@@ -5,6 +5,7 @@
 import math
 import streamlit as st
 import plotly.graph_objects as go
+import numpy as np
 
 st.set_page_config(
     page_title="2026 IPO泡沫模拟器",
@@ -128,10 +129,9 @@ def market_to_sentiment(data):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "🏠 市场概览", "🔍 IPO详情", "🎛️ 泡沫模拟", "📜 历史对比", "📡 实时市场"
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "🏠 市场概览", "🔍 IPO详情", "🎛️ 泡沫模拟", "📜 历史对比", "📡 实时市场", "📈 趋势预测"
 ])
-
 # ── Tab 1: 市场概览 ────────────────────────────────────────────────────────────
 with tab1:
     c1, c2, c3, c4 = st.columns(4)
@@ -338,7 +338,7 @@ with tab5:
         st.subheader(f"当前市场情绪：{label}（{sentiment_score}/100）")
         st.progress(sentiment_score / 100)
         st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算 · 可直接用于泡沫模拟Tab的情绪参数")
-import numpy as np
+
 
 # ── Tab 6: 趋势预测 (GBM 蒙特卡洛多情景模拟) ───────────────────────────────────
 with tab6: # 请确保你在前面的 st.tabs 中添加了第六个 tab: "📈 趋势预测"
