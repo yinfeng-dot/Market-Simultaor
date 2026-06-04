@@ -339,3 +339,100 @@ with tab5:
         st.subheader(f"当前市场情绪：{label}（{sentiment_score}/100）")
         st.progress(sentiment_score / 100)
         st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算 · 可直接用于泡沫模拟Tab的情绪参数")
+import numpy as np
+
+# ── Tab 6: 趋势预测 (GBM 蒙特卡洛多情景模拟) ───────────────────────────────────
+with tab6: # 请确保你在前面的 st.tabs 中添加了第六个 tab: "📈 趋势预测"
+    st.subheader("🔮 核心资产 24 个月多情景价格趋势模拟")
+    st.caption("基于几何布朗运动 (GBM) 模型，结合实时市场情绪动态调整漂移率与波动率")
+
+    # 1. 侧边栏/控制面板：参数设置
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        s0 = st.number_input("初始资产价格 / IPO定价 ($)", min_value=10.0, value=100.0, step=5.0)
+        time_horizon = st.slider("预测周期 (月)", 6, 36, 24)
+    with col2:
+        base_mu = st.slider("基准年化预期收益率 (μ)", -0.5, 1.0, 0.15, step=0.05, help="反映市场的基准增长预期")
+        base_sigma = st.slider("基准年化波动率 (σ)", 0.1, 1.5, 0.40, step=0.05, help="反映资产的风险与价格震荡幅度")
+    with col3:
+        # 允许引入 API 抓取的宏观情绪参数进行调节
+        macro_shock = st.slider("宏观情绪冲击因子", -5.0, 5.0, 0.0, step=0.5, help="正数代表强刺激/降息/AI突破，负数代表紧缩/黑天鹅")
+        simulations = st.selectbox("模拟路径数量", [5, 10, 20], index=0, help="每种情景展示的可能路径数")
+
+    st.divider()
+
+    # 2. 核心数学模型：几何布朗运动 (GBM) 路径生成器
+    def generate_gbm_paths(S0, mu, sigma, T_months, n_paths):
+        dt = 1 / 12  # 时间步长：1个月
+        N_steps = T_months
+        paths = np.zeros((N_steps + 1, n_paths))
+        paths[0] = S0
+        
+        for t in range(1, N_steps + 1):
+            # 标准正态分布随机数
+            Z = np.random.standard_normal(n_paths) 
+            # GBM 核心公式
+            paths[t] = paths[t-1] * np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z)
+        return paths
+
+    # 3. 设定三种宏观情景的参数微调
+    # 基准情景 (Base Case)
+    mu_base = base_mu + (macro_shock * 0.02)
+    sigma_base = base_sigma
+
+    # 乐观情景 (Bull Case)：收益率更高，波动率由于流动性充裕略微降低
+    mu_bull = base_mu + 0.30 + (macro_shock * 0.05)
+    sigma_bull = max(0.1, base_sigma - 0.10)
+
+    # 悲观情景 (Bear Case)：收益率转负，恐慌导致波动率飙升
+    mu_bear = base_mu - 0.40 + (macro_shock * 0.05)
+    sigma_bear = base_sigma + 0.30
+
+    # 生成路径数据
+    np.random.seed(42) # 固定随机种子以便观察，实盘可移除
+    paths_base = generate_gbm_paths(s0, mu_base, sigma_base, time_horizon, simulations)
+    paths_bull = generate_gbm_paths(s0, mu_bull, sigma_bull, time_horizon, simulations)
+    paths_bear = generate_gbm_paths(s0, mu_bear, sigma_bear, time_horizon, simulations)
+
+    # 4. 使用 Plotly 渲染多情景曲线
+    fig_trend = go.Figure()
+    time_axis = np.arange(0, time_horizon + 1)
+
+    # 辅助函数：将路径添加到图表
+    def add_paths_to_fig(fig, paths, color, name_prefix):
+        for i in range(paths.shape[1]):
+            show_leg = True if i == 0 else False # 仅显示第一个图例项避免杂乱
+            fig.add_trace(go.Scatter(
+                x=time_axis, 
+                y=paths[:, i], 
+                mode='lines',
+                line=dict(color=color, width=1.5, dash='solid' if i==0 else 'dot'),
+                opacity=0.8 if i==0 else 0.3,
+                name=f"{name_prefix} 情景",
+                showlegend=show_leg
+            ))
+
+    # 添加三组情景
+    add_paths_to_fig(fig_trend, paths_base, "#534AB7", "📊 基准")
+    add_paths_to_fig(fig_trend, paths_bull, "#1D9E75", "🚀 乐观")
+    add_paths_to_fig(fig_trend, paths_bear, "#D85A30", "🐻 悲观")
+
+    # 优化图表布局
+    fig_trend.update_layout(
+        height=500,
+        title=f"未来 {time_horizon} 个月多情景价格演化路径 (GBM 蒙特卡洛)",
+        xaxis_title="时间 (月)",
+        yaxis_title="预测资产价格 ($)",
+        plot_bgcolor="#fafafa",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+    # 5. 最终估值落点分析
+    st.subheader("期末价格分布极值分析")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("🚀 乐观情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bull[-1]):.2f}", f"{(np.mean(paths_bull[-1])/s0 - 1)*100:.1f}%")
+    c2.metric("📊 基准情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_base[-1]):.2f}", f"{(np.mean(paths_base[-1])/s0 - 1)*100:.1f}%", delta_color="off")
+    c3.metric("🐻 悲观情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bear[-1]):.2f}", f"{(np.mean(paths_bear[-1])/s0 - 1)*100:.1f}%", delta_color="inverse")
