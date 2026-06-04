@@ -550,7 +550,7 @@ with tabs[6]:
         with qcols[i]:
             st.caption(group)
             for tk in tickers:
-                if st.button(tk, key=f"q_{tk}", use_container_width=True):
+                if st.button(tk, key=f"q_{group}_{tk}", use_container_width=True):
                     quick_pick = tk
 
     st.divider()
