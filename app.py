@@ -340,99 +340,134 @@ with tab5:
         st.progress(sentiment_score / 100)
         st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算 · 可直接用于泡沫模拟Tab的情绪参数")
 import numpy as np
+import numpy as np
+import plotly.graph_objects as go
+import streamlit as st
+
+# ── 资产情景与参数字典 (核心逻辑库) ───────────────────────────────────────────
+# 结构：资产名称 -> {"s0": 默认价格, "mu": 默认基准收益, "sigma": 默认基准波动, "scenarios": {具体故事}}
+ASSET_SCENARIOS = {
+    "个股：英伟达 (NVDA) - AI算力核心": {
+        "s0": 130.0, "mu": 0.25, "sigma": 0.45,
+        "scenarios": {
+            "bull": "🚀 乐观情景 (超预期)：B200等下一代芯片产能瓶颈突破，大型云厂商（微软、亚马逊等）资本支出（CapEx）无衰退迹象，且未出现地缘政治黑天鹅。",
+            "base": "📊 基准情景 (符合预期)：芯片按计划交付，供应链保持稳定，市场估值随着实际业绩的增长被逐步且健康地消化。",
+            "bear": "🐻 悲观情景 (逻辑破坏)：下游AI应用迟迟缺乏‘杀手级’产品，导致云厂商削减资本开支；或台积电（TSMC）面临严重的地缘冲突与断供危机。"
+        }
+    },
+    "指数：纳斯达克100 (^NDX) - 科技大盘": {
+        "s0": 18000.0, "mu": 0.12, "sigma": 0.22, # 指数的波动率显著低于个股
+        "scenarios": {
+            "bull": "🚀 乐观情景 (金发姑娘经济)：美联储（Fed）开启连续降息周期，宏观经济实现完美‘软着陆’，同时AI技术实质性提升了标普企业的整体生产率。",
+            "base": "📊 基准情景 (温和增长)：利率维持中性区间，美国宏观经济未见显著衰退，大型科技股盈利基本符合华尔街的一致预期。",
+            "bear": "🐻 悲观情景 (滞胀或硬着陆)：通胀意外反弹迫使美联储重新加息（资金面收紧），或者美国经济数据恶化陷入深度衰退，引发系统性估值杀跌。"
+        }
+    },
+    "IPO标的：SpaceX - 太空科技龙头": {
+        "s0": 100.0, "mu": 0.30, "sigma": 0.60, # 一级/刚上市资产波动率极高
+        "scenarios": {
+            "bull": "🚀 乐观情景 (商业化爆发)：星舰（Starship）全面实现常态化商业发射，星链（Starlink）垄断全球卫星互联网并产生巨额自由现金流，IPO遭机构疯抢。",
+            "base": "📊 基准情景 (稳步推进)：各项发射任务按部就班，市场愿意为马斯克的愿景和其在航天领域的绝对垄断地位支付较高的估值溢价。",
+            "bear": "🐻 悲观情景 (重大挫折)：核心火箭在关键载人或大额商业任务中遭遇灾难性失败；或者NASA等政府大额合同被竞争对手大幅分食。"
+        }
+    },
+    "期货：VIX 恐慌指数期货": {
+        "s0": 15.0, "mu": 0.0, "sigma": 0.80, # VIX具有均值回归特性，且波动极大
+        "scenarios": {
+            "bull": "🚀 乐观情景 (系统崩溃)：这是VIX的‘多头’情景。全球爆发黑天鹅事件（如突发战争、大型金融机构倒闭），市场流动性瞬间枯竭，期权对冲需求井喷。",
+            "base": "📊 基准情景 (市场平静)：宏观无重大消息，VIX在13-18的历史低位区间震荡，由于期货升水（Contango），多头面临展期损耗。",
+            "bear": "🐻 悲观情景 (极度贪婪)：AI泡沫持续膨胀且无任何利空阻力，散户与机构一致看多，市场波动率被极度压缩至个位数。"
+        }
+    }
+}
 
 # ── Tab 6: 趋势预测 (GBM 蒙特卡洛多情景模拟) ───────────────────────────────────
-with tab6: # 请确保你在前面的 st.tabs 中添加了第六个 tab: "📈 趋势预测"
-    st.subheader("🔮 核心资产 24 个月多情景价格趋势模拟")
-    st.caption("基于几何布朗运动 (GBM) 模型，结合实时市场情绪动态调整漂移率与波动率")
+with tab6: 
+    st.subheader("🔮 资产多情景演化路径与宏观事件推演")
+    st.caption("基于几何布朗运动 (GBM) 结合不同宏观现实世界事件的压力测试")
 
-    # 1. 侧边栏/控制面板：参数设置
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        s0 = st.number_input("初始资产价格 / IPO定价 ($)", min_value=10.0, value=100.0, step=5.0)
-        time_horizon = st.slider("预测周期 (月)", 6, 36, 24)
-    with col2:
-        base_mu = st.slider("基准年化预期收益率 (μ)", -0.5, 1.0, 0.15, step=0.05, help="反映市场的基准增长预期")
-        base_sigma = st.slider("基准年化波动率 (σ)", 0.1, 1.5, 0.40, step=0.05, help="反映资产的风险与价格震荡幅度")
-    with col3:
-        # 允许引入 API 抓取的宏观情绪参数进行调节
-        macro_shock = st.slider("宏观情绪冲击因子", -5.0, 5.0, 0.0, step=0.5, help="正数代表强刺激/降息/AI突破，负数代表紧缩/黑天鹅")
-        simulations = st.selectbox("模拟路径数量", [5, 10, 20], index=0, help="每种情景展示的可能路径数")
+    # 1. 资产选择与联动参数
+    selected_asset = st.selectbox("🎯 选择分析资产", list(ASSET_SCENARIOS.keys()))
+    asset_data = ASSET_SCENARIOS[selected_asset]
 
     st.divider()
 
-    # 2. 核心数学模型：几何布朗运动 (GBM) 路径生成器
+    # 2. 侧边栏/控制面板：允许用户微调默认参数
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        s0 = st.number_input("初始价格 ($/点)", min_value=1.0, value=asset_data["s0"], step=10.0)
+        time_horizon = st.slider("预测周期 (月)", 6, 36, 24)
+    with col2:
+        base_mu = st.slider("基准预期年化收益 (μ)", -0.5, 1.0, asset_data["mu"], step=0.05)
+        base_sigma = st.slider("基准年化波动率 (σ)", 0.1, 1.5, asset_data["sigma"], step=0.05)
+    with col3:
+        macro_shock = st.slider("临时外力冲击因子", -5.0, 5.0, 0.0, step=0.5, help="正数放大乐观，负数加重悲观")
+        simulations = st.selectbox("每种情景展示的路径数", [5, 10, 20], index=0)
+
+    # 3. 数学模型：几何布朗运动 (GBM)
     def generate_gbm_paths(S0, mu, sigma, T_months, n_paths):
         dt = 1 / 12  # 时间步长：1个月
         N_steps = T_months
         paths = np.zeros((N_steps + 1, n_paths))
         paths[0] = S0
-        
         for t in range(1, N_steps + 1):
-            # 标准正态分布随机数
             Z = np.random.standard_normal(n_paths) 
-            # GBM 核心公式
             paths[t] = paths[t-1] * np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z)
         return paths
 
-    # 3. 设定三种宏观情景的参数微调
-    # 基准情景 (Base Case)
+    # 设置三种宏观情景的数学转化
     mu_base = base_mu + (macro_shock * 0.02)
     sigma_base = base_sigma
 
-    # 乐观情景 (Bull Case)：收益率更高，波动率由于流动性充裕略微降低
-    mu_bull = base_mu + 0.30 + (macro_shock * 0.05)
-    sigma_bull = max(0.1, base_sigma - 0.10)
+    mu_bull = base_mu + 0.25 + (macro_shock * 0.05)
+    sigma_bull = max(0.1, base_sigma - 0.10) # 乐观时恐慌情绪低，波动率下降
 
-    # 悲观情景 (Bear Case)：收益率转负，恐慌导致波动率飙升
-    mu_bear = base_mu - 0.40 + (macro_shock * 0.05)
-    sigma_bear = base_sigma + 0.30
+    mu_bear = base_mu - 0.35 + (macro_shock * 0.05)
+    sigma_bear = base_sigma + 0.25 # 悲观时容易出现暴跌，波动率上升
 
-    # 生成路径数据
-    np.random.seed(42) # 固定随机种子以便观察，实盘可移除
+    np.random.seed(42) # 固定种子，避免每次交互画面乱跳
     paths_base = generate_gbm_paths(s0, mu_base, sigma_base, time_horizon, simulations)
     paths_bull = generate_gbm_paths(s0, mu_bull, sigma_bull, time_horizon, simulations)
     paths_bear = generate_gbm_paths(s0, mu_bear, sigma_bear, time_horizon, simulations)
 
-    # 4. 使用 Plotly 渲染多情景曲线
+    # 4. 图表渲染
     fig_trend = go.Figure()
     time_axis = np.arange(0, time_horizon + 1)
 
-    # 辅助函数：将路径添加到图表
     def add_paths_to_fig(fig, paths, color, name_prefix):
         for i in range(paths.shape[1]):
-            show_leg = True if i == 0 else False # 仅显示第一个图例项避免杂乱
+            show_leg = True if i == 0 else False
             fig.add_trace(go.Scatter(
-                x=time_axis, 
-                y=paths[:, i], 
-                mode='lines',
+                x=time_axis, y=paths[:, i], mode='lines',
                 line=dict(color=color, width=1.5, dash='solid' if i==0 else 'dot'),
-                opacity=0.8 if i==0 else 0.3,
-                name=f"{name_prefix} 情景",
-                showlegend=show_leg
+                opacity=0.8 if i==0 else 0.2,
+                name=f"{name_prefix} 情景", showlegend=show_leg
             ))
 
-    # 添加三组情景
     add_paths_to_fig(fig_trend, paths_base, "#534AB7", "📊 基准")
     add_paths_to_fig(fig_trend, paths_bull, "#1D9E75", "🚀 乐观")
     add_paths_to_fig(fig_trend, paths_bear, "#D85A30", "🐻 悲观")
 
-    # 优化图表布局
     fig_trend.update_layout(
-        height=500,
-        title=f"未来 {time_horizon} 个月多情景价格演化路径 (GBM 蒙特卡洛)",
-        xaxis_title="时间 (月)",
-        yaxis_title="预测资产价格 ($)",
-        plot_bgcolor="#fafafa",
-        hovermode="x unified",
+        height=450, margin=dict(t=30, b=10),
+        xaxis_title="未来月份 (Month)", yaxis_title="预测估值/价格",
+        plot_bgcolor="#fafafa", hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    
     st.plotly_chart(fig_trend, use_container_width=True)
 
-    # 5. 最终估值落点分析
-    st.subheader("期末价格分布极值分析")
+    # 5. 情景事件解读面板 (对应图表中的曲线)
+    st.subheader("📚 模型曲线对应的现实宏观事件")
+    st.caption("以下事件说明了触发上方不同价格路径的根本业务与宏观原因：")
+    
+    # 用醒目的消息框展示故事
+    st.success(asset_data["scenarios"]["bull"])
+    st.info(asset_data["scenarios"]["base"])
+    st.error(asset_data["scenarios"]["bear"])
+    
+    # 数值总结
     c1, c2, c3 = st.columns(3)
-    c1.metric("🚀 乐观情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bull[-1]):.2f}", f"{(np.mean(paths_bull[-1])/s0 - 1)*100:.1f}%")
-    c2.metric("📊 基准情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_base[-1]):.2f}", f"{(np.mean(paths_base[-1])/s0 - 1)*100:.1f}%", delta_color="off")
-    c3.metric("🐻 悲观情景均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bear[-1]):.2f}", f"{(np.mean(paths_bear[-1])/s0 - 1)*100:.1f}%", delta_color="inverse")
+    c1.metric("乐观均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bull[-1]):.2f}", f"{(np.mean(paths_bull[-1])/s0 - 1)*100:.1f}%")
+    c2.metric("基准均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_base[-1]):.2f}", f"{(np.mean(paths_base[-1])/s0 - 1)*100:.1f}%", delta_color="off")
+    c3.metric("悲观均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bear[-1]):.2f}", f"{(np.mean(paths_bear[-1])/s0 - 1)*100:.1f}%", delta_color="inverse")
+    
