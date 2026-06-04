@@ -606,6 +606,97 @@ with tabs[6]:
                       "超卖" if result['rsi']<30 else "超买" if result['rsi']>70 else "正常")
             m5.metric("综合评分", f"{result['score']}/100")
 
+            # ── 买입/卖출理由 ──
+            st.subheader("🧠 分析师意见")
+
+            def gen_reason(r):
+                lines = []
+                p = r["price_now"]
+                if r["rating"] in ("强力买入", "买入"):
+                    lines.append(f"**{r['ticker']} 目前技术面偏多，综合评分 {r['score']}/100，给予「{r['rating']}」评级。**")
+                elif r["rating"] == "持有":
+                    lines.append(f"**{r['ticker']} 技术信号中性，综合评分 {r['score']}/100，建议「持有」观望。**")
+                else:
+                    lines.append(f"**{r['ticker']} 技术面偏空，综合评分 {r['score']}/100，给予「{r['rating']}」评级。**")
+
+                if r["rsi"] < 30:
+                    lines.append(f"RSI 仅 {r['rsi']:.1f}，处于严重超卖区间，历史上此位置出现反弹的概率较高，短线存在较好的买点。")
+                elif r["rsi"] > 70:
+                    lines.append(f"RSI 高达 {r['rsi']:.1f}，进入超买区间，短期获利盘压力较大，追高风险显著。")
+                else:
+                    lines.append(f"RSI 为 {r['rsi']:.1f}，处于中性区间，无明显超买超卖信号。")
+
+                if r["macd_hist"] > 0:
+                    lines.append(f"MACD 柱状图为正（{r['macd_hist']:.3f}），多头动能持续，金叉形态支撑上涨趋势。")
+                else:
+                    lines.append(f"MACD 柱状图为负（{r['macd_hist']:.3f}），空头动能占主导，死叉形态需警惕进一步下行。")
+
+                if p > r["ma20"] and r["ma20"] > r["ma50"]:
+                    lines.append(f"价格 ${p:.2f} 站于 MA20（${r['ma20']:.2f}）和 MA50（${r['ma50']:.2f}）之上，均线多头排列，中期趋势向好。")
+                elif p < r["ma20"] and r["ma20"] < r["ma50"]:
+                    lines.append(f"价格 ${p:.2f} 跌破 MA20（${r['ma20']:.2f}）和 MA50（${r['ma50']:.2f}），均线空头排列，中期趋势偏弱。")
+                else:
+                    lines.append(f"价格与均线关系中性（MA20: ${r['ma20']:.2f}，MA50: ${r['ma50']:.2f}），方向待确认。")
+
+                if p < r["bb_low"]:
+                    lines.append(f"价格触及布林带下轨（${r['bb_low']:.2f}），处于统计超卖区间，均值回归概率较高。")
+                elif p > r["bb_up"]:
+                    lines.append(f"价格突破布林带上轨（${r['bb_up']:.2f}），短期过度拉伸，需警惕回调。")
+
+                if r["vol_ratio"] > 1.5 and r["mom_1m"] > 0:
+                    lines.append(f"近期成交量是20日均量的 {r['vol_ratio']:.1f} 倍，放量上涨说明资金积极介入，信号可信度高。")
+                elif r["vol_ratio"] > 1.5 and r["mom_1m"] < 0:
+                    lines.append(f"近期成交量是20日均量的 {r['vol_ratio']:.1f} 倍，但伴随价格下跌，放量下跌为明显出逃信号。")
+                else:
+                    lines.append(f"成交量接近均值（{r['vol_ratio']:.1f}x），没有明显的资金异动。")
+
+                if r["mom_1m"] > 10:
+                    lines.append(f"过去1个月涨幅达 +{r['mom_1m']:.1f}%，3个月涨幅 {r['mom_3m']:+.1f}%，动量强劲，趋势追随者可考虑顺势参与。")
+                elif r["mom_1m"] < -10:
+                    lines.append(f"过去1个月跌幅 {r['mom_1m']:.1f}%，3个月跌幅 {r['mom_3m']:.1f}%，下行压力持续，建议等待趋势企稳。")
+
+                if r["pe"] and r["pe"] > 0:
+                    if r["pe"] < 15:
+                        lines.append(f"基本面方面，P/E 仅 {r['pe']:.1f}x，估值处于低位，具备安全边际。")
+                    elif r["pe"] > 50:
+                        lines.append(f"基本面方面，P/E 高达 {r['pe']:.1f}x，估值偏贵，需要高增长持续兑现才能支撑当前股价。")
+
+                if r["target_analyst"] and r["target_analyst"] > 0:
+                    upside = (r["target_analyst"] - p) / p * 100
+                    agree = "与本模型判断一致。" if (upside > 0) == (r["score"] >= 50) else "与本模型判断存在分歧，建议综合参考。"
+                    lines.append(f"华尔街分析师平均目标价为 ${r['target_analyst']:.2f}，较现价 {'+' if upside>=0 else ''}{upside:.1f}%，{agree}")
+
+                direction = "上行" if r["price_target_pct"] >= 0 else "下行"
+                lines.append(f"综合以上因素，模型预测未来3个月价格目标为 ${r['price_target']:.2f}，{direction}空间约 {abs(r['price_target_pct']):.1f}%。")
+
+                if r["rating"] in ("强力买入", "买入"):
+                    lines.append("建议逢低分批建仓，严格设置止损位（建议设于近期低点下方3-5%）。")
+                elif r["rating"] == "持有":
+                    lines.append("建议持仓观望，等待更明确的方向性信号后再做决策。")
+                else:
+                    lines.append("建议减仓或设置严格止损，控制下行风险，等待技术面好转后再考虑重新介入。")
+
+                return lines
+
+            box_colors = {
+                "强力买入": ("#E1F5EE", "#0F6E56"),
+                "买入":     ("#F0FAF5", "#1D9E75"),
+                "持有":     ("#FAEEDA", "#BA7517"),
+                "卖出":     ("#FDF0EC", "#D85A30"),
+                "强力卖出": ("#FCEBEB", "#A32D2D"),
+            }
+            bg, border = box_colors.get(result["rating"], ("#F5F5F5", "#cccccc"))
+            reason_lines = gen_reason(result)
+            for line in reason_lines:
+                st.markdown(
+                    f'<div style="background:{bg};border-left:4px solid {border};'
+                    f'padding:10px 16px;border-radius:6px;margin-bottom:8px;'
+                    f'font-size:14px;line-height:1.7">{line}</div>',
+                    unsafe_allow_html=True
+                )
+
+            st.divider()
+
             # ── 价格图表 + 技术指标 ──
             hist = result["hist"]
             close = hist["Close"]
