@@ -380,33 +380,95 @@ ASSET_SCENARIOS = {
         }
     }
 }
+import numpy as np
+import plotly.graph_objects as go
+import streamlit as st
+import yfinance as yf
+import datetime
 
-# ── Tab 6: 趋势预测 (GBM 蒙特卡洛多情景模拟) ───────────────────────────────────
-with tab6: 
-    st.subheader("🔮 资产多情景演化路径与宏观事件推演")
-    st.caption("基于几何布朗运动 (GBM) 结合不同宏观现实世界事件的压力测试")
+# ── Tab 6: 趋势预测 (接入实时市场数据版) ──────────────────────────────────────────
+with tab6:
+    st.subheader("🔮 资产多情景演化路径 (实时数据驱动版)")
+    st.caption("基于雅虎财经实时数据自动计算历史波动率与收益率，驱动 GBM 蒙特卡洛模拟")
 
-    # 1. 资产选择与联动参数
-    selected_asset = st.selectbox("🎯 选择分析资产", list(ASSET_SCENARIOS.keys()))
-    asset_data = ASSET_SCENARIOS[selected_asset]
+    # 1. 控制面板：数据源与资产选择
+    col_mode, col_ticker, col_horizon = st.columns([1, 1, 1])
+    with col_mode:
+        use_live_data = st.toggle("📡 开启实时市场数据抓取", value=True, help="开启后将自动计算该资产过去一年的真实波动率和收益率")
+    with col_ticker:
+        # 支持用户输入任意美股代码或指数代码
+        ticker_symbol = st.text_input("输入资产代码 (如 NVDA, ^NDX, MSFT, TSLA)", value="NVDA")
+    with col_horizon:
+        time_horizon = st.slider("预测周期 (月)", 6, 36, 24)
 
     st.divider()
 
-    # 2. 侧边栏/控制面板：允许用户微调默认参数
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        s0 = st.number_input("初始价格 ($/点)", min_value=1.0, value=asset_data["s0"], step=10.0)
-        time_horizon = st.slider("预测周期 (月)", 6, 36, 24)
-    with col2:
-        base_mu = st.slider("基准预期年化收益 (μ)", -0.5, 1.0, asset_data["mu"], step=0.05)
-        base_sigma = st.slider("基准年化波动率 (σ)", 0.1, 1.5, asset_data["sigma"], step=0.05)
-    with col3:
-        macro_shock = st.slider("临时外力冲击因子", -5.0, 5.0, 0.0, step=0.5, help="正数放大乐观，负数加重悲观")
-        simulations = st.selectbox("每种情景展示的路径数", [5, 10, 20], index=0)
+    # 2. 数据获取与参数推导模块
+    @st.cache_data(ttl=3600) # 缓存1小时，避免API请求超限
+    def fetch_and_calc_params(ticker):
+        try:
+            # 获取过去 1 年的数据
+            data = yf.download(ticker, period="1y", progress=False)
+            if data.empty:
+                return None, "未找到该资产数据，请检查代码。"
+            
+            # 提取收盘价 (处理多重索引问题)
+            if isinstance(data.columns, pd.MultiIndex):
+                close_prices = data['Close'][ticker].dropna()
+            else:
+                close_prices = data['Close'].dropna()
 
-    # 3. 数学模型：几何布朗运动 (GBM)
+            if len(close_prices) < 50:
+                return None, "有效交易数据不足，无法计算可靠的波动率。"
+
+            s0 = float(close_prices.iloc[-1]) # 最新收盘价
+            
+            # 计算每日收益率
+            daily_returns = close_prices.pct_change().dropna()
+            
+            # 年化历史波动率 = 日波动率 * sqrt(252)
+            hist_sigma = float(daily_returns.std() * np.sqrt(252))
+            
+            # 年化历史收益率 = (最新价 / 一年前价格) - 1  (使用过去一年的实际表现作为基准漂移率)
+            hist_mu = float((close_prices.iloc[-1] / close_prices.iloc[0]) - 1)
+            
+            # 加上风控熔断：限制极大极小值，防止图表崩溃
+            hist_mu = max(-0.8, min(1.5, hist_mu)) 
+            hist_sigma = max(0.05, min(1.2, hist_sigma))
+            
+            return {"s0": s0, "mu": hist_mu, "sigma": hist_sigma}, None
+        except Exception as e:
+            return None, str(e)
+
+    # 3. 初始化核心参数
+    s0, base_mu, base_sigma = 100.0, 0.15, 0.40 # 默认兜底参数
+    
+    if use_live_data and ticker_symbol:
+        with st.spinner(f"正在从市场抓取 {ticker_symbol} 的量化特征..."):
+            live_params, err = fetch_and_calc_params(ticker_symbol)
+            if err:
+                st.error(f"数据获取失败: {err}")
+            elif live_params:
+                s0 = live_params["s0"]
+                base_mu = live_params["mu"]
+                base_sigma = live_params["sigma"]
+                st.success(f"✅ 成功同步实时数据！最新价: **${s0:,.2f}** | 历史年化收益: **{base_mu*100:.1f}%** | 历史年化波动率: **{base_sigma*100:.1f}%**")
+
+    # 允许用户在实时数据基础上进一步手动微调
+    st.markdown("#### ⚙️ 参数微调与外力冲击")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        s0 = st.number_input("起始价格 ($)", value=s0, step=5.0)
+    with c2:
+        base_mu = st.number_input("基准年化收益 (μ)", value=float(base_mu), step=0.05)
+    with c3:
+        base_sigma = st.number_input("基准年化波动率 (σ)", value=float(base_sigma), step=0.05)
+    with c4:
+        macro_shock = st.slider("宏观情绪冲击因子", -5.0, 5.0, 0.0, step=0.5, help="外生变量：模拟突发利好或利空")
+
+    # 4. 几何布朗运动 (GBM) 核心模型
     def generate_gbm_paths(S0, mu, sigma, T_months, n_paths):
-        dt = 1 / 12  # 时间步长：1个月
+        dt = 1 / 12
         N_steps = T_months
         paths = np.zeros((N_steps + 1, n_paths))
         paths[0] = S0
@@ -415,59 +477,52 @@ with tab6:
             paths[t] = paths[t-1] * np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z)
         return paths
 
-    # 设置三种宏观情景的数学转化
+    # 情景参数设定 (加入冲击因子)
     mu_base = base_mu + (macro_shock * 0.02)
     sigma_base = base_sigma
 
     mu_bull = base_mu + 0.25 + (macro_shock * 0.05)
-    sigma_bull = max(0.1, base_sigma - 0.10) # 乐观时恐慌情绪低，波动率下降
+    sigma_bull = max(0.1, base_sigma - 0.10) # 牛市波动通常较低
 
-    mu_bear = base_mu - 0.35 + (macro_shock * 0.05)
-    sigma_bear = base_sigma + 0.25 # 悲观时容易出现暴跌，波动率上升
+    mu_bear = base_mu - 0.40 + (macro_shock * 0.05)
+    sigma_bear = min(1.5, base_sigma + 0.30) # 熊市恐慌波动飙升
 
-    np.random.seed(42) # 固定种子，避免每次交互画面乱跳
+    simulations = 10 # 默认跑10条路径保持界面清爽
+    np.random.seed(42)
     paths_base = generate_gbm_paths(s0, mu_base, sigma_base, time_horizon, simulations)
     paths_bull = generate_gbm_paths(s0, mu_bull, sigma_bull, time_horizon, simulations)
     paths_bear = generate_gbm_paths(s0, mu_bear, sigma_bear, time_horizon, simulations)
 
-    # 4. 图表渲染
+    # 5. 图表渲染
     fig_trend = go.Figure()
     time_axis = np.arange(0, time_horizon + 1)
 
-    def add_paths_to_fig(fig, paths, color, name_prefix):
+    def add_paths(fig, paths, color, name_prefix):
         for i in range(paths.shape[1]):
             show_leg = True if i == 0 else False
             fig.add_trace(go.Scatter(
                 x=time_axis, y=paths[:, i], mode='lines',
                 line=dict(color=color, width=1.5, dash='solid' if i==0 else 'dot'),
                 opacity=0.8 if i==0 else 0.2,
-                name=f"{name_prefix} 情景", showlegend=show_leg
+                name=f"{name_prefix}", showlegend=show_leg
             ))
 
-    add_paths_to_fig(fig_trend, paths_base, "#534AB7", "📊 基准")
-    add_paths_to_fig(fig_trend, paths_bull, "#1D9E75", "🚀 乐观")
-    add_paths_to_fig(fig_trend, paths_bear, "#D85A30", "🐻 悲观")
+    add_paths(fig_trend, paths_base, "#534AB7", "📊 基准情景")
+    add_paths(fig_trend, paths_bull, "#1D9E75", "🚀 乐观情景")
+    add_paths(fig_trend, paths_bear, "#D85A30", "🐻 悲观情景")
 
     fig_trend.update_layout(
         height=450, margin=dict(t=30, b=10),
-        xaxis_title="未来月份 (Month)", yaxis_title="预测估值/价格",
+        xaxis_title="未来月份", yaxis_title="预测价格 ($)",
         plot_bgcolor="#fafafa", hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig_trend, use_container_width=True)
 
-    # 5. 情景事件解读面板 (对应图表中的曲线)
-    st.subheader("📚 模型曲线对应的现实宏观事件")
-    st.caption("以下事件说明了触发上方不同价格路径的根本业务与宏观原因：")
+    # 6. 数据统计面板
+    r1, r2, r3 = st.columns(3)
+    r1.metric("🚀 乐观预期均价 (T+"+str(time_horizon)+")", f"${np.mean(paths_bull[-1]):,.2f}", f"{(np.mean(paths_bull[-1])/s0 - 1)*100:+.1f}%")
+    r2.metric("📊 基准预期均价 (T+"+str(time_horizon)+")", f"${np.mean(paths_base[-1]):,.2f}", f"{(np.mean(paths_base[-1])/s0 - 1)*100:+.1f}%", delta_color="off")
+    r3.metric("🐻 悲观预期均价 (T+"+str(time_horizon)+")", f"${np.mean(paths_bear[-1]):,.2f}", f"{(np.mean(paths_bear[-1])/s0 - 1)*100:+.1f}%", delta_color="inverse")
     
-    # 用醒目的消息框展示故事
-    st.success(asset_data["scenarios"]["bull"])
-    st.info(asset_data["scenarios"]["base"])
-    st.error(asset_data["scenarios"]["bear"])
-    
-    # 数值总结
-    c1, c2, c3 = st.columns(3)
-    c1.metric("乐观均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bull[-1]):.2f}", f"{(np.mean(paths_bull[-1])/s0 - 1)*100:.1f}%")
-    c2.metric("基准均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_base[-1]):.2f}", f"{(np.mean(paths_base[-1])/s0 - 1)*100:.1f}%", delta_color="off")
-    c3.metric("悲观均值 (T+"+str(time_horizon)+")", f"${np.mean(paths_bear[-1]):.2f}", f"{(np.mean(paths_bear[-1])/s0 - 1)*100:.1f}%", delta_color="inverse")
     
