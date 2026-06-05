@@ -212,6 +212,109 @@ def fetch_stock_analysis(ticker: str):
         mktcap = info.get("marketCap",   None)
         target = info.get("targetMeanPrice", None)
 
+        # ── 新增指标 ──────────────────────────────────────────────────
+        # ATR (14) — 平均真实波幅，用于止损计算
+        high_low   = hist["High"] - hist["Low"]
+        high_close = (hist["High"] - hist["Close"].shift()).abs()
+        low_close  = (hist["Low"]  - hist["Close"].shift()).abs()
+        true_range = high_low.combine(high_close, max).combine(low_close, max)
+        atr        = float(true_range.rolling(14).mean().iloc[-1])
+        atr_pct    = atr / price_now * 100
+
+        # 止损建议（1.5x ATR below current price）
+        stop_loss       = price_now - 1.5 * atr
+        stop_loss_pct   = (stop_loss - price_now) / price_now * 100
+
+        # OBV — 能量潮（On-Balance Volume）
+        obv = []
+        for i in range(len(close)):
+            if i == 0:
+                obv.append(float(volume.iloc[i]))
+            else:
+                if close.iloc[i] > close.iloc[i-1]:
+                    obv.append(obv[-1] + float(volume.iloc[i]))
+                elif close.iloc[i] < close.iloc[i-1]:
+                    obv.append(obv[-1] - float(volume.iloc[i]))
+                else:
+                    obv.append(obv[-1])
+        import pandas as pd
+        obv_series    = pd.Series(obv, index=close.index)
+        obv_ma20      = float(obv_series.rolling(20).mean().iloc[-1])
+        obv_now       = float(obv_series.iloc[-1])
+        obv_trend     = "上升" if obv_now > obv_ma20 else "下降"
+        obv_pct       = (obv_now - obv_ma20) / abs(obv_ma20) * 100 if obv_ma20 != 0 else 0
+
+        # 斐波那契回撤位
+        fib_high = price_52w_high
+        fib_low  = price_52w_low
+        fib_range = fib_high - fib_low
+        fib_levels = {
+            "0.236": round(fib_high - 0.236 * fib_range, 2),
+            "0.382": round(fib_high - 0.382 * fib_range, 2),
+            "0.500": round(fib_high - 0.500 * fib_range, 2),
+            "0.618": round(fib_high - 0.618 * fib_range, 2),
+            "0.786": round(fib_high - 0.786 * fib_range, 2),
+        }
+        # 找最近的支撑和阻力
+        nearest_support    = max([v for v in fib_levels.values() if v <= price_now], default=fib_low)
+        nearest_resistance = min([v for v in fib_levels.values() if v >= price_now], default=fib_high)
+
+        # 线性回归斜率（20日）
+        import numpy as np_inner
+        x_lr  = np_inner.arange(20)
+        y_lr  = close.iloc[-20:].values if len(close) >= 20 else close.values
+        if len(y_lr) >= 2:
+            slope_norm = float(np_inner.polyfit(np_inner.arange(len(y_lr)), y_lr, 1)[0])
+            slope_pct  = slope_norm / price_now * 100  # 每日涨跌%
+        else:
+            slope_norm = 0.0
+            slope_pct  = 0.0
+
+        # 夏普比率（年化，使用6个月日收益率）
+        daily_returns = close.pct_change().dropna()
+        if len(daily_returns) > 5:
+            sharpe = float((daily_returns.mean() / daily_returns.std()) * (252 ** 0.5))
+        else:
+            sharpe = 0.0
+
+        # 长期投资综合评分（0-100，独立于短线评分）
+        lt_score = 50
+        # 趋势稳定性：线性回归斜率正负
+        if slope_pct > 0.1:   lt_score += 10
+        elif slope_pct < -0.1: lt_score -= 10
+        # OBV趋势：资金长期流向
+        if obv_trend == "上升": lt_score += 10
+        else:                   lt_score -= 10
+        # 夏普比率：风险调整后收益
+        if sharpe > 1.5:   lt_score += 15
+        elif sharpe > 0.5: lt_score += 8
+        elif sharpe < 0:   lt_score -= 15
+        elif sharpe < 0.5: lt_score -= 5
+        # 价格与MA200关系（若有）
+        if price_now > ma200: lt_score += 10
+        else:                 lt_score -= 10
+        # P/E基本面
+        if pe and pe > 0:
+            if pe < 20:   lt_score += 10
+            elif pe > 60: lt_score -= 10
+        # Beta波动性
+        if beta:
+            if beta < 1.2: lt_score += 5
+            elif beta > 2:  lt_score -= 5
+        lt_score = max(0, min(100, lt_score))
+
+        # 长期投资评级
+        if lt_score >= 75:
+            lt_rating = "强烈推荐长期持有"; lt_color = "#0F6E56"
+        elif lt_score >= 60:
+            lt_rating = "适合长期投资";     lt_color = "#1D9E75"
+        elif lt_score >= 45:
+            lt_rating = "中性，谨慎长持";   lt_color = "#BA7517"
+        elif lt_score >= 30:
+            lt_rating = "不建议长期持有";   lt_color = "#D85A30"
+        else:
+            lt_rating = "规避，高风险资产"; lt_color = "#A32D2D"
+
         # ── 评分系统（总分 100） ──
         score = 50  # 中性起点
         signals = []
@@ -296,6 +399,48 @@ def fetch_stock_analysis(ticker: str):
                 score -= 5
                 signals.append(("🔴", "分析师看空", f"目标价${target:.2f}，较现价下行风险{abs(upside):.1f}%"))
 
+        # OBV 信号 (±8分)
+        if obv_trend == "上升" and obv_pct > 5:
+            score += 8
+            signals.append(("✅", "OBV资金流入", f"能量潮高于均线{obv_pct:.1f}%，机构资金持续买入"))
+        elif obv_trend == "下降" and obv_pct < -5:
+            score -= 8
+            signals.append(("🔴", "OBV资金流出", f"能量潮低于均线{abs(obv_pct):.1f}%，资金持续流出"))
+        else:
+            signals.append(("⚪", "OBV中性", f"资金流向尚不明确，趋势待确认"))
+
+        # 线性回归斜率信号 (±6分)
+        if slope_pct > 0.15:
+            score += 6
+            signals.append(("✅", "上升趋势", f"20日线性回归斜率 +{slope_pct:.2f}%/日，价格趋势向上"))
+        elif slope_pct < -0.15:
+            score -= 6
+            signals.append(("🔴", "下降趋势", f"20日线性回归斜率 {slope_pct:.2f}%/日，价格趋势向下"))
+        else:
+            signals.append(("⚪", "趋势平坦", f"20日线性回归斜率接近0（{slope_pct:.2f}%/日），横盘整理中"))
+
+        # 斐波那契位置信号 (±5分)
+        fib_position = (price_now - fib_low) / fib_range * 100 if fib_range > 0 else 50
+        if abs(price_now - nearest_support) / price_now < 0.02:
+            score += 5
+            signals.append(("✅", "斐波那契支撑", f"价格${price_now:.2f}接近支撑位${nearest_support:.2f}（Fib回撤）"))
+        elif abs(price_now - nearest_resistance) / price_now < 0.02:
+            score -= 5
+            signals.append(("🔴", "斐波那契阻力", f"价格${price_now:.2f}接近阻力位${nearest_resistance:.2f}（Fib回撤）"))
+        else:
+            signals.append(("⚪", "斐波那契中性", f"支撑${nearest_support:.2f} → 当前${price_now:.2f} → 阻力${nearest_resistance:.2f}"))
+
+        # 夏普比率信号 (±5分)
+        if sharpe > 1.5:
+            score += 5
+            signals.append(("✅", "夏普比率优秀", f"夏普={sharpe:.2f}，风险调整后收益极佳"))
+        elif sharpe > 0.5:
+            score += 2
+            signals.append(("🟡", "夏普比率良好", f"夏普={sharpe:.2f}，风险收益比尚可"))
+        elif sharpe < 0:
+            score -= 5
+            signals.append(("🔴", "夏普比率为负", f"夏普={sharpe:.2f}，持有该股不如持有现金"))
+
         score = max(0, min(100, score))
 
         # ── 评级逻辑 ──
@@ -343,6 +488,17 @@ def fetch_stock_analysis(ticker: str):
             "rating_emoji": rating_emoji,
             "signals": signals,
             "hist": hist,
+            "atr": atr, "atr_pct": atr_pct,
+            "stop_loss": stop_loss, "stop_loss_pct": stop_loss_pct,
+            "obv_trend": obv_trend, "obv_pct": obv_pct,
+            "fib_levels": fib_levels,
+            "nearest_support": nearest_support,
+            "nearest_resistance": nearest_resistance,
+            "slope_pct": slope_pct,
+            "sharpe": sharpe,
+            "lt_score": lt_score,
+            "lt_rating": lt_rating,
+            "lt_color": lt_color,
         }
     except Exception as e:
         return {"error": str(e)}
@@ -691,6 +847,157 @@ with tabs[6]:
                 st.markdown(
                     f'<div style="background:{bg};border-left:4px solid {border};'
                     f'padding:10px 16px;border-radius:6px;margin-bottom:8px;'
+                    f'font-size:14px;line-height:1.7">{line}</div>',
+                    unsafe_allow_html=True
+                )
+
+            # ── 新增指标面板 ──
+            st.subheader("📐 量化指标面板")
+            qi1, qi2, qi3, qi4 = st.columns(4)
+            qi1.metric("ATR波幅", f"${result['atr']:.2f}", f"占价格{result['atr_pct']:.1f}%")
+            qi2.metric("建议止损位", f"${result['stop_loss']:.2f}", f"{result['stop_loss_pct']:.1f}%", delta_color="inverse")
+            qi3.metric("夏普比率(年化)", f"{result['sharpe']:.2f}",
+                       "优秀" if result['sharpe']>1.5 else "良好" if result['sharpe']>0.5 else "偏低")
+            qi4.metric("趋势斜率(日)", f"{result['slope_pct']:+.2f}%",
+                       "上升趋势" if result['slope_pct']>0.1 else "下降趋势" if result['slope_pct']<-0.1 else "横盘")
+
+            qi5, qi6, qi7, qi8 = st.columns(4)
+            qi5.metric("OBV资金趋势", result['obv_trend'],
+                       f"{'高于' if result['obv_pct']>0 else '低于'}均线{abs(result['obv_pct']):.1f}%",
+                       delta_color="normal" if result['obv_trend']=="上升" else "inverse")
+            qi6.metric("斐波那契支撑", f"${result['nearest_support']:.2f}")
+            qi7.metric("斐波那契阻力", f"${result['nearest_resistance']:.2f}")
+            qi8.metric("MA200趋势", f"${result['ma200']:.2f}",
+                       "价格在上方✓" if result['price_now']>result['ma200'] else "价格在下方✗",
+                       delta_color="normal" if result['price_now']>result['ma200'] else "inverse")
+
+            # 斐波那契水平图
+            st.subheader("📏 斐波那契支撑/阻力位")
+            fib_vals = list(result["fib_levels"].values())
+            fib_keys = [f"Fib {k}" for k in result["fib_levels"].keys()]
+            fig_fib = go.Figure()
+            for k, v in result["fib_levels"].items():
+                color = "#534AB7" if v <= result["price_now"] else "#D85A30"
+                fig_fib.add_hline(y=v, line_dash="dash", line_color=color, line_width=1.5,
+                                  annotation_text=f"  Fib {k}  ${v:.2f}",
+                                  annotation_position="right")
+            fig_fib.add_hline(y=result["price_now"], line_color="#0F6E56", line_width=2.5,
+                              annotation_text=f"  现价 ${result['price_now']:.2f}",
+                              annotation_position="right")
+            fig_fib.add_hline(y=result["stop_loss"], line_color="#A32D2D", line_dash="dot", line_width=2,
+                              annotation_text=f"  止损 ${result['stop_loss']:.2f}",
+                              annotation_position="right")
+            fig_fib.update_layout(height=280, plot_bgcolor="#fafafa",
+                                  yaxis_title="价格 ($)",
+                                  xaxis=dict(showticklabels=False),
+                                  margin=dict(t=20, b=20, r=150))
+            st.plotly_chart(fig_fib, use_container_width=True)
+
+            # ── 长期投资分析 ──
+            st.subheader("🏦 长期投资分析")
+            lt = result
+            lt_bg, lt_border = {
+                "强烈推荐长期持有": ("#E1F5EE", "#0F6E56"),
+                "适合长期投资":     ("#F0FAF5", "#1D9E75"),
+                "中性，谨慎长持":   ("#FAEEDA", "#BA7517"),
+                "不建议长期持有":   ("#FDF0EC", "#D85A30"),
+                "规避，高风险资产": ("#FCEBEB", "#A32D2D"),
+            }.get(lt["lt_rating"], ("#F5F5F5", "#999"))
+
+            st.markdown(
+                f'<div style="background:{lt_bg};border-left:5px solid {lt_border};'
+                f'padding:14px 20px;border-radius:8px;margin-bottom:12px">'
+                f'<span style="font-size:18px;font-weight:700;color:{lt_border}">'
+                f'长期投资评级：{lt["lt_rating"]}</span>'
+                f'<span style="margin-left:16px;color:#666;font-size:13px">长期评分：{lt["lt_score"]}/100</span>'
+                f'</div>', unsafe_allow_html=True
+            )
+
+            # 自动生成长期分析文字
+            def gen_lt_analysis(r):
+                lines = []
+                p = r["price_now"]
+                ticker = r["ticker"]
+                name = r.get("name", ticker)
+
+                # 开头总结
+                if r["lt_score"] >= 75:
+                    lines.append(f"**{name}（{ticker}）具备较强的长期投资价值，综合量化评分 {r['lt_score']}/100。**")
+                elif r["lt_score"] >= 60:
+                    lines.append(f"**{name}（{ticker}）基本面与趋势均支持长期持有，综合评分 {r['lt_score']}/100。**")
+                elif r["lt_score"] >= 45:
+                    lines.append(f"**{name}（{ticker}）长期前景中性，需结合基本面深入研究，评分 {r['lt_score']}/100。**")
+                else:
+                    lines.append(f"**{name}（{ticker}）目前不具备明显的长期投资价值，综合评分 {r['lt_score']}/100，建议规避或等待更好入场时机。**")
+
+                # 趋势稳定性
+                if r["slope_pct"] > 0.1:
+                    lines.append(f"📈 **趋势分析**：20日线性回归斜率为 +{r['slope_pct']:.2f}%/日，价格处于持续上升通道，长期持有者账面浮盈概率较高。")
+                elif r["slope_pct"] < -0.1:
+                    lines.append(f"📉 **趋势分析**：20日线性回归斜率为 {r['slope_pct']:.2f}%/日，价格处于持续下行通道，长期持有面临账面亏损风险，需等待趋势反转确认。")
+                else:
+                    lines.append(f"➡️ **趋势分析**：价格处于横盘整理阶段（斜率 {r['slope_pct']:+.2f}%/日），长期持有者需耐心等待方向突破。")
+
+                # 资金面（OBV）
+                if r["obv_trend"] == "上升":
+                    lines.append(f"💰 **资金面**：OBV能量潮高于20日均线 {r['obv_pct']:.1f}%，机构资金长期净流入，是长期看涨的重要信号。")
+                else:
+                    lines.append(f"🚨 **资金面**：OBV能量潮低于20日均线 {abs(r['obv_pct']):.1f}%，资金持续净流出，长期持有需警惕进一步下跌。")
+
+                # 风险调整收益（夏普）
+                if r["sharpe"] > 1.5:
+                    lines.append(f"⚡ **风险收益比**：年化夏普比率 {r['sharpe']:.2f}，属于优秀水平（>1.5），意味着每承担1单位风险可获得超过1.5单位收益，长期持有性价比高。")
+                elif r["sharpe"] > 0.5:
+                    lines.append(f"⚡ **风险收益比**：年化夏普比率 {r['sharpe']:.2f}，属于良好水平，风险与收益基本匹配，适合风险偏好中等的长期投资者。")
+                elif r["sharpe"] < 0:
+                    lines.append(f"⚠️ **风险收益比**：年化夏普比率 {r['sharpe']:.2f}（为负），意味着持有该股的风险调整后收益不及无风险利率，长期持有的机会成本较高。")
+                else:
+                    lines.append(f"⚡ **风险收益比**：年化夏普比率 {r['sharpe']:.2f}，风险收益比偏低，建议与其他资产组合配置以分散风险。")
+
+                # MA200长期趋势
+                if r["price_now"] > r["ma200"]:
+                    gap = (r["price_now"] - r["ma200"]) / r["ma200"] * 100
+                    lines.append(f"📊 **长期均线**：价格 ${r['price_now']:.2f} 高于200日均线 ${r['ma200']:.2f}（+{gap:.1f}%），处于长期牛市结构，是长期投资的基本条件。")
+                else:
+                    gap = (r["ma200"] - r["price_now"]) / r["ma200"] * 100
+                    lines.append(f"📊 **长期均线**：价格 ${r['price_now']:.2f} 低于200日均线 ${r['ma200']:.2f}（-{gap:.1f}%），处于长期熊市结构，长期投资需谨慎，等待价格收复MA200后再考虑介入。")
+
+                # 基本面
+                if r["pe"] and r["pe"] > 0:
+                    if r["pe"] < 15:
+                        lines.append(f"💼 **估值**：P/E={r['pe']:.1f}x，估值偏低，具备较强安全边际，适合价值型长期投资者。")
+                    elif r["pe"] < 30:
+                        lines.append(f"💼 **估值**：P/E={r['pe']:.1f}x，估值合理，成长与价值兼顾。")
+                    else:
+                        lines.append(f"💼 **估值**：P/E={r['pe']:.1f}x，估值偏高，长期回报率可能受到压制，需依赖高增长兑现。")
+
+                # Beta
+                if r["beta"]:
+                    if r["beta"] < 0.8:
+                        lines.append(f"🛡️ **波动性**：Beta={r['beta']:.2f}，低于市场平均，防御性强，适合稳健型长期投资者。")
+                    elif r["beta"] > 1.5:
+                        lines.append(f"🎢 **波动性**：Beta={r['beta']:.2f}，高于市场平均，波动较大，长期持有需承受较大回撤，适合风险承受能力强的投资者。")
+                    else:
+                        lines.append(f"📌 **波动性**：Beta={r['beta']:.2f}，与市场波动基本一致。")
+
+                # 斐波那契长期支撑
+                lines.append(f"🎯 **关键价位**：长期投资者应关注斐波那契0.618支撑位 ${r['fib_levels']['0.618']:.2f}（强支撑），若价格跌破需重新评估持仓。理想建仓区间为 ${r['fib_levels']['0.618']:.2f}—${r['fib_levels']['0.500']:.2f}。")
+
+                # 结论
+                if r["lt_score"] >= 60:
+                    lines.append(f"**✅ 长期投资结论**：建议以分批定投方式建立长期仓位，止损设于 ${r['stop_loss']:.2f}（1.5x ATR），目标持有周期12-36个月。")
+                elif r["lt_score"] >= 45:
+                    lines.append("**⚖️ 长期投资结论**：建议小仓位试探性介入，密切关注基本面变化，若业绩持续改善可逐步加仓。")
+                else:
+                    lines.append("**❌ 长期投资结论**：当前不具备长期投资价值，建议等待趋势反转（价格站稳MA200）且OBV转为净流入后再重新评估。")
+
+                return lines
+
+            lt_lines = gen_lt_analysis(result)
+            for line in lt_lines:
+                st.markdown(
+                    f'<div style="background:{lt_bg};border-left:3px solid {lt_border};'
+                    f'padding:10px 16px;border-radius:6px;margin-bottom:6px;'
                     f'font-size:14px;line-height:1.7">{line}</div>',
                     unsafe_allow_html=True
                 )
