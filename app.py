@@ -889,99 +889,269 @@ with tabs[6]:
                        delta_color="normal" if result['price_now']>result['ma200'] else "inverse")
 
             # 斐波那契水平图
-            st.subheader("📏 斐波那契支撑/阻力位")
+            st.subheader("📊 技术图表")
 
-            # X轴=时间，Y轴=价格，斐波那契水平线横跨全图
+            # ── 图表选择器 ──
+            chart_type = st.radio(
+                "选择图表类型",
+                ["📈 K线 + 斐波那契", "📉 K线 + 均线 + 布林带", "📊 RSI指标", "📦 成交量分析", "🌊 OBV能量潮"],
+                horizontal=True,
+                label_visibility="collapsed",
+            )
+
+            hist_c = result["hist"]
             p_now  = result["price_now"]
             p_stop = result["stop_loss"]
             fib    = result["fib_levels"]
-            hist_c = result["hist"]
 
-            fig_fib = go.Figure()
-
-            # K线
-            fig_fib.add_trace(go.Candlestick(
-                x=hist_c.index,
-                open=hist_c["Open"], high=hist_c["High"],
-                low=hist_c["Low"],   close=hist_c["Close"],
-                name="K线",
-                increasing_line_color="#1D9E75",
-                decreasing_line_color="#A32D2D",
-                showlegend=False,
-            ))
-
-            # 斐波那契水平线
-            fib_configs = [
-                ("0.236", "Fib 23.6%",  "#E07B39", "dash"),
-                ("0.382", "Fib 38.2%",  "#D85A30", "dash"),
-                ("0.500", "Fib 50.0%",  "#534AB7", "dash"),
-                ("0.618", "Fib 61.8%",  "#3C3489", "dash"),
-                ("0.786", "Fib 78.6%",  "#251F5C", "dash"),
-            ]
-            for key, label, color, dash in fib_configs:
-                v = fib[key]
-                line_color = "#1D9E75" if v <= p_now else "#D85A30"
-                fig_fib.add_hline(
-                    y=v,
-                    line_dash="dash",
-                    line_color=line_color,
-                    line_width=1.2,
-                    annotation_text=f"{label}  ${v:.2f}",
-                    annotation_position="right",
-                    annotation_font=dict(color=line_color, size=11),
+            # ── 图表1：K线 + 斐波那契 ──────────────────────────────────────
+            if chart_type == "📈 K线 + 斐波那契":
+                fig_c = go.Figure()
+                fig_c.add_trace(go.Candlestick(
+                    x=hist_c.index,
+                    open=hist_c["Open"], high=hist_c["High"],
+                    low=hist_c["Low"],   close=hist_c["Close"],
+                    name="K线",
+                    increasing_line_color="#1D9E75",
+                    decreasing_line_color="#E24B4A",
+                    increasing_fillcolor="#1D9E75",
+                    decreasing_fillcolor="#E24B4A",
+                    showlegend=False,
+                ))
+                fib_cfgs = [
+                    ("0.236", "Fib 23.6%", "#E07B39"),
+                    ("0.382", "Fib 38.2%", "#D85A30"),
+                    ("0.500", "Fib 50.0%", "#534AB7"),
+                    ("0.618", "Fib 61.8%", "#3C3489"),
+                    ("0.786", "Fib 78.6%", "#251F5C"),
+                ]
+                for key, label, _ in fib_cfgs:
+                    v = fib[key]
+                    clr = "#1D9E75" if v <= p_now else "#D85A30"
+                    fig_c.add_hline(y=v, line_dash="dash", line_color=clr, line_width=1.5,
+                                    annotation_text=f" {label}  ${v:.2f}",
+                                    annotation_position="right",
+                                    annotation_font=dict(color=clr, size=12))
+                fig_c.add_hline(y=result["price_52w_high"], line_dash="dot",
+                                line_color="#185FA5", line_width=1,
+                                annotation_text=f" 52W高  ${result['price_52w_high']:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(color="#185FA5", size=11))
+                fig_c.add_hline(y=result["price_52w_low"], line_dash="dot",
+                                line_color="#534AB7", line_width=1,
+                                annotation_text=f" 52W低  ${result['price_52w_low']:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(color="#534AB7", size=11))
+                fig_c.add_hline(y=p_now, line_color="#0F6E56", line_width=2.5,
+                                annotation_text=f" ▶ 现价  ${p_now:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(color="#0F6E56", size=13))
+                fig_c.add_hline(y=p_stop, line_dash="dot", line_color="#A32D2D", line_width=1.8,
+                                annotation_text=f" ⛔ 止损  ${p_stop:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(color="#A32D2D", size=12))
+                fig_c.update_layout(
+                    title=dict(text=f"{result['ticker']} · K线 + 斐波那契回撤位", font=dict(size=15)),
+                    height=500, plot_bgcolor="#fafafa",
+                    xaxis=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                               rangeslider=dict(visible=False)),
+                    yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
+                    margin=dict(t=50, b=50, l=60, r=160),
+                    showlegend=False,
                 )
 
-            # 52周高低点线
-            fig_fib.add_hline(y=result["price_52w_high"], line_dash="dot",
-                              line_color="#185FA5", line_width=1,
-                              annotation_text=f"52W高  ${result['price_52w_high']:.2f}",
-                              annotation_position="right",
-                              annotation_font=dict(color="#185FA5", size=11))
-            fig_fib.add_hline(y=result["price_52w_low"], line_dash="dot",
-                              line_color="#534AB7", line_width=1,
-                              annotation_text=f"52W低  ${result['price_52w_low']:.2f}",
-                              annotation_position="right",
-                              annotation_font=dict(color="#534AB7", size=11))
+            # ── 图表2：K线 + 均线 + 布林带 ───────────────────────────────
+            elif chart_type == "📉 K线 + 均线 + 布林带":
+                close_s  = hist_c["Close"]
+                ma20_s   = close_s.rolling(20).mean()
+                ma50_s   = close_s.rolling(min(50,len(close_s))).mean()
+                bb_mid_s = close_s.rolling(20).mean()
+                bb_std_s = close_s.rolling(20).std()
+                bb_up_s  = bb_mid_s + 2 * bb_std_s
+                bb_lo_s  = bb_mid_s - 2 * bb_std_s
 
-            # 现价线
-            fig_fib.add_hline(
-                y=p_now,
-                line_color="#0F6E56",
-                line_width=2,
-                annotation_text=f"现价  ${p_now:.2f}",
-                annotation_position="right",
-                annotation_font=dict(color="#0F6E56", size=12, family="Arial Black"),
-            )
+                fig_c = go.Figure()
+                # 布林带填充
+                fig_c.add_trace(go.Scatter(
+                    x=hist_c.index, y=bb_up_s, mode="lines",
+                    line=dict(color="rgba(83,74,183,0.3)", width=1),
+                    name="布林上轨", showlegend=True,
+                ))
+                fig_c.add_trace(go.Scatter(
+                    x=hist_c.index, y=bb_lo_s, mode="lines",
+                    line=dict(color="rgba(83,74,183,0.3)", width=1),
+                    fill="tonexty", fillcolor="rgba(83,74,183,0.06)",
+                    name="布林下轨", showlegend=True,
+                ))
+                # K线
+                fig_c.add_trace(go.Candlestick(
+                    x=hist_c.index,
+                    open=hist_c["Open"], high=hist_c["High"],
+                    low=hist_c["Low"],   close=hist_c["Close"],
+                    name="K线",
+                    increasing_line_color="#1D9E75", decreasing_line_color="#E24B4A",
+                    showlegend=False,
+                ))
+                fig_c.add_trace(go.Scatter(x=hist_c.index, y=ma20_s, mode="lines",
+                    line=dict(color="#F5A623", width=1.8), name="MA20"))
+                fig_c.add_trace(go.Scatter(x=hist_c.index, y=ma50_s, mode="lines",
+                    line=dict(color="#534AB7", width=1.8), name="MA50"))
+                fig_c.add_hline(y=p_now, line_color="#0F6E56", line_width=2,
+                                annotation_text=f" 现价 ${p_now:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(color="#0F6E56", size=12))
+                fig_c.update_layout(
+                    title=dict(text=f"{result['ticker']} · K线 + MA20/MA50 + 布林带", font=dict(size=15)),
+                    height=500, plot_bgcolor="#fafafa",
+                    xaxis=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                               rangeslider=dict(visible=False)),
+                    yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
+                    legend=dict(orientation="h", y=1.05, x=0),
+                    margin=dict(t=60, b=50, l=60, r=120),
+                )
 
-            # 止损线
-            fig_fib.add_hline(
-                y=p_stop,
-                line_dash="dot",
-                line_color="#A32D2D",
-                line_width=1.8,
-                annotation_text=f"止损  ${p_stop:.2f}",
-                annotation_position="right",
-                annotation_font=dict(color="#A32D2D", size=11),
-            )
+            # ── 图表3：RSI ─────────────────────────────────────────────────
+            elif chart_type == "📊 RSI指标":
+                close_s = hist_c["Close"].dropna()
+                delta_s = close_s.diff()
+                gain_s  = delta_s.clip(lower=0).rolling(14).mean()
+                loss_s  = (-delta_s.clip(upper=0)).rolling(14).mean()
+                rsi_s   = 100 - 100 / (1 + gain_s / loss_s.replace(0, 1e-9))
 
-            fig_fib.update_layout(
-                height=420,
-                plot_bgcolor="#fafafa",
-                paper_bgcolor="white",
-                xaxis=dict(
-                    title="日期",
-                    showgrid=True, gridcolor="#eeeeee",
-                    rangeslider=dict(visible=False),
-                ),
-                yaxis=dict(
-                    title="价格 ($)",
-                    showgrid=True, gridcolor="#eeeeee",
-                    side="left",
-                ),
-                margin=dict(t=20, b=40, l=60, r=140),
-                showlegend=False,
-            )
-            st.plotly_chart(fig_fib, use_container_width=True)
+                from plotly.subplots import make_subplots as _msub
+                fig_c = _msub(rows=2, cols=1, shared_xaxes=True,
+                              row_heights=[0.6, 0.4], vertical_spacing=0.06,
+                              subplot_titles=("价格走势", "RSI (14)"))
+                fig_c.add_trace(go.Candlestick(
+                    x=hist_c.index,
+                    open=hist_c["Open"], high=hist_c["High"],
+                    low=hist_c["Low"],   close=hist_c["Close"],
+                    name="K线",
+                    increasing_line_color="#1D9E75", decreasing_line_color="#E24B4A",
+                    showlegend=False,
+                ), row=1, col=1)
+                fig_c.add_trace(go.Scatter(x=hist_c.index, y=rsi_s, mode="lines",
+                    line=dict(color="#534AB7", width=2), name="RSI",
+                    fill="tozeroy", fillcolor="rgba(83,74,183,0.08)",
+                ), row=2, col=1)
+                # 超买超卖区域
+                fig_c.add_hrect(y0=70, y1=100, row=2, col=1,
+                                fillcolor="rgba(226,75,74,0.1)", line_width=0)
+                fig_c.add_hrect(y0=0, y1=30, row=2, col=1,
+                                fillcolor="rgba(29,158,117,0.1)", line_width=0)
+                fig_c.add_hline(y=70, line_dash="dash", line_color="#E24B4A",
+                                line_width=1, row=2, col=1,
+                                annotation_text=" 超买70", annotation_position="right",
+                                annotation_font=dict(color="#E24B4A", size=11))
+                fig_c.add_hline(y=30, line_dash="dash", line_color="#1D9E75",
+                                line_width=1, row=2, col=1,
+                                annotation_text=" 超卖30", annotation_position="right",
+                                annotation_font=dict(color="#1D9E75", size=11))
+                fig_c.update_layout(
+                    title=dict(text=f"{result['ticker']} · RSI 相对强弱指标", font=dict(size=15)),
+                    height=550, plot_bgcolor="#fafafa",
+                    xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                                rangeslider=dict(visible=False)),
+                    yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                    yaxis2=dict(title="RSI", range=[0,100],
+                                showgrid=True, gridcolor="#eeeeee"),
+                    margin=dict(t=60, b=50, l=60, r=80),
+                    showlegend=False,
+                )
+
+            # ── 图表4：成交量分析 ──────────────────────────────────────────
+            elif chart_type == "📦 成交量分析":
+                vol_ma20 = hist_c["Volume"].rolling(20).mean()
+                bar_colors = ["#1D9E75" if c >= o else "#E24B4A"
+                              for c, o in zip(hist_c["Close"], hist_c["Open"])]
+                from plotly.subplots import make_subplots as _msub
+                fig_c = _msub(rows=2, cols=1, shared_xaxes=True,
+                              row_heights=[0.55, 0.45], vertical_spacing=0.06,
+                              subplot_titles=("价格走势", "成交量（绿=上涨日，红=下跌日）"))
+                fig_c.add_trace(go.Candlestick(
+                    x=hist_c.index,
+                    open=hist_c["Open"], high=hist_c["High"],
+                    low=hist_c["Low"],   close=hist_c["Close"],
+                    name="K线",
+                    increasing_line_color="#1D9E75", decreasing_line_color="#E24B4A",
+                    showlegend=False,
+                ), row=1, col=1)
+                fig_c.add_trace(go.Bar(
+                    x=hist_c.index, y=hist_c["Volume"],
+                    marker_color=bar_colors, name="成交量",
+                    showlegend=False,
+                ), row=2, col=1)
+                fig_c.add_trace(go.Scatter(
+                    x=hist_c.index, y=vol_ma20, mode="lines",
+                    line=dict(color="#F5A623", width=2), name="20日均量",
+                ), row=2, col=1)
+                fig_c.update_layout(
+                    title=dict(text=f"{result['ticker']} · 成交量分析", font=dict(size=15)),
+                    height=550, plot_bgcolor="#fafafa",
+                    xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                                rangeslider=dict(visible=False)),
+                    yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                    yaxis2=dict(title="成交量", showgrid=True, gridcolor="#eeeeee"),
+                    legend=dict(orientation="h", y=1.05),
+                    margin=dict(t=60, b=50, l=60, r=60),
+                )
+
+            # ── 图表5：OBV能量潮 ───────────────────────────────────────────
+            elif chart_type == "🌊 OBV能量潮":
+                close_s = hist_c["Close"]
+                vol_s   = hist_c["Volume"]
+                obv_vals = []
+                for i in range(len(close_s)):
+                    if i == 0:
+                        obv_vals.append(float(vol_s.iloc[i]))
+                    else:
+                        if close_s.iloc[i] > close_s.iloc[i-1]:
+                            obv_vals.append(obv_vals[-1] + float(vol_s.iloc[i]))
+                        elif close_s.iloc[i] < close_s.iloc[i-1]:
+                            obv_vals.append(obv_vals[-1] - float(vol_s.iloc[i]))
+                        else:
+                            obv_vals.append(obv_vals[-1])
+                import pandas as _pd
+                obv_series = _pd.Series(obv_vals, index=close_s.index)
+                obv_ma     = obv_series.rolling(20).mean()
+                obv_color  = ["#1D9E75" if v >= 0 else "#E24B4A" for v in obv_vals]
+
+                from plotly.subplots import make_subplots as _msub
+                fig_c = _msub(rows=2, cols=1, shared_xaxes=True,
+                              row_heights=[0.55, 0.45], vertical_spacing=0.06,
+                              subplot_titles=("价格走势", "OBV 能量潮（资金净流向）"))
+                fig_c.add_trace(go.Candlestick(
+                    x=hist_c.index,
+                    open=hist_c["Open"], high=hist_c["High"],
+                    low=hist_c["Low"],   close=hist_c["Close"],
+                    name="K线",
+                    increasing_line_color="#1D9E75", decreasing_line_color="#E24B4A",
+                    showlegend=False,
+                ), row=1, col=1)
+                fig_c.add_trace(go.Scatter(
+                    x=hist_c.index, y=obv_series, mode="lines",
+                    line=dict(color="#534AB7", width=2),
+                    fill="tozeroy", fillcolor="rgba(83,74,183,0.08)",
+                    name="OBV",
+                ), row=2, col=1)
+                fig_c.add_trace(go.Scatter(
+                    x=hist_c.index, y=obv_ma, mode="lines",
+                    line=dict(color="#F5A623", width=1.8, dash="dash"),
+                    name="OBV MA20",
+                ), row=2, col=1)
+                fig_c.add_hline(y=0, line_color="#888", line_width=1, row=2, col=1)
+                fig_c.update_layout(
+                    title=dict(text=f"{result['ticker']} · OBV 能量潮（机构资金流向）", font=dict(size=15)),
+                    height=550, plot_bgcolor="#fafafa",
+                    xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                                rangeslider=dict(visible=False)),
+                    yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                    yaxis2=dict(title="OBV", showgrid=True, gridcolor="#eeeeee"),
+                    legend=dict(orientation="h", y=1.05),
+                    margin=dict(t=60, b=50, l=60, r=60),
+                )
+
+            st.plotly_chart(fig_c, use_container_width=True)
 
             # ── 长期投资分析 ──
             st.subheader("🏦 长期投资分析")
