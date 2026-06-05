@@ -145,12 +145,28 @@ def fetch_stock_analysis(ticker: str):
     try:
         import yfinance as yf
         t    = yf.Ticker(ticker)
-        hist = t.history(period="6mo")
-        if hist.empty or len(hist) < 20:
+        # 尝试1年数据，不足则用6个月
+        hist = t.history(period="1y")
+        if hist.empty or len(hist) < 10:
+            hist = t.history(period="6mo")
+        if hist.empty or len(hist) < 10:
+            return None
+        # 清理 NaN
+        hist = hist.dropna(subset=["Close","Open","High","Low","Volume"])
+        if len(hist) < 10:
             return None
 
-        close  = hist["Close"]
-        volume = hist["Volume"]
+        close  = hist["Close"].dropna()
+        volume = hist["Volume"].fillna(0)
+
+        def safe_float(val, default=0.0):
+            """Convert to float, return default if NaN/None/inf"""
+            import math
+            try:
+                v = float(val)
+                return default if (math.isnan(v) or math.isinf(v)) else v
+            except Exception:
+                return default
 
         # ── 技术指标计算 ──
         # RSI (14)
@@ -158,43 +174,44 @@ def fetch_stock_analysis(ticker: str):
         gain   = delta.clip(lower=0).rolling(14).mean()
         loss   = (-delta.clip(upper=0)).rolling(14).mean()
         rs     = gain / loss.replace(0, 1e-9)
-        rsi    = float((100 - 100 / (1 + rs)).iloc[-1])
+        rsi    = safe_float((100 - 100 / (1 + rs)).iloc[-1], 50.0)
 
         # MACD
         ema12  = close.ewm(span=12).mean()
         ema26  = close.ewm(span=26).mean()
         macd   = ema12 - ema26
         signal = macd.ewm(span=9).mean()
-        macd_val    = float(macd.iloc[-1])
-        signal_val  = float(signal.iloc[-1])
+        macd_val    = safe_float(macd.iloc[-1])
+        signal_val  = safe_float(signal.iloc[-1])
         macd_hist   = macd_val - signal_val
 
         # 均线
-        ma20  = float(close.rolling(20).mean().iloc[-1])
-        ma50  = float(close.rolling(50).mean().iloc[-1]) if len(close) >= 50 else ma20
-        ma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else ma20
+        ma20  = safe_float(close.rolling(20).mean().iloc[-1], price_now)
+        ma50  = safe_float(close.rolling(min(50,len(close))).mean().iloc[-1], ma20)
+        ma200 = safe_float(close.rolling(min(200,len(close))).mean().iloc[-1], ma20)
 
         # 布林带
-        bb_mid = float(close.rolling(20).mean().iloc[-1])
-        bb_std = float(close.rolling(20).std().iloc[-1])
+        bb_mid = safe_float(close.rolling(min(20,len(close))).mean().iloc[-1], price_now)
+        bb_std = safe_float(close.rolling(min(20,len(close))).std().iloc[-1], price_now*0.02)
         bb_up  = bb_mid + 2 * bb_std
         bb_low = bb_mid - 2 * bb_std
 
         # 成交量趋势
-        vol_avg = float(volume.rolling(20).mean().iloc[-1])
-        vol_now = float(volume.iloc[-1])
+        vol_avg = safe_float(volume.rolling(min(20,len(volume))).mean().iloc[-1], 1.0)
+        vol_now = safe_float(volume.iloc[-1], vol_avg)
         vol_ratio = vol_now / vol_avg if vol_avg > 0 else 1.0
 
         # 价格位置
-        price_now = float(close.iloc[-1])
-        price_52w_high = float(close.rolling(min(252, len(close))).max().iloc[-1])
-        price_52w_low  = float(close.rolling(min(252, len(close))).min().iloc[-1])
+        price_now = safe_float(close.iloc[-1])
+        if price_now == 0: return None
+        price_52w_high = safe_float(close.rolling(min(252, len(close))).max().iloc[-1], price_now)
+        price_52w_low  = safe_float(close.rolling(min(252, len(close))).min().iloc[-1], price_now)
         price_from_high = (price_now - price_52w_high) / price_52w_high * 100
         price_from_low  = (price_now - price_52w_low)  / price_52w_low  * 100
 
         # 动量
-        mom_1m  = float((close.iloc[-1] / close.iloc[-22] - 1) * 100) if len(close) >= 22 else 0
-        mom_3m  = float((close.iloc[-1] / close.iloc[-66] - 1) * 100) if len(close) >= 66 else 0
+        mom_1m  = safe_float((close.iloc[-1] / close.iloc[max(0,len(close)-22)] - 1) * 100)
+        mom_3m  = safe_float((close.iloc[-1] / close.iloc[max(0,len(close)-66)] - 1) * 100)
 
         # 基本面（若有）
         info = {}
@@ -218,7 +235,7 @@ def fetch_stock_analysis(ticker: str):
         high_close = (hist["High"] - hist["Close"].shift()).abs()
         low_close  = (hist["Low"]  - hist["Close"].shift()).abs()
         true_range = high_low.combine(high_close, max).combine(low_close, max)
-        atr        = float(true_range.rolling(14).mean().iloc[-1])
+        atr        = safe_float(true_range.rolling(min(14,len(true_range))).mean().iloc[-1], price_now*0.02)
         atr_pct    = atr / price_now * 100
 
         # 止损建议（1.5x ATR below current price）
@@ -239,8 +256,8 @@ def fetch_stock_analysis(ticker: str):
                     obv.append(obv[-1])
         import pandas as pd
         obv_series    = pd.Series(obv, index=close.index)
-        obv_ma20      = float(obv_series.rolling(20).mean().iloc[-1])
-        obv_now       = float(obv_series.iloc[-1])
+        obv_ma20      = safe_float(obv_series.rolling(min(20,len(obv_series))).mean().iloc[-1])
+        obv_now       = safe_float(obv_series.iloc[-1])
         obv_trend     = "上升" if obv_now > obv_ma20 else "下降"
         obv_pct       = (obv_now - obv_ma20) / abs(obv_ma20) * 100 if obv_ma20 != 0 else 0
 
