@@ -891,69 +891,107 @@ with tabs[6]:
             # 斐波那契水平图
             st.subheader("📏 斐波那契支撑/阻力位")
 
-            # 用条形图作为底层，让 add_hline 有 x 轴范围可以渲染
-            fib_all_prices = list(result["fib_levels"].values()) + [result["price_now"], result["stop_loss"]]
-            fib_y_min = min(fib_all_prices) * 0.98
-            fib_y_max = max(fib_all_prices) * 1.02
+            # ── 改用水平条形图，清晰展示各价位 ──
+            p_now  = result["price_now"]
+            p_stop = result["stop_loss"]
+            fib    = result["fib_levels"]
 
-            # 标签与颜色
-            fib_labels = {
-                "0.236": ("Fib 23.6%", "#9B8FE0"),
-                "0.382": ("Fib 38.2%", "#7B6FD0"),
-                "0.500": ("Fib 50.0%", "#534AB7"),
-                "0.618": ("Fib 61.8%", "#3C3489"),
-                "0.786": ("Fib 78.6%", "#251F5C"),
-            }
+            # 构建所有价位行（从高到低排序）
+            rows = [
+                ("52周高点",      result["price_52w_high"], "#185FA5", "━━"),
+                ("Fib 23.6%",     fib["0.236"],             "#D85A30" if fib["0.236"] > p_now else "#1D9E75", "- -"),
+                ("Fib 38.2%",     fib["0.382"],             "#D85A30" if fib["0.382"] > p_now else "#1D9E75", "- -"),
+                ("Fib 50.0%",     fib["0.500"],             "#D85A30" if fib["0.500"] > p_now else "#1D9E75", "- -"),
+                ("Fib 61.8%",     fib["0.618"],             "#D85A30" if fib["0.618"] > p_now else "#1D9E75", "- -"),
+                ("Fib 78.6%",     fib["0.786"],             "#D85A30" if fib["0.786"] > p_now else "#1D9E75", "- -"),
+                ("52周低点",      result["price_52w_low"],  "#534AB7", "━━"),
+            ]
+            # 插入现价和止损（按价格顺序）
+            rows.append(("▶ 现价",  p_now,  "#0F6E56", "━━"))
+            rows.append(("⛔ 止损",  p_stop, "#A32D2D", "· ·"))
+            rows.sort(key=lambda x: x[1], reverse=True)
+
+            # 构建水平条形图：x=价格，y=标签
+            labels = [r[0] for r in rows]
+            prices = [r[1] for r in rows]
+            colors = [r[2] for r in rows]
+
+            # 计算相对进度（用于色块宽度）
+            p_min = min(prices) * 0.97
+            p_max = max(prices) * 1.03
 
             fig_fib = go.Figure()
 
-            # 透明占位 scatter，撑开 x 轴
-            fig_fib.add_trace(go.Scatter(
-                x=[0, 1], y=[fib_y_min, fib_y_max],
-                mode="markers", marker=dict(opacity=0),
-                showlegend=False, hoverinfo="skip",
-            ))
+            # 背景渐变区（支撑区绿，阻力区红）
+            fig_fib.add_shape(type="rect", x0=p_min, x1=p_now,
+                              y0=-0.5, y1=len(rows)-0.5, yref="y",
+                              fillcolor="rgba(29,158,117,0.05)",
+                              line=dict(width=0))
+            fig_fib.add_shape(type="rect", x0=p_now, x1=p_max,
+                              y0=-0.5, y1=len(rows)-0.5, yref="y",
+                              fillcolor="rgba(216,90,48,0.05)",
+                              line=dict(width=0))
 
-            # 斐波那契水平线（用 shape 代替 hline）
-            shapes = []
-            annotations = []
-            for k, v in result["fib_levels"].items():
-                lbl, clr = fib_labels.get(k, (f"Fib {k}", "#888"))
-                is_support = v <= result["price_now"]
-                clr = "#1D9E75" if is_support else "#D85A30"
-                shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
-                                   y0=v, y1=v, yref="y",
-                                   line=dict(color=clr, width=1.8, dash="dash")))
-                annotations.append(dict(x=1.01, y=v, xref="paper", yref="y",
-                                        text=f"{lbl}  <b>${v:.2f}</b>",
-                                        showarrow=False, xanchor="left",
-                                        font=dict(color=clr, size=12)))
+            # 现价垂直线
+            fig_fib.add_shape(type="line",
+                              x0=p_now, x1=p_now, y0=-0.5, y1=len(rows)-0.5,
+                              line=dict(color="#0F6E56", width=2, dash="dash"))
 
-            # 现价线
-            shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
-                               y0=result["price_now"], y1=result["price_now"], yref="y",
-                               line=dict(color="#0F6E56", width=2.5)))
-            annotations.append(dict(x=1.01, y=result["price_now"], xref="paper", yref="y",
-                                    text=f"现价  <b>${result['price_now']:.2f}</b>",
-                                    showarrow=False, xanchor="left",
-                                    font=dict(color="#0F6E56", size=13)))
+            # 止损垂直线
+            fig_fib.add_shape(type="line",
+                              x0=p_stop, x1=p_stop, y0=-0.5, y1=len(rows)-0.5,
+                              line=dict(color="#A32D2D", width=1.5, dash="dot"))
 
-            # 止损线
-            shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
-                               y0=result["stop_loss"], y1=result["stop_loss"], yref="y",
-                               line=dict(color="#A32D2D", width=2, dash="dot")))
-            annotations.append(dict(x=1.01, y=result["stop_loss"], xref="paper", yref="y",
-                                    text=f"止损  <b>${result['stop_loss']:.2f}</b>",
-                                    showarrow=False, xanchor="left",
-                                    font=dict(color="#A32D2D", size=12)))
+            # 每个价位的散点 + 横线
+            for i, (lbl, price, color, _) in enumerate(rows):
+                is_current = "现价" in lbl
+                is_stop    = "止损" in lbl
+                size  = 16 if (is_current or is_stop) else 10
+                sym   = "diamond" if is_current else "x" if is_stop else "circle"
+
+                fig_fib.add_trace(go.Scatter(
+                    x=[price], y=[i],
+                    mode="markers+text",
+                    marker=dict(color=color, size=size, symbol=sym,
+                                line=dict(color="white", width=1.5)),
+                    text=[f"  <b>${price:.2f}</b>"],
+                    textposition="middle right",
+                    textfont=dict(color=color, size=13 if is_current else 11),
+                    showlegend=False,
+                    hovertemplate=f"<b>{lbl}</b><br>${price:.2f}<extra></extra>",
+                ))
 
             fig_fib.update_layout(
-                height=300, plot_bgcolor="#fafafa",
-                yaxis=dict(title="价格 ($)", range=[fib_y_min, fib_y_max]),
-                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-                shapes=shapes, annotations=annotations,
-                margin=dict(t=20, b=20, r=160),
+                height=420,
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                xaxis=dict(
+                    title="价格 ($)",
+                    range=[p_min, p_max * 1.08],
+                    showgrid=True,
+                    gridcolor="#eeeeee",
+                    zeroline=False,
+                ),
+                yaxis=dict(
+                    tickmode="array",
+                    tickvals=list(range(len(rows))),
+                    ticktext=[f"<b>{r[0]}</b>" if ("现价" in r[0] or "止损" in r[0]) else r[0] for r in rows],
+                    showgrid=True,
+                    gridcolor="#eeeeee",
+                    tickfont=dict(size=12),
+                ),
+                margin=dict(t=20, b=40, l=100, r=80),
                 showlegend=False,
+                annotations=[
+                    dict(x=p_now, y=len(rows)-0.3, text="现价", showarrow=False,
+                         font=dict(color="#0F6E56", size=11), xanchor="center"),
+                    dict(x=p_stop, y=len(rows)-0.3, text="止损", showarrow=False,
+                         font=dict(color="#A32D2D", size=11), xanchor="center"),
+                    dict(x=(p_min+p_now)/2, y=-0.4, text="支撑区 🟢", showarrow=False,
+                         font=dict(color="#1D9E75", size=11), xanchor="center"),
+                    dict(x=(p_now+p_max)/2, y=-0.4, text="阻力区 🔴", showarrow=False,
+                         font=dict(color="#D85A30", size=11), xanchor="center"),
+                ],
             )
             st.plotly_chart(fig_fib, use_container_width=True)
 
