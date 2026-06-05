@@ -873,24 +873,71 @@ with tabs[6]:
 
             # 斐波那契水平图
             st.subheader("📏 斐波那契支撑/阻力位")
-            fib_vals = list(result["fib_levels"].values())
-            fib_keys = [f"Fib {k}" for k in result["fib_levels"].keys()]
+
+            # 用条形图作为底层，让 add_hline 有 x 轴范围可以渲染
+            fib_all_prices = list(result["fib_levels"].values()) + [result["price_now"], result["stop_loss"]]
+            fib_y_min = min(fib_all_prices) * 0.98
+            fib_y_max = max(fib_all_prices) * 1.02
+
+            # 标签与颜色
+            fib_labels = {
+                "0.236": ("Fib 23.6%", "#9B8FE0"),
+                "0.382": ("Fib 38.2%", "#7B6FD0"),
+                "0.500": ("Fib 50.0%", "#534AB7"),
+                "0.618": ("Fib 61.8%", "#3C3489"),
+                "0.786": ("Fib 78.6%", "#251F5C"),
+            }
+
             fig_fib = go.Figure()
+
+            # 透明占位 scatter，撑开 x 轴
+            fig_fib.add_trace(go.Scatter(
+                x=[0, 1], y=[fib_y_min, fib_y_max],
+                mode="markers", marker=dict(opacity=0),
+                showlegend=False, hoverinfo="skip",
+            ))
+
+            # 斐波那契水平线（用 shape 代替 hline）
+            shapes = []
+            annotations = []
             for k, v in result["fib_levels"].items():
-                color = "#534AB7" if v <= result["price_now"] else "#D85A30"
-                fig_fib.add_hline(y=v, line_dash="dash", line_color=color, line_width=1.5,
-                                  annotation_text=f"  Fib {k}  ${v:.2f}",
-                                  annotation_position="right")
-            fig_fib.add_hline(y=result["price_now"], line_color="#0F6E56", line_width=2.5,
-                              annotation_text=f"  现价 ${result['price_now']:.2f}",
-                              annotation_position="right")
-            fig_fib.add_hline(y=result["stop_loss"], line_color="#A32D2D", line_dash="dot", line_width=2,
-                              annotation_text=f"  止损 ${result['stop_loss']:.2f}",
-                              annotation_position="right")
-            fig_fib.update_layout(height=280, plot_bgcolor="#fafafa",
-                                  yaxis_title="价格 ($)",
-                                  xaxis=dict(showticklabels=False),
-                                  margin=dict(t=20, b=20, r=150))
+                lbl, clr = fib_labels.get(k, (f"Fib {k}", "#888"))
+                is_support = v <= result["price_now"]
+                clr = "#1D9E75" if is_support else "#D85A30"
+                shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
+                                   y0=v, y1=v, yref="y",
+                                   line=dict(color=clr, width=1.8, dash="dash")))
+                annotations.append(dict(x=1.01, y=v, xref="paper", yref="y",
+                                        text=f"{lbl}  <b>${v:.2f}</b>",
+                                        showarrow=False, xanchor="left",
+                                        font=dict(color=clr, size=12)))
+
+            # 现价线
+            shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
+                               y0=result["price_now"], y1=result["price_now"], yref="y",
+                               line=dict(color="#0F6E56", width=2.5)))
+            annotations.append(dict(x=1.01, y=result["price_now"], xref="paper", yref="y",
+                                    text=f"现价  <b>${result['price_now']:.2f}</b>",
+                                    showarrow=False, xanchor="left",
+                                    font=dict(color="#0F6E56", size=13)))
+
+            # 止损线
+            shapes.append(dict(type="line", x0=0, x1=1, xref="paper",
+                               y0=result["stop_loss"], y1=result["stop_loss"], yref="y",
+                               line=dict(color="#A32D2D", width=2, dash="dot")))
+            annotations.append(dict(x=1.01, y=result["stop_loss"], xref="paper", yref="y",
+                                    text=f"止损  <b>${result['stop_loss']:.2f}</b>",
+                                    showarrow=False, xanchor="left",
+                                    font=dict(color="#A32D2D", size=12)))
+
+            fig_fib.update_layout(
+                height=300, plot_bgcolor="#fafafa",
+                yaxis=dict(title="价格 ($)", range=[fib_y_min, fib_y_max]),
+                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                shapes=shapes, annotations=annotations,
+                margin=dict(t=20, b=20, r=160),
+                showlegend=False,
+            )
             st.plotly_chart(fig_fib, use_container_width=True)
 
             # ── 长期投资分析 ──
