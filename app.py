@@ -185,6 +185,14 @@ def fetch_stock_analysis(ticker: str):
         signal_val  = safe_float(signal.iloc[-1])
         macd_hist   = macd_val - signal_val
 
+        # 价格位置（必须最先计算，其他指标依赖 price_now）
+        price_now = safe_float(close.iloc[-1])
+        if price_now == 0: return None
+        price_52w_high = safe_float(close.rolling(min(252, len(close))).max().iloc[-1], price_now)
+        price_52w_low  = safe_float(close.rolling(min(252, len(close))).min().iloc[-1], price_now)
+        price_from_high = (price_now - price_52w_high) / price_52w_high * 100
+        price_from_low  = (price_now - price_52w_low)  / price_52w_low  * 100
+
         # 均线
         ma20  = safe_float(close.rolling(20).mean().iloc[-1], price_now)
         ma50  = safe_float(close.rolling(min(50,len(close))).mean().iloc[-1], ma20)
@@ -200,14 +208,6 @@ def fetch_stock_analysis(ticker: str):
         vol_avg = safe_float(volume.rolling(min(20,len(volume))).mean().iloc[-1], 1.0)
         vol_now = safe_float(volume.iloc[-1], vol_avg)
         vol_ratio = vol_now / vol_avg if vol_avg > 0 else 1.0
-
-        # 价格位置
-        price_now = safe_float(close.iloc[-1])
-        if price_now == 0: return None
-        price_52w_high = safe_float(close.rolling(min(252, len(close))).max().iloc[-1], price_now)
-        price_52w_low  = safe_float(close.rolling(min(252, len(close))).min().iloc[-1], price_now)
-        price_from_high = (price_now - price_52w_high) / price_52w_high * 100
-        price_from_low  = (price_now - price_52w_low)  / price_52w_low  * 100
 
         # 动量
         mom_1m  = safe_float((close.iloc[-1] / close.iloc[max(0,len(close)-22)] - 1) * 100)
