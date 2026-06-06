@@ -891,13 +891,25 @@ with tabs[6]:
             # 斐波那契水平图
             st.subheader("📊 技术图表")
 
-            # ── 图表选择器 ──
-            chart_type = st.radio(
-                "选择图表类型",
-                ["📈 K线 + 斐波那契", "📉 K线 + 均线 + 布林带", "📊 RSI指标", "📦 成交量分析", "🌊 OBV能量潮"],
-                horizontal=True,
-                label_visibility="collapsed",
-            )
+            # ── 图表选择器（用 session_state 保持选择，防止页面跳回顶部）──
+            chart_options = ["📈 K线 + 斐波那契", "📉 K线 + 均线 + 布林带", "📊 RSI指标", "📦 成交量分析", "🌊 OBV能量潮"]
+            if "chart_type" not in st.session_state:
+                st.session_state["chart_type"] = chart_options[0]
+
+            btn_cols = st.columns(len(chart_options))
+            for i, opt in enumerate(chart_options):
+                is_selected = st.session_state["chart_type"] == opt
+                btn_style = (
+                    "background:#534AB7;color:white;border:none;border-radius:8px;"
+                    "padding:8px 12px;font-size:13px;cursor:pointer;width:100%;font-weight:600"
+                    if is_selected else
+                    "background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:8px;"
+                    "padding:8px 12px;font-size:13px;cursor:pointer;width:100%"
+                )
+                if btn_cols[i].button(opt, key=f"chart_btn_{i}", use_container_width=True):
+                    st.session_state["chart_type"] = opt
+
+            chart_type = st.session_state["chart_type"]
 
             hist_c = result["hist"]
             p_now  = result["price_now"]
