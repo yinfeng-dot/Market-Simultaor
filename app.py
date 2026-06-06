@@ -524,16 +524,65 @@ def fetch_stock_analysis(ticker: str):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","🎛️ 泡沫模拟","📜 历史对比","📡 实时市场","📈 趋势预测","🔬 股票分析器"])
+tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","🎛️ 泡沫模拟","📜 历史对比","📈 趋势预测","🔬 股票分析器"])
 
-# ── Tab 1 ──────────────────────────────────────────────────────────────────────
+# ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
+    st.subheader("📊 市场实时动态")
+
+    live_data_t1 = fetch_market_data()
+    if live_data_t1:
+        if st.button("🔄 刷新实时数据", key="refresh_t1"):
+            st.cache_data.clear(); st.rerun()
+
+        cols_t1 = st.columns(4)
+        for i, (ticker, info) in enumerate(live_data_t1.items()):
+            cols_t1[i % 4].metric(
+                label=info["name"],
+                value=f"{info['price']:,.2f}",
+                delta=f"{info['change_pct']:+.2f}%",
+                delta_color="inverse" if ticker == "^VIX" else "normal",
+            )
+
+        st.subheader("今日涨跌幅")
+        tl_t1 = [v["name"] for v in live_data_t1.values()]
+        ch_t1 = [v["change_pct"] for v in live_data_t1.values()]
+        fig_live_t1 = go.Figure(go.Bar(
+            x=tl_t1, y=ch_t1,
+            marker_color=["#A32D2D" if c < 0 else "#0F6E56" for c in ch_t1],
+            text=[f"{c:+.2f}%" for c in ch_t1], textposition="outside",
+        ))
+        fig_live_t1.update_layout(
+            height=300, yaxis_title="涨跌幅 (%)", plot_bgcolor="#fafafa",
+            showlegend=False, margin=dict(t=20, b=20),
+            yaxis=dict(zeroline=True, zerolinecolor="#cccccc"),
+        )
+        st.plotly_chart(fig_live_t1, use_container_width=True)
+
+        sentiment_t1 = market_to_sentiment(live_data_t1)
+        label_t1 = ("极度恐慌" if sentiment_t1 < 20 else "恐慌" if sentiment_t1 < 40
+                    else "中性" if sentiment_t1 < 60 else "乐观" if sentiment_t1 < 80 else "极度狂热")
+        st.subheader(f"当前市场情绪：{label_t1}（{sentiment_t1}/100）")
+        st.progress(sentiment_t1 / 100)
+        st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算")
+    else:
+        st.warning("无法获取实时数据，请检查网络连接。")
+
+    st.divider()
+    st.subheader("📈 2026 IPO市场总览")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("预期总市值", "$3.12T", "12大待上市公司")
     c2.metric("Q1 2026 融资额", "$42.6B", "同比 +45%")
     c3.metric("AI占风投比例", "80%", "泡沫风险高", delta_color="inverse")
     c4.metric("泡沫综合指数", "74/100", "⚠ 高度警戒", delta_color="inverse")
 
+    st.subheader("市场集中度风险")
+    for label, val in {"AI估值集中":88,"流动性压力":79,"盈利能力缺口":72,"锁定期后抛压":65,"市场吸收能力":42}.items():
+        st.progress(val/100, text=f"{label}：**{val}%**")
+
+# ── Tab 2: IPO详情（含估值总览） ────────────────────────────────────────────────
+with tabs[1]:
+    # 估值分布图（从原市场概览移过来）
     st.subheader("核心IPO估值分布")
     names = [c["name"] for c in IPOS]
     vals  = [c["val_b"] for c in IPOS]
@@ -543,16 +592,13 @@ with tabs[0]:
         textposition="outside",
         hovertemplate="<b>%{x}</b><br>估值: $%{y}B<extra></extra>",
     ))
-    fig_bar.update_layout(height=350, margin=dict(t=30,b=20),
-                          yaxis_title="估值 ($B)", showlegend=False, plot_bgcolor="#fafafa")
+    fig_bar.update_layout(height=320, margin=dict(t=30,b=20),
+                          yaxis_title="估值 ($B)", showlegend=False,
+                          plot_bgcolor="#fafafa")
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.subheader("市场集中度风险")
-    for label, val in {"AI估值集中":88,"流动性压力":79,"盈利能力缺口":72,"锁定期后抛压":65,"市场吸收能力":42}.items():
-        st.progress(val/100, text=f"{label}：**{val}%**")
-
-# ── Tab 2 ──────────────────────────────────────────────────────────────────────
-with tabs[1]:
+    st.divider()
+    st.subheader("公司深度分析")
     selected = st.selectbox("选择公司", [c["name"] for c in IPOS])
     company  = next(c for c in IPOS if c["name"] == selected)
     col1, col2 = st.columns(2)
@@ -643,38 +689,10 @@ with tabs[3]:
     col2.warning("**2021 SPAC狂热**\n\n600+ SPAC上市，多数较峰值下跌70%+。利率上升刺破泡沫，散户损失惨重。")
     col3.info("**2026 AI IPO浪潮**\n\n三巨头合计估值$3T，AI占风投80%。部分公司确有营收，但P/S倍数同样极端。")
 
-# ── Tab 5 ──────────────────────────────────────────────────────────────────────
+# ── (实时市场已合并到Tab1) ──────────────────────────────────────────────────────
+
+# ── Tab 5: 趋势预测 ──────────────────────────────────────────────────────────────
 with tabs[4]:
-    st.subheader("📡 实时AI相关市场数据")
-    st.caption("数据来自雅虎财经，每5分钟自动刷新")
-    if st.button("🔄 手动刷新"):
-        st.cache_data.clear(); st.rerun()
-
-    live_data=fetch_market_data()
-    if not live_data:
-        st.warning("无法获取实时数据，请检查网络连接。")
-    else:
-        cols=st.columns(4)
-        for i,(ticker,info) in enumerate(live_data.items()):
-            cols[i%4].metric(label=info["name"], value=f"{info['price']:,.2f}",
-                delta=f"{info['change_pct']:+.2f}%",
-                delta_color="inverse" if ticker=="^VIX" else "normal")
-        st.subheader("今日涨跌幅")
-        tl=[v["name"] for v in live_data.values()]; ch=[v["change_pct"] for v in live_data.values()]
-        fig_live=go.Figure(go.Bar(x=tl,y=ch,marker_color=["#A32D2D" if c<0 else "#0F6E56" for c in ch],
-            text=[f"{c:+.2f}%" for c in ch],textposition="outside"))
-        fig_live.update_layout(height=320,yaxis_title="涨跌幅 (%)",plot_bgcolor="#fafafa",
-                               showlegend=False,margin=dict(t=20,b=20),
-                               yaxis=dict(zeroline=True,zerolinecolor="#cccccc"))
-        st.plotly_chart(fig_live, use_container_width=True)
-        sentiment_score=market_to_sentiment(live_data)
-        label=("极度恐慌" if sentiment_score<20 else "恐慌" if sentiment_score<40
-               else "中性" if sentiment_score<60 else "乐观" if sentiment_score<80 else "极度狂热")
-        st.subheader(f"当前市场情绪：{label}（{sentiment_score}/100）")
-        st.progress(sentiment_score/100)
-
-# ── Tab 6 ──────────────────────────────────────────────────────────────────────
-with tabs[5]:
     st.subheader("🔮 核心资产 24 个月多情景价格趋势模拟")
     col1,col2,col3=st.columns(3)
     with col1:
@@ -710,8 +728,8 @@ with tabs[5]:
     c2.metric("📊 基准情景均值",f"${np.mean(paths_base[-1]):.2f}",f"{(np.mean(paths_base[-1])/s0-1)*100:.1f}%",delta_color="off")
     c3.metric("🐻 悲观情景均值",f"${np.mean(paths_bear[-1]):.2f}",f"{(np.mean(paths_bear[-1])/s0-1)*100:.1f}%",delta_color="inverse")
 
-# ── Tab 7: 股票分析器 ──────────────────────────────────────────────────────────
-with tabs[6]:
+# ── Tab 6: 股票分析器 ──────────────────────────────────────────────────────────
+with tabs[5]:
     st.subheader("🔬 股票智能分析器")
     st.caption("输入任意股票代码，自动分析技术面+基本面，给出评级与价格目标")
 
