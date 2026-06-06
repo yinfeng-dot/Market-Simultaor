@@ -1323,16 +1323,565 @@ with tabs[6]:
                 col.markdown(f"**{icon} {title}**  \n{desc}")
 
             # ── 基本面 ──
+            # ── 基本面数据 + 解释 ──
             st.subheader("📊 基本面数据")
-            f1,f2,f3,f4 = st.columns(4)
-            f1.metric("P/E (TTM)", f"{result['pe']:.1f}x" if result['pe'] else "N/A")
-            f2.metric("Forward P/E", f"{result['fwd_pe']:.1f}x" if result['fwd_pe'] else "N/A")
-            f3.metric("P/B", f"{result['pb']:.2f}x" if result['pb'] else "N/A")
-            f4.metric("Beta", f"{result['beta']:.2f}" if result['beta'] else "N/A")
+
+            def fmt_explain(label, value, explain, good_range, interpret):
+                """渲染一个指标卡片+解释"""
+                return f"""
+                <div style="border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;
+                            background:white;height:100%">
+                    <div style="font-size:12px;color:#888;margin-bottom:4px">{label}</div>
+                    <div style="font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:6px">{value}</div>
+                    <div style="font-size:11px;color:#555;margin-bottom:4px">
+                        📌 <b>正常范围</b>：{good_range}
+                    </div>
+                    <div style="font-size:12px;color:#333;line-height:1.5">{interpret}</div>
+                </div>"""
+
+            # 计算各指标的解释
+            pe_v   = result["pe"]
+            fpe_v  = result["fwd_pe"]
+            pb_v   = result["pb"]
+            beta_v = result["beta"]
+
+            pe_str   = f"{pe_v:.1f}x"   if pe_v   else "N/A"
+            fpe_str  = f"{fpe_v:.1f}x"  if fpe_v  else "N/A"
+            pb_str   = f"{pb_v:.2f}x"   if pb_v   else "N/A"
+            beta_str = f"{beta_v:.2f}"  if beta_v  else "N/A"
+
+            def pe_interpret(v):
+                if not v: return "数据不足，无法判断。"
+                if v < 0:   return "🔴 公司当前亏损，P/E为负，需关注扭亏时间表。"
+                if v < 10:  return "🟢 估值极低，可能被低估，或市场对前景悲观。"
+                if v < 20:  return "🟢 估值合理，属于价值投资区间，性价比高。"
+                if v < 35:  return "🟡 估值偏高，需要业绩增长支撑，适合成长股。"
+                return        "🔴 估值较贵，市场已充分定价未来增长，追高风险大。"
+
+            def fpe_interpret(v):
+                if not v: return "数据不足。"
+                if v < 15:  return "🟢 按未来盈利计算估值便宜，市场预期改善空间大。"
+                if v < 25:  return "🟡 合理，反映市场对未来盈利的温和预期。"
+                return        "🔴 市场对未来盈利预期很高，若业绩不达预期将大幅回调。"
+
+            def pb_interpret(v):
+                if not v: return "数据不足。"
+                if v < 1:   return "🟢 股价低于账面价值，资产被严重低估（银行/地产常见）。"
+                if v < 3:   return "🟢 估值合理，资产质量有保障。"
+                if v < 8:   return "🟡 品牌/技术溢价，科技股常见，需关注ROE是否匹配。"
+                return        "🔴 高溢价，完全依赖无形资产和未来增长，回撤风险高。"
+
+            def beta_interpret(v):
+                if not v: return "数据不足。"
+                if v < 0.5: return "🟢 极低波动，防御性强（公用事业/消费必需品），适合保守投资者。"
+                if v < 1.0: return "🟢 低于市场波动，相对稳健，下跌时跌得少。"
+                if v < 1.5: return "🟡 与市场同步，市场涨它涨，市场跌它跌。"
+                if v < 2.0: return "🟠 高波动，市场上涨时涨幅更大，但下跌时跌幅也更大。"
+                return        "🔴 极高波动，适合短线交易者，长期持有心理压力大。"
+
+            fc1, fc2, fc3, fc4 = st.columns(4)
+            with fc1:
+                st.markdown(fmt_explain(
+                    "P/E（市盈率）", pe_str,
+                    "解释：你花多少钱买1元利润",
+                    "价值股10-20x，成长股20-40x",
+                    pe_interpret(pe_v)
+                ), unsafe_allow_html=True)
+            with fc2:
+                st.markdown(fmt_explain(
+                    "Forward P/E（预期市盈率）", fpe_str,
+                    "解释：按未来12个月预期利润计算",
+                    "低于当前P/E = 盈利预期改善",
+                    fpe_interpret(fpe_v)
+                ), unsafe_allow_html=True)
+            with fc3:
+                st.markdown(fmt_explain(
+                    "P/B（市净率）", pb_str,
+                    "解释：股价相对账面净资产的倍数",
+                    "传统行业<2x，科技股3-10x正常",
+                    pb_interpret(pb_v)
+                ), unsafe_allow_html=True)
+            with fc4:
+                st.markdown(fmt_explain(
+                    "Beta（市场敏感度）", beta_str,
+                    "解释：相对大盘的波动幅度",
+                    "<1=防御，=1=同步，>1=进攻",
+                    beta_interpret(beta_v)
+                ), unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
             if result["target_analyst"]:
                 upside = (result["target_analyst"] - result["price_now"]) / result["price_now"] * 100
-                st.info(f"**华尔街分析师目标价：${result['target_analyst']:.2f}**  较现价 {'+' if upside>=0 else ''}{upside:.1f}%")
+                ua_color = "#0F6E56" if upside >= 0 else "#A32D2D"
+                st.markdown(
+                    f'<div style="background:#EEF4FF;border-left:4px solid #185FA5;'
+                    f'padding:12px 16px;border-radius:8px;font-size:13px">'
+                    f'🎯 <b>华尔街分析师平均目标价：${result["target_analyst"]:.2f}</b>'
+                    f'&nbsp;&nbsp;较现价 <span style="color:{ua_color};font-weight:700">'
+                    f'{"+"+str(round(upside,1)) if upside>=0 else round(upside,1)}%</span>'
+                    f'&nbsp;&nbsp;|&nbsp;&nbsp;解释：这是华尔街各大投行分析师对该股未来12个月目标价的平均值，'
+                    f'高于现价说明分析师整体看涨，低于现价说明分析师整体看空。</div>',
+                    unsafe_allow_html=True
+                )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # ── 财报分析 ──
+            st.subheader("📋 财报与季报自动分析")
+            st.caption("数据来自雅虎财经，自动分析最近四个季度营收/利润趋势并预测未来走势")
+
+            @st.cache_data(ttl=3600)
+            def fetch_financials(tk):
+                try:
+                    import yfinance as yf
+                    import pandas as pd
+                    t = yf.Ticker(tk)
+
+                    # 季度财报
+                    q_income = t.quarterly_income_stmt
+                    q_balance = t.quarterly_balance_sheet
+                    q_cashflow = t.quarterly_cashflow
+                    annual_income = t.income_stmt
+
+                    return {
+                        "q_income":    q_income,
+                        "q_balance":   q_balance,
+                        "q_cashflow":  q_cashflow,
+                        "annual":      annual_income,
+                        "info":        t.info,
+                    }
+                except Exception as e:
+                    return {"error": str(e)}
+
+            fin_data = fetch_financials(result["ticker"])
+
+            if "error" in fin_data:
+                st.warning(f"财报数据暂时无法获取：{fin_data['error']}")
+            else:
+                fin_tabs = st.tabs(["📅 季度营收趋势", "💰 盈利能力", "🏦 资产负债", "💵 现金流", "📆 年报对比", "🔮 多情景预测"])
+
+                # ── 季度营收 ──
+                with fin_tabs[0]:
+                    try:
+                        qi = fin_data["q_income"]
+                        if qi is not None and not qi.empty:
+                            rev_row = None
+                            for k in ["Total Revenue","Revenue","Net Revenue"]:
+                                if k in qi.index:
+                                    rev_row = qi.loc[k]
+                                    break
+                            if rev_row is not None:
+                                rev_row = rev_row.dropna().sort_index()
+                                cols_q = [str(c)[:10] for c in rev_row.index]
+                                vals_q = [v/1e6 for v in rev_row.values]
+
+                                # 趋势判断
+                                if len(vals_q) >= 2:
+                                    trend_pct = (vals_q[-1] - vals_q[0]) / abs(vals_q[0]) * 100 if vals_q[0] != 0 else 0
+                                    qoq = (vals_q[-1] - vals_q[-2]) / abs(vals_q[-2]) * 100 if vals_q[-2] != 0 else 0
+                                else:
+                                    trend_pct = 0; qoq = 0
+
+                                fig_rev = go.Figure()
+                                fig_rev.add_trace(go.Bar(
+                                    x=cols_q, y=vals_q,
+                                    marker_color=["#1D9E75" if v >= vals_q[0] else "#E24B4A" for v in vals_q],
+                                    text=[f"${v:.0f}M" for v in vals_q],
+                                    textposition="outside",
+                                    name="季度营收",
+                                ))
+                                # 趋势线
+                                import numpy as np_f
+                                if len(vals_q) >= 3:
+                                    z = np_f.polyfit(range(len(vals_q)), vals_q, 1)
+                                    trend_line = np_f.poly1d(z)(range(len(vals_q)))
+                                    fig_rev.add_trace(go.Scatter(
+                                        x=cols_q, y=trend_line, mode="lines",
+                                        line=dict(color="#534AB7", width=2, dash="dash"),
+                                        name="趋势线",
+                                    ))
+                                fig_rev.update_layout(
+                                    height=380, plot_bgcolor="#fafafa",
+                                    title=f"季度营收趋势（百万美元）",
+                                    yaxis_title="营收 ($M)",
+                                    margin=dict(t=50,b=40,l=60,r=40),
+                                )
+                                st.plotly_chart(fig_rev, use_container_width=True)
+
+                                # 自动解读
+                                t_color = "#0F6E56" if trend_pct >= 0 else "#A32D2D"
+                                q_color = "#0F6E56" if qoq >= 0 else "#A32D2D"
+                                st.markdown(
+                                    f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">'
+                                    f'📊 <b>营收趋势解读</b><br>'
+                                    f'• 最近一季营收：<b>${vals_q[-1]:.0f}M</b>，环比上季 <span style="color:{q_color};font-weight:600">{"+"+str(round(qoq,1)) if qoq>=0 else round(qoq,1)}%</span><br>'
+                                    f'• 过去{len(vals_q)}个季度整体趋势：<span style="color:{t_color};font-weight:600">{"增长" if trend_pct>=0 else "下滑"} {abs(trend_pct):.1f}%</span><br>'
+                                    f'• {"🟢 营收持续增长，业务扩张信号良好，支持股价长期上行。" if trend_pct > 10 else "🟡 营收增长平稳，业务较为稳定，适合稳健型投资者。" if trend_pct >= 0 else "🔴 营收出现下滑趋势，需关注公司是否有明确的反转计划。"}'
+                                    f'</div>', unsafe_allow_html=True
+                                )
+                            else:
+                                st.info("该公司暂无季度营收数据。")
+                    except Exception as e:
+                        st.warning(f"季度营收数据解析失败：{e}")
+
+                # ── 盈利能力 ──
+                with fin_tabs[1]:
+                    try:
+                        qi = fin_data["q_income"]
+                        if qi is not None and not qi.empty:
+                            metrics_map = {
+                                "毛利润": ["Gross Profit"],
+                                "营业利润": ["Operating Income","EBIT"],
+                                "净利润": ["Net Income","Net Income Common Stockholders"],
+                            }
+                            fig_profit = go.Figure()
+                            colors_p = {"毛利润":"#1D9E75","营业利润":"#534AB7","净利润":"#185FA5"}
+                            found_any = False
+                            for label, keys in metrics_map.items():
+                                for k in keys:
+                                    if k in qi.index:
+                                        row = qi.loc[k].dropna().sort_index()
+                                        cols_p = [str(c)[:10] for c in row.index]
+                                        vals_p = [v/1e6 for v in row.values]
+                                        fig_profit.add_trace(go.Bar(
+                                            x=cols_p, y=vals_p,
+                                            name=label,
+                                            marker_color=colors_p.get(label,"#888"),
+                                        ))
+                                        found_any = True
+                                        break
+                            if found_any:
+                                fig_profit.update_layout(
+                                    height=380, plot_bgcolor="#fafafa",
+                                    title="季度盈利能力（百万美元）",
+                                    yaxis_title="金额 ($M)",
+                                    barmode="group",
+                                    legend=dict(orientation="h", y=1.1),
+                                    margin=dict(t=60,b=40,l=60,r=40),
+                                )
+                                st.plotly_chart(fig_profit, use_container_width=True)
+
+                                # 毛利率解读
+                                for k in ["Gross Profit"]:
+                                    if k in qi.index:
+                                        gp = qi.loc[k].dropna().sort_index()
+                                        rev_keys = ["Total Revenue","Revenue"]
+                                        for rk in rev_keys:
+                                            if rk in qi.index:
+                                                rv = qi.loc[rk].dropna().sort_index()
+                                                common = gp.index.intersection(rv.index)
+                                                if len(common) > 0:
+                                                    margin = float(gp[common[-1]] / rv[common[-1]] * 100)
+                                                    m_color = "#0F6E56" if margin > 40 else "#BA7517" if margin > 20 else "#A32D2D"
+                                                    st.markdown(
+                                                        f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">'
+                                                        f'💰 <b>盈利能力解读</b><br>'
+                                                        f'• 最新季度毛利率：<span style="color:{m_color};font-weight:700">{margin:.1f}%</span><br>'
+                                                        f'• {"🟢 毛利率超过40%，说明产品定价能力强，竞争护城河宽（科技/药品常见）。" if margin>40 else "🟡 毛利率20-40%，盈利能力中等，需关注成本控制。" if margin>20 else "🔴 毛利率低于20%，盈利空间薄，对成本上升非常敏感（零售/制造常见）。"}'
+                                                        f'</div>', unsafe_allow_html=True
+                                                    )
+                                                break
+                            else:
+                                st.info("暂无盈利数据。")
+                    except Exception as e:
+                        st.warning(f"盈利数据解析失败：{e}")
+
+                # ── 资产负债 ──
+                with fin_tabs[2]:
+                    try:
+                        qb = fin_data["q_balance"]
+                        if qb is not None and not qb.empty:
+                            # 现金 vs 负债
+                            cash_keys = ["Cash And Cash Equivalents","Cash Cash Equivalents And Short Term Investments"]
+                            debt_keys = ["Total Debt","Long Term Debt"]
+                            cash_row = None; debt_row = None
+                            for k in cash_keys:
+                                if k in qb.index: cash_row = qb.loc[k].dropna().sort_index(); break
+                            for k in debt_keys:
+                                if k in qb.index: debt_row = qb.loc[k].dropna().sort_index(); break
+
+                            if cash_row is not None and debt_row is not None:
+                                common_idx = cash_row.index.intersection(debt_row.index)
+                                if len(common_idx) > 0:
+                                    cols_b = [str(c)[:10] for c in common_idx]
+                                    cash_v = [cash_row[c]/1e9 for c in common_idx]
+                                    debt_v = [debt_row[c]/1e9 for c in common_idx]
+                                    net_cash = [c-d for c,d in zip(cash_v,debt_v)]
+
+                                    fig_bal = go.Figure()
+                                    fig_bal.add_trace(go.Bar(x=cols_b, y=cash_v, name="现金及等价物",
+                                                             marker_color="#1D9E75"))
+                                    fig_bal.add_trace(go.Bar(x=cols_b, y=[-d for d in debt_v],
+                                                             name="总债务（负值）", marker_color="#E24B4A"))
+                                    fig_bal.add_trace(go.Scatter(x=cols_b, y=net_cash, mode="lines+markers",
+                                                                 name="净现金", line=dict(color="#534AB7",width=2)))
+                                    fig_bal.add_hline(y=0, line_color="#888", line_width=1)
+                                    fig_bal.update_layout(
+                                        height=380, plot_bgcolor="#fafafa",
+                                        title="现金 vs 债务（十亿美元）",
+                                        yaxis_title="金额 ($B)",
+                                        barmode="relative",
+                                        legend=dict(orientation="h", y=1.1),
+                                        margin=dict(t=60,b=40,l=60,r=40),
+                                    )
+                                    st.plotly_chart(fig_bal, use_container_width=True)
+
+                                    latest_net = net_cash[-1]
+                                    nc_color = "#0F6E56" if latest_net > 0 else "#A32D2D"
+                                    st.markdown(
+                                        f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">'
+                                        f'🏦 <b>资产负债解读</b><br>'
+                                        f'• 最新净现金头寸：<span style="color:{nc_color};font-weight:700">${latest_net:.2f}B</span>（现金减去所有债务）<br>'
+                                        f'• {"🟢 净现金为正，公司无债务压力，财务健康，抗风险能力强。" if latest_net>0 else "🔴 净现金为负，公司负债大于现金，需关注债务到期和再融资风险。"}'
+                                        f'</div>', unsafe_allow_html=True
+                                    )
+                    except Exception as e:
+                        st.warning(f"资产负债数据解析失败：{e}")
+
+                # ── 现金流 ──
+                with fin_tabs[3]:
+                    try:
+                        qcf = fin_data["q_cashflow"]
+                        if qcf is not None and not qcf.empty:
+                            ocf_keys = ["Operating Cash Flow","Cash From Operations"]
+                            fcf_keys = ["Free Cash Flow","Capital Expenditure"]
+                            ocf_row = None
+                            for k in ocf_keys:
+                                if k in qcf.index: ocf_row = qcf.loc[k].dropna().sort_index(); break
+
+                            if ocf_row is not None:
+                                cols_cf = [str(c)[:10] for c in ocf_row.index]
+                                ocf_v   = [v/1e6 for v in ocf_row.values]
+                                bar_clr = ["#1D9E75" if v >= 0 else "#E24B4A" for v in ocf_v]
+
+                                fig_cf = go.Figure()
+                                fig_cf.add_trace(go.Bar(
+                                    x=cols_cf, y=ocf_v,
+                                    marker_color=bar_clr,
+                                    text=[f"${v:.0f}M" for v in ocf_v],
+                                    textposition="outside",
+                                    name="经营现金流",
+                                ))
+                                fig_cf.add_hline(y=0, line_color="#888", line_width=1)
+                                fig_cf.update_layout(
+                                    height=380, plot_bgcolor="#fafafa",
+                                    title="季度经营现金流（百万美元）",
+                                    yaxis_title="现金流 ($M)",
+                                    margin=dict(t=50,b=40,l=60,r=40),
+                                )
+                                st.plotly_chart(fig_cf, use_container_width=True)
+
+                                pos_count = sum(1 for v in ocf_v if v > 0)
+                                cf_color = "#0F6E56" if pos_count >= len(ocf_v)*0.75 else "#A32D2D"
+                                st.markdown(
+                                    f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">'
+                                    f'💵 <b>现金流解读</b><br>'
+                                    f'• 最近{len(ocf_v)}季中有 <span style="color:{cf_color};font-weight:700">{pos_count}季</span> 经营现金流为正<br>'
+                                    f'• 现金流为正 = 公司真实赚钱，不依赖融资输血<br>'
+                                    f'• {"🟢 持续正向现金流，公司自我造血能力强，财务非常健康。" if pos_count==len(ocf_v) else "🟡 现金流偶有负值，关注是否为一次性投资支出还是持续亏损。" if pos_count>=len(ocf_v)*0.5 else "🔴 多季现金流为负，公司需依赖外部融资维持运营，风险较高。"}'
+                                    f'</div>', unsafe_allow_html=True
+                                )
+                    except Exception as e:
+                        st.warning(f"现金流数据解析失败：{e}")
+
+                # ── 年报对比 ──
+                with fin_tabs[4]:
+                    try:
+                        ai = fin_data["annual"]
+                        if ai is not None and not ai.empty:
+                            rev_row_a = None
+                            for k in ["Total Revenue","Revenue"]:
+                                if k in ai.index: rev_row_a = ai.loc[k].dropna().sort_index(); break
+
+                            ni_row_a = None
+                            for k in ["Net Income","Net Income Common Stockholders"]:
+                                if k in ai.index: ni_row_a = ai.loc[k].dropna().sort_index(); break
+
+                            gp_row_a = None
+                            for k in ["Gross Profit"]:
+                                if k in ai.index: gp_row_a = ai.loc[k].dropna().sort_index(); break
+
+                            if rev_row_a is not None:
+                                years    = [str(c)[:4] for c in rev_row_a.index]
+                                rev_vals = [v/1e9 for v in rev_row_a.values]
+
+                                fig_ann = go.Figure()
+                                fig_ann.add_trace(go.Bar(
+                                    x=years, y=rev_vals,
+                                    name="年度营收", marker_color="#185FA5",
+                                    text=[f"${v:.2f}B" for v in rev_vals],
+                                    textposition="outside",
+                                ))
+                                if ni_row_a is not None:
+                                    ni_years = [str(c)[:4] for c in ni_row_a.index]
+                                    ni_vals  = [v/1e9 for v in ni_row_a.values]
+                                    fig_ann.add_trace(go.Bar(
+                                        x=ni_years, y=ni_vals,
+                                        name="年度净利润",
+                                        marker_color=["#1D9E75" if v>=0 else "#E24B4A" for v in ni_vals],
+                                        text=[f"${v:.2f}B" for v in ni_vals],
+                                        textposition="outside",
+                                    ))
+                                if gp_row_a is not None:
+                                    gp_years = [str(c)[:4] for c in gp_row_a.index]
+                                    gp_vals  = [v/1e9 for v in gp_row_a.values]
+                                    fig_ann.add_trace(go.Scatter(
+                                        x=gp_years, y=gp_vals,
+                                        name="年度毛利润", mode="lines+markers",
+                                        line=dict(color="#F5A623", width=2.5),
+                                        marker=dict(size=8),
+                                    ))
+
+                                fig_ann.update_layout(
+                                    height=400, plot_bgcolor="#fafafa",
+                                    title="年度财报对比（十亿美元）",
+                                    yaxis_title="金额 ($B)",
+                                    barmode="group",
+                                    legend=dict(orientation="h", y=1.1),
+                                    margin=dict(t=60,b=40,l=60,r=40),
+                                )
+                                st.plotly_chart(fig_ann, use_container_width=True)
+
+                                # 年报自动解读
+                                if len(rev_vals) >= 2:
+                                    yoy_rev = (rev_vals[-1] - rev_vals[-2]) / abs(rev_vals[-2]) * 100 if rev_vals[-2] != 0 else 0
+                                    cagr    = ((rev_vals[-1]/rev_vals[0])**(1/max(1,len(rev_vals)-1))-1)*100 if rev_vals[0]>0 else 0
+                                else:
+                                    yoy_rev = 0; cagr = 0
+
+                                ni_latest = ni_row_a.iloc[-1]/1e9 if ni_row_a is not None and len(ni_row_a)>0 else None
+                                rev_latest = rev_vals[-1] if rev_vals else 0
+                                net_margin = (ni_latest/rev_latest*100) if (ni_latest and rev_latest) else None
+
+                                lines_ann = []
+                                lines_ann.append(f"📆 <b>年报综合解读</b>")
+                                lines_ann.append(f"• 最新财年营收：<b>${rev_latest:.2f}B</b>，同比 {'<span style="color:#0F6E56">+' if yoy_rev>=0 else '<span style="color:#A32D2D">'}{yoy_rev:.1f}%</span>")
+                                lines_ann.append(f"• {len(rev_vals)}年复合增长率(CAGR)：<b>{'<span style="color:#0F6E56">+' if cagr>=0 else '<span style="color:#A32D2D">'}{cagr:.1f}%</span></b>")
+                                if net_margin is not None:
+                                    color_m = "#0F6E56" if net_margin > 15 else "#BA7517" if net_margin > 0 else "#A32D2D"
+                                    lines_ann.append(f"• 净利润率：<span style='color:{color_m};font-weight:700'>{net_margin:.1f}%</span>（{'🟢 盈利能力强' if net_margin>15 else '🟡 盈利能力中等' if net_margin>0 else '🔴 仍在亏损'}）")
+                                if cagr > 15:
+                                    lines_ann.append("• 🟢 <b>高速增长型公司</b>：营收CAGR超过15%，属于高成长股，适合成长型投资者，但需承受较高估值。")
+                                elif cagr > 5:
+                                    lines_ann.append("• 🟡 <b>稳健增长型公司</b>：营收增速稳定，现金流可预期，适合稳健型投资者。")
+                                elif cagr >= 0:
+                                    lines_ann.append("• 🟠 <b>成熟期公司</b>：营收增长放缓，需关注分红、回购等股东回报政策。")
+                                else:
+                                    lines_ann.append("• 🔴 <b>营收萎缩</b>：长期营收下滑，需深入了解公司转型计划和竞争壁垒是否仍存在。")
+
+                                st.markdown(
+                                    '<div style="background:#F8F9FA;border-radius:8px;padding:14px 16px;'
+                                    'font-size:13px;line-height:2">'
+                                    + "<br>".join(lines_ann) +
+                                    '</div>', unsafe_allow_html=True
+                                )
+                        else:
+                            st.info("暂无年度财报数据。")
+                    except Exception as e:
+                        st.warning(f"年报数据解析失败：{e}")
+
+                # ── 多情景预测 ──
+                with fin_tabs[5]:
+                    st.markdown("**基于历史营收增长率，预测未来4个季度三种情景**")
+                    try:
+                        qi = fin_data["q_income"]
+                        if qi is not None and not qi.empty:
+                            rev_row = None
+                            for k in ["Total Revenue","Revenue"]:
+                                if k in qi.index: rev_row = qi.loc[k].dropna().sort_index(); break
+
+                            if rev_row is not None and len(rev_row) >= 2:
+                                import numpy as np_p
+                                rev_vals = [v/1e6 for v in rev_row.values]
+                                rev_cols = [str(c)[:10] for c in rev_row.index]
+
+                                # 计算历史平均增长率
+                                if len(rev_vals) >= 4:
+                                    qoq_rates = [(rev_vals[i]-rev_vals[i-1])/abs(rev_vals[i-1])
+                                                 for i in range(1,len(rev_vals)) if rev_vals[i-1]!=0]
+                                    avg_growth = float(np_p.mean(qoq_rates)) if qoq_rates else 0.03
+                                else:
+                                    avg_growth = (rev_vals[-1]/rev_vals[0]-1)/(len(rev_vals)-1) if rev_vals[0]!=0 else 0.03
+
+                                # 三种情景增长率
+                                bull_g  = avg_growth * 1.5 + 0.02
+                                base_g  = avg_growth
+                                bear_g  = avg_growth * 0.5 - 0.02
+
+                                last_rev = rev_vals[-1]
+                                future_q = [f"Q+{i+1}" for i in range(4)]
+
+                                bull_fwd  = [last_rev * (1+bull_g)**(i+1) for i in range(4)]
+                                base_fwd  = [last_rev * (1+base_g)**(i+1) for i in range(4)]
+                                bear_fwd  = [last_rev * (1+bear_g)**(i+1) for i in range(4)]
+
+                                # 历史+预测组合
+                                all_x   = rev_cols + future_q
+                                fig_fwd = go.Figure()
+
+                                # 历史数据
+                                fig_fwd.add_trace(go.Bar(
+                                    x=rev_cols, y=rev_vals,
+                                    name="历史营收", marker_color="#534AB7",
+                                ))
+                                # 三种预测
+                                fig_fwd.add_trace(go.Scatter(
+                                    x=[rev_cols[-1]] + future_q,
+                                    y=[last_rev] + bull_fwd,
+                                    mode="lines+markers", name="乐观情景",
+                                    line=dict(color="#1D9E75", width=2, dash="dot"),
+                                    marker=dict(size=8),
+                                ))
+                                fig_fwd.add_trace(go.Scatter(
+                                    x=[rev_cols[-1]] + future_q,
+                                    y=[last_rev] + base_fwd,
+                                    mode="lines+markers", name="基准情景",
+                                    line=dict(color="#F5A623", width=2, dash="dot"),
+                                    marker=dict(size=8),
+                                ))
+                                fig_fwd.add_trace(go.Scatter(
+                                    x=[rev_cols[-1]] + future_q,
+                                    y=[last_rev] + bear_fwd,
+                                    mode="lines+markers", name="悲观情景",
+                                    line=dict(color="#E24B4A", width=2, dash="dot"),
+                                    marker=dict(size=8),
+                                ))
+                                fig_fwd.add_vrect(
+                                    x0=rev_cols[-1], x1=future_q[-1],
+                                    fillcolor="rgba(83,74,183,0.05)",
+                                    line_width=0,
+                                    annotation_text="预测区间",
+                                    annotation_position="top left",
+                                )
+                                fig_fwd.update_layout(
+                                    height=420, plot_bgcolor="#fafafa",
+                                    title="营收预测：历史趋势 + 未来4季度三情景预测",
+                                    yaxis_title="营收 ($M)",
+                                    legend=dict(orientation="h", y=1.1),
+                                    margin=dict(t=60,b=40,l=60,r=40),
+                                )
+                                st.plotly_chart(fig_fwd, use_container_width=True)
+
+                                # 预测解读
+                                bull_total = sum(bull_fwd); base_total = sum(base_fwd); bear_total = sum(bear_fwd)
+                                hist_annual = sum(rev_vals[-4:]) if len(rev_vals)>=4 else sum(rev_vals)*4/len(rev_vals)
+
+                                st.markdown(f"""
+                                <div style="background:#F8F9FA;border-radius:8px;padding:14px 16px;font-size:13px;line-height:2">
+                                <b>🔮 未来4季度营收预测汇总</b><br>
+                                🚀 <b>乐观情景</b>（增长率 +{bull_g*100:.1f}%/季）：未来4季合计 <b style="color:#1D9E75">${bull_total:.0f}M</b><br>
+                                📊 <b>基准情景</b>（增长率 {base_g*100:+.1f}%/季）：未来4季合计 <b style="color:#F5A623">${base_total:.0f}M</b><br>
+                                🐻 <b>悲观情景</b>（增长率 {bear_g*100:.1f}%/季）：未来4季合计 <b style="color:#E24B4A">${bear_total:.0f}M</b><br>
+                                <br>
+                                📌 <b>说明</b>：预测基于历史季均增长率（{avg_growth*100:+.1f}%），乐观=历史增速×1.5+2%，悲观=历史增速×0.5-2%。
+                                实际结果受宏观环境、行业竞争、管理层决策等多重因素影响，预测仅供参考。
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.info("营收数据不足，无法生成预测。")
+                    except Exception as e:
+                        st.warning(f"预测生成失败：{e}")
 
             # ── 评级说明 ──
             st.subheader("💡 评级说明")
@@ -1346,4 +1895,4 @@ with tabs[6]:
             for r, d in rating_guide.items():
                 st.caption(f"**{r}**：{d}")
 
-            st.warning("⚠️ 以上分析基于技术指标，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
+            st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
