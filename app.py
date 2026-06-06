@@ -715,39 +715,57 @@ with tabs[6]:
     st.subheader("🔬 股票智能分析器")
     st.caption("输入任意股票代码，自动分析技术面+基本面，给出评级与价格目标")
 
-    # 快捷选股
+    # ── 全局 session_state 初始化 ──
+    if "selected_ticker" not in st.session_state:
+        st.session_state["selected_ticker"] = ""
+    if "analysis_result" not in st.session_state:
+        st.session_state["analysis_result"] = None
+    if "chart_type" not in st.session_state:
+        st.session_state["chart_type"] = "📈 K线 + 斐波那契"
+
+    # 快捷选股（点击后存入 session_state，不触发分析）
     st.write("**快捷选择热门股票：**")
     qcols = st.columns(len(POPULAR_STOCKS))
-    quick_pick = None
     for i, (group, tickers) in enumerate(POPULAR_STOCKS.items()):
         with qcols[i]:
             st.caption(group)
             for tk in tickers:
                 if st.button(tk, key=f"q_{group}_{tk}", use_container_width=True):
-                    quick_pick = tk
+                    st.session_state["selected_ticker"] = tk
+                    st.session_state["analysis_result"] = None  # 清空旧结果
 
     st.divider()
 
-    # 股票代码输入
+    # 股票代码输入框（从 session_state 读取默认值）
     col_input, col_btn = st.columns([3, 1])
     with col_input:
         ticker_input = st.text_input(
             "输入股票代码（如 AAPL、TSLA、0700.HK）",
-            value=quick_pick if quick_pick else "",
+            value=st.session_state["selected_ticker"],
             placeholder="AAPL",
+            key="ticker_text_input",
         ).strip().upper()
     with col_btn:
         st.write("")
         st.write("")
         analyze_btn = st.button("🔍 开始分析", use_container_width=True, type="primary")
 
-    if ticker_input and (analyze_btn or quick_pick):
-        with st.spinner(f"正在分析 {ticker_input}..."):
-            result = fetch_stock_analysis(ticker_input)
+    # 触发分析：点击开始分析 或 输入框里有内容且与上次不同
+    if analyze_btn and ticker_input:
+        st.session_state["selected_ticker"] = ticker_input
+        st.session_state["analysis_result"] = None  # 强制重新分析
 
-        if result is None:
-            st.error("数据不足，请检查股票代码是否正确。")
-        elif "error" in result:
+    if st.session_state["selected_ticker"] and st.session_state["analysis_result"] is None:
+        with st.spinner(f"正在分析 {st.session_state['selected_ticker']}..."):
+            st.session_state["analysis_result"] = fetch_stock_analysis(
+                st.session_state["selected_ticker"]
+            )
+
+    result = st.session_state["analysis_result"]
+    ticker_input = st.session_state["selected_ticker"]
+
+    if ticker_input and result is not None:
+        if "error" in result:
             st.error(f"获取数据失败：{result['error']}")
         else:
             # ── 评级横幅 ──
