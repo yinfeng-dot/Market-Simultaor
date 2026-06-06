@@ -1839,57 +1839,97 @@ with tabs[6]:
                                 base_g  = avg_growth
                                 bear_g  = avg_growth * 0.5 - 0.02
 
+                                import pandas as _pd2
+                                from datetime import timedelta
+
                                 last_rev = rev_vals[-1]
-                                future_q = [f"Q+{i+1}" for i in range(4)]
+
+                                # 用真实日期做x轴，让历史柱和预测线在同一轴上连接
+                                last_date = rev_row.index[-1]
+                                # 推算未来4个季度日期（每季+91天）
+                                future_dates = [last_date + timedelta(days=91*(i+1)) for i in range(4)]
+                                future_labels = [str(d)[:10] for d in future_dates]
 
                                 bull_fwd  = [last_rev * (1+bull_g)**(i+1) for i in range(4)]
                                 base_fwd  = [last_rev * (1+base_g)**(i+1) for i in range(4)]
                                 bear_fwd  = [last_rev * (1+bear_g)**(i+1) for i in range(4)]
 
-                                # 历史+预测组合
-                                all_x   = rev_cols + future_q
                                 fig_fwd = go.Figure()
 
-                                # 历史数据
+                                # 历史柱状图
                                 fig_fwd.add_trace(go.Bar(
                                     x=rev_cols, y=rev_vals,
-                                    name="历史营收", marker_color="#534AB7",
+                                    name="历史营收",
+                                    marker_color="#534AB7",
+                                    marker_line_color="#3C3489",
+                                    marker_line_width=1,
                                 ))
-                                # 三种预测
+
+                                # 预测起点（最后一个历史点）+ 未来4季
+                                x_pred = [rev_cols[-1]] + future_labels
+
                                 fig_fwd.add_trace(go.Scatter(
-                                    x=[rev_cols[-1]] + future_q,
-                                    y=[last_rev] + bull_fwd,
-                                    mode="lines+markers", name="乐观情景",
-                                    line=dict(color="#1D9E75", width=2, dash="dot"),
-                                    marker=dict(size=8),
+                                    x=x_pred, y=[last_rev] + bull_fwd,
+                                    mode="lines+markers+text",
+                                    name="🚀 乐观情景",
+                                    line=dict(color="#1D9E75", width=2.5),
+                                    marker=dict(size=10, color="#1D9E75",
+                                                line=dict(color="white", width=2)),
+                                    text=[""] + [f"${v:.0f}M" for v in bull_fwd],
+                                    textposition="top center",
+                                    textfont=dict(size=10, color="#1D9E75"),
                                 ))
                                 fig_fwd.add_trace(go.Scatter(
-                                    x=[rev_cols[-1]] + future_q,
-                                    y=[last_rev] + base_fwd,
-                                    mode="lines+markers", name="基准情景",
-                                    line=dict(color="#F5A623", width=2, dash="dot"),
-                                    marker=dict(size=8),
+                                    x=x_pred, y=[last_rev] + base_fwd,
+                                    mode="lines+markers+text",
+                                    name="📊 基准情景",
+                                    line=dict(color="#F5A623", width=2.5),
+                                    marker=dict(size=10, color="#F5A623",
+                                                line=dict(color="white", width=2)),
+                                    text=[""] + [f"${v:.0f}M" for v in base_fwd],
+                                    textposition="top center",
+                                    textfont=dict(size=10, color="#BA7517"),
                                 ))
                                 fig_fwd.add_trace(go.Scatter(
-                                    x=[rev_cols[-1]] + future_q,
-                                    y=[last_rev] + bear_fwd,
-                                    mode="lines+markers", name="悲观情景",
-                                    line=dict(color="#E24B4A", width=2, dash="dot"),
-                                    marker=dict(size=8),
+                                    x=x_pred, y=[last_rev] + bear_fwd,
+                                    mode="lines+markers+text",
+                                    name="🐻 悲观情景",
+                                    line=dict(color="#E24B4A", width=2.5),
+                                    marker=dict(size=10, color="#E24B4A",
+                                                line=dict(color="white", width=2)),
+                                    text=[""] + [f"${v:.0f}M" for v in bear_fwd],
+                                    textposition="bottom center",
+                                    textfont=dict(size=10, color="#A32D2D"),
                                 ))
+
+                                # 预测区间背景
                                 fig_fwd.add_vrect(
-                                    x0=rev_cols[-1], x1=future_q[-1],
-                                    fillcolor="rgba(83,74,183,0.05)",
+                                    x0=rev_cols[-1], x1=future_labels[-1],
+                                    fillcolor="rgba(83,74,183,0.06)",
                                     line_width=0,
-                                    annotation_text="预测区间",
-                                    annotation_position="top left",
                                 )
+                                # 分界线
+                                fig_fwd.add_vline(
+                                    x=rev_cols[-1],
+                                    line_dash="dash", line_color="#888", line_width=1.5,
+                                    annotation_text=" ← 历史  预测 →",
+                                    annotation_position="top",
+                                    annotation_font=dict(size=11, color="#555"),
+                                )
+
                                 fig_fwd.update_layout(
-                                    height=420, plot_bgcolor="#fafafa",
-                                    title="营收预测：历史趋势 + 未来4季度三情景预测",
+                                    height=460, plot_bgcolor="#fafafa",
+                                    paper_bgcolor="white",
+                                    title=dict(
+                                        text="营收预测：历史趋势 + 未来4季度三情景",
+                                        font=dict(size=15),
+                                    ),
                                     yaxis_title="营收 ($M)",
-                                    legend=dict(orientation="h", y=1.1),
-                                    margin=dict(t=60,b=40,l=60,r=40),
+                                    xaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                                    yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                                    legend=dict(orientation="h", y=1.08, x=0),
+                                    margin=dict(t=70, b=50, l=60, r=40),
+                                    hovermode="x unified",
                                 )
                                 st.plotly_chart(fig_fwd, use_container_width=True)
 
