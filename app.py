@@ -524,7 +524,7 @@ def fetch_stock_analysis(ticker: str):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","🎛️ 泡沫模拟","📜 历史对比","📈 趋势预测","🔬 股票分析器"])
+tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","🎛️ 泡沫模拟","📜 历史对比","📈 趋势预测","🌐 宏观分析","🔬 股票分析器"])
 
 # ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
@@ -728,8 +728,445 @@ with tabs[4]:
     c2.metric("📊 基准情景均值",f"${np.mean(paths_base[-1]):.2f}",f"{(np.mean(paths_base[-1])/s0-1)*100:.1f}%",delta_color="off")
     c3.metric("🐻 悲观情景均值",f"${np.mean(paths_bear[-1]):.2f}",f"{(np.mean(paths_bear[-1])/s0-1)*100:.1f}%",delta_color="inverse")
 
-# ── Tab 6: 股票分析器 ──────────────────────────────────────────────────────────
+
+# ── Tab 6: 宏观经济分析 ──────────────────────────────────────────────────────────
 with tabs[5]:
+    st.subheader("🌐 宏观经济指标与股市影响分析")
+    st.caption("数据来自 FRED (美联储经济数据库) · 自动分析最新数据并预测对股市的影响")
+
+    @st.cache_data(ttl=3600)
+    def fetch_macro_data():
+        """从 FRED 免费API 抓取宏观数据"""
+        import urllib.request, json, datetime
+        BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
+        results = {}
+        series = {
+            "PAYEMS":   ("非农就业人数", "千人", "monthly"),
+            "CPIAUCSL": ("CPI通胀率",    "%",    "monthly"),
+            "FEDFUNDS": ("联邦基金利率", "%",    "monthly"),
+            "GDP":      ("GDP增长率",    "十亿$","quarterly"),
+            "UNRATE":   ("失业率",       "%",    "monthly"),
+            "DGS10":    ("10年期国债收益率","%", "daily"),
+            "T10YIE":   ("10年通胀预期", "%",    "daily"),
+            "UMCSENT":  ("密歇根消费者信心", "指数", "monthly"),
+        }
+        for sid, (name, unit, freq) in series.items():
+            try:
+                url = f"{BASE}{sid}&vintage_date=&realtime_start=&realtime_end="
+                req = urllib.request.Request(
+                    f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
+                    headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    lines = r.read().decode().strip().split("\n")
+                # 取最近12个数据点
+                data_lines = [l for l in lines[1:] if l.strip() and "." in l][-12:]
+                dates = [l.split(",")[0] for l in data_lines]
+                vals  = []
+                for l in data_lines:
+                    try: vals.append(float(l.split(",")[1]))
+                    except: vals.append(None)
+                vals = [v for v in vals if v is not None]
+                dates = dates[:len(vals)]
+                if vals:
+                    results[sid] = {
+                        "name": name, "unit": unit, "freq": freq,
+                        "dates": dates, "values": vals,
+                        "latest": vals[-1],
+                        "prev": vals[-2] if len(vals) >= 2 else vals[-1],
+                        "change": vals[-1] - vals[-2] if len(vals) >= 2 else 0,
+                    }
+            except Exception as e:
+                results[sid] = {"error": str(e), "name": name}
+        return results
+
+    def analyze_macro_impact(macro):
+        """根据宏观数据自动生成股市影响分析"""
+        signals = []
+        score = 0  # 正=利多，负=利空
+
+        # CPI分析
+        if "CPIAUCSL" in macro and "error" not in macro["CPIAUCSL"]:
+            cpi = macro["CPIAUCSL"]
+            cpi_yoy = ((cpi["latest"] / cpi["values"][-13]) - 1) * 100 if len(cpi["values"]) >= 13 else cpi["change"]
+            if cpi_yoy < 2.5:
+                score += 15
+                signals.append(("🟢", "CPI通胀受控", f"同比+{cpi_yoy:.1f}%，低于美联储2%目标附近，降息预期上升，利多股市。"))
+            elif cpi_yoy < 3.5:
+                score += 5
+                signals.append(("🟡", "CPI温和", f"同比+{cpi_yoy:.1f}%，通胀温和，美联储维持中性政策。"))
+            elif cpi_yoy < 5.0:
+                score -= 10
+                signals.append(("🟠", "CPI偏高", f"同比+{cpi_yoy:.1f}%，通胀压力上升，加息预期压制估值。"))
+            else:
+                score -= 20
+                signals.append(("🔴", "CPI过热", f"同比+{cpi_yoy:.1f}%，高通胀环境，历史上对成长股杀伤力大。"))
+
+        # 非农就业
+        if "PAYEMS" in macro and "error" not in macro["PAYEMS"]:
+            nfp = macro["PAYEMS"]
+            mom_change = nfp["change"]  # 千人
+            if mom_change > 200:
+                score += 10
+                signals.append(("🟢", "非农强劲", f"新增{mom_change:.0f}K就业，劳动市场健康，消费支撑股市。"))
+            elif mom_change > 100:
+                score += 5
+                signals.append(("🟡", "非农温和", f"新增{mom_change:.0f}K就业，劳动市场稳定，对股市中性。"))
+            elif mom_change > 0:
+                score -= 5
+                signals.append(("🟠", "非农偏弱", f"新增{mom_change:.0f}K就业，就业放缓，可能触发衰退担忧。"))
+            else:
+                score -= 15
+                signals.append(("🔴", "非农负增长", f"减少{abs(mom_change):.0f}K就业，衰退信号，历史上大幅利空。"))
+
+        # 联邦基金利率
+        if "FEDFUNDS" in macro and "error" not in macro["FEDFUNDS"]:
+            rate = macro["FEDFUNDS"]["latest"]
+            change = macro["FEDFUNDS"]["change"]
+            if rate < 2.0:
+                score += 20
+                signals.append(("🟢", "超低利率", f"联邦基金利率{rate:.2f}%，宽松周期利好成长股和科技股。"))
+            elif rate < 3.5:
+                score += 8
+                signals.append(("🟢", "利率适中", f"联邦基金利率{rate:.2f}%，对股市影响中性偏正。"))
+            elif rate < 5.0:
+                score -= 8
+                signals.append(("🟠", "利率偏高", f"联邦基金利率{rate:.2f}%，高利率压制高估值成长股。"))
+            else:
+                score -= 15
+                signals.append(("🔴", "高利率环境", f"联邦基金利率{rate:.2f}%，高利率显著提升折现率，压制股票估值。"))
+            if change < -0.1:
+                score += 10
+                signals.append(("🟢", "降息周期", f"利率下降{abs(change):.2f}%，降息周期历史上平均推动标普500上涨20%+。"))
+            elif change > 0.1:
+                score -= 10
+                signals.append(("🔴", "加息周期", f"利率上升{change:.2f}%，加息周期初期通常对成长股造成压力。"))
+
+        # 10年期国债
+        if "DGS10" in macro and "error" not in macro["DGS10"]:
+            t10 = macro["DGS10"]["latest"]
+            if t10 < 3.0:
+                score += 10
+                signals.append(("🟢", "10年债收益率低", f"{t10:.2f}%，股票相对债券更有吸引力（TINA效应）。"))
+            elif t10 < 4.5:
+                score += 2
+                signals.append(("🟡", "10年债收益率适中", f"{t10:.2f}%，股债竞争加剧，高估值股承压。"))
+            else:
+                score -= 12
+                signals.append(("🔴", "10年债收益率高", f"{t10:.2f}%，债券吸引力增加，资金流出股市，P/E压缩。"))
+
+        # 失业率
+        if "UNRATE" in macro and "error" not in macro["UNRATE"]:
+            unrate = macro["UNRATE"]["latest"]
+            change = macro["UNRATE"]["change"]
+            if unrate < 4.0:
+                score += 8
+                signals.append(("🟢", "就业市场强健", f"失业率{unrate:.1f}%，历史低位，消费能力强。"))
+            elif unrate < 5.5:
+                score += 3
+                signals.append(("🟡", "就业市场正常", f"失业率{unrate:.1f}%，处于正常区间。"))
+            else:
+                score -= 12
+                signals.append(("🔴", "失业率偏高", f"失业率{unrate:.1f}%，经济承压，消费需求走弱。"))
+
+        # 消费者信心
+        if "UMCSENT" in macro and "error" not in macro["UMCSENT"]:
+            sentiment = macro["UMCSENT"]["latest"]
+            if sentiment > 85:
+                score += 8
+                signals.append(("🟢", "消费者信心强", f"密歇根指数{sentiment:.1f}，消费预期乐观。"))
+            elif sentiment > 65:
+                score += 2
+                signals.append(("🟡", "消费者信心中性", f"密歇根指数{sentiment:.1f}，消费预期平稳。"))
+            else:
+                score -= 8
+                signals.append(("🔴", "消费者信心弱", f"密歇根指数{sentiment:.1f}，消费预期低迷，零售和消费股承压。"))
+
+        # 综合判断
+        if score >= 30:
+            outlook = "🚀 强烈看涨"; outlook_color = "#0F6E56"
+            summary = "宏观环境整体利多股市，低通胀+宽松货币政策+强就业三重利好共振，建议增加风险资产配置。"
+        elif score >= 15:
+            outlook = "📈 温和看涨"; outlook_color = "#1D9E75"
+            summary = "宏观环境偏正面，主要风险指标可控，可维持正常股票仓位，重点关注成长股和科技股。"
+        elif score >= 0:
+            outlook = "⚖️ 中性"; outlook_color = "#BA7517"
+            summary = "宏观信号混杂，正负因素并存，建议均衡配置，避免过度集中于高估值板块。"
+        elif score >= -15:
+            outlook = "📉 温和看空"; outlook_color = "#D85A30"
+            summary = "宏观环境存在逆风，高利率或高通胀压制估值，建议降低仓位，增加防御性资产比重。"
+        else:
+            outlook = "💥 强烈看空"; outlook_color = "#A32D2D"
+            summary = "多项宏观指标同时发出警告，历史上此类组合往往伴随较大市场回调，建议显著降低风险敞口。"
+
+        return signals, score, outlook, outlook_color, summary
+
+    if st.button("🔄 刷新宏观数据", key="refresh_macro"):
+        st.cache_data.clear(); st.rerun()
+
+    with st.spinner("正在从美联储数据库获取最新宏观数据..."):
+        macro_data = fetch_macro_data()
+
+    # 宏观指标总览
+    st.subheader("📊 核心宏观指标（最新值）")
+    macro_display = {
+        "PAYEMS":  ("👷 非农就业",     "K",  "新增就业人数（千）"),
+        "UNRATE":  ("📉 失业率",       "%",  "劳动市场健康度"),
+        "CPIAUCSL":("📈 CPI",         "",   "消费者价格指数"),
+        "FEDFUNDS":("🏦 联邦基金利率", "%",  "美联储政策利率"),
+        "DGS10":   ("📜 10年期国债",   "%",  "长端无风险利率"),
+        "T10YIE":  ("🌡️ 通胀预期",    "%",  "市场10年通胀预期"),
+        "UMCSENT": ("😊 消费者信心",   "",   "密歇根大学消费信心"),
+        "GDP":     ("🏭 GDP",         "$B", "实际国内生产总值"),
+    }
+    mcols = st.columns(4)
+    for i, (sid, (label, unit, desc)) in enumerate(macro_display.items()):
+        if sid in macro_data and "error" not in macro_data[sid]:
+            d = macro_data[sid]
+            chg = d["change"]
+            chg_str = f"{'+' if chg >= 0 else ''}{chg:.2f}{unit}"
+            # VIX-style: 失业率和CPI上升是利空，标红
+            is_bad_up = sid in ("UNRATE", "CPIAUCSL", "DGS10", "FEDFUNDS")
+            delta_color = ("inverse" if is_bad_up else "normal") if chg != 0 else "off"
+            mcols[i % 4].metric(
+                label=f"{label}",
+                value=f"{d['latest']:.2f}{unit}",
+                delta=chg_str,
+                delta_color=delta_color,
+                help=desc,
+            )
+        else:
+            mcols[i % 4].metric(label=label, value="获取中...")
+
+    st.divider()
+
+    # 股市影响分析
+    signals, score, outlook, outlook_color, summary = analyze_macro_impact(macro_data)
+
+    st.subheader("🎯 宏观环境对股市综合影响")
+    st.markdown(
+        f'<div style="background:{outlook_color};color:white;padding:16px 20px;'
+        f'border-radius:10px;margin-bottom:12px">'
+        f'<span style="font-size:22px;font-weight:700">{outlook}</span>'
+        f'<span style="margin-left:16px;opacity:0.9;font-size:14px">综合评分：{score:+d}分</span><br>'
+        f'<span style="font-size:13px;opacity:0.9;margin-top:6px;display:block">{summary}</span>'
+        f'</div>', unsafe_allow_html=True
+    )
+
+    # 各指标信号
+    st.subheader("📋 逐项指标分析")
+    sig_c1, sig_c2 = st.columns(2)
+    for i, (icon, title, desc) in enumerate(signals):
+        col = sig_c1 if i % 2 == 0 else sig_c2
+        bg = {"🟢":"#E1F5EE","🟡":"#FAEEDA","🟠":"#FDF0EC","🔴":"#FCEBEB"}.get(icon, "#F5F5F5")
+        border = {"🟢":"#0F6E56","🟡":"#BA7517","🟠":"#D85A30","🔴":"#A32D2D"}.get(icon, "#999")
+        col.markdown(
+            f'<div style="background:{bg};border-left:4px solid {border};'
+            f'padding:10px 14px;border-radius:6px;margin-bottom:8px;font-size:13px;line-height:1.7">'
+            f'<b>{icon} {title}</b><br>{desc}</div>',
+            unsafe_allow_html=True
+        )
+
+    st.divider()
+
+    # 历史趋势图
+    st.subheader("📈 关键指标历史走势")
+    chart_tabs = st.tabs(["非农就业", "CPI通胀", "联邦基金利率", "10年期国债", "失业率", "消费者信心"])
+    chart_map = [
+        ("PAYEMS",  "非农新增就业（千人）", "#185FA5"),
+        ("CPIAUCSL","消费者价格指数",       "#D85A30"),
+        ("FEDFUNDS","联邦基金利率 (%)",      "#534AB7"),
+        ("DGS10",   "10年期国债收益率 (%)", "#1D9E75"),
+        ("UNRATE",  "失业率 (%)",           "#E24B4A"),
+        ("UMCSENT", "密歇根消费者信心指数", "#F5A623"),
+    ]
+    for ct, (sid, ylabel, color) in zip(chart_tabs, chart_map):
+        with ct:
+            if sid in macro_data and "error" not in macro_data[sid]:
+                d = macro_data[sid]
+                fig_m = go.Figure()
+                fig_m.add_trace(go.Scatter(
+                    x=d["dates"], y=d["values"],
+                    mode="lines+markers",
+                    line=dict(color=color, width=2.5),
+                    marker=dict(size=6, color=color,
+                                line=dict(color="white", width=1.5)),
+                    fill="tozeroy",
+                    fillcolor=color.replace("#", "rgba(").rstrip(")") + ",0.08)" if color.startswith("#") else color,
+                    hovertemplate=f"<b>%{{x}}</b><br>{ylabel}: %{{y:.2f}}<extra></extra>",
+                ))
+                # 最新值标注
+                fig_m.add_annotation(
+                    x=d["dates"][-1], y=d["values"][-1],
+                    text=f"  最新: {d['values'][-1]:.2f}",
+                    showarrow=False, xanchor="left",
+                    font=dict(color=color, size=12, family="Arial Black"),
+                )
+                fig_m.update_layout(
+                    height=320, plot_bgcolor="#fafafa",
+                    yaxis_title=ylabel,
+                    xaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                    yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
+                    margin=dict(t=20, b=40, l=60, r=40),
+                    showlegend=False,
+                )
+                st.plotly_chart(fig_m, use_container_width=True)
+
+                # 数据解读
+                latest = d["values"][-1]
+                chg    = d["change"]
+                interp = {
+                    "PAYEMS":  f"本月新增就业 {latest:.0f}K，环比{'增加' if chg>0 else '减少'} {abs(chg):.0f}K。{'就业市场强劲，支撑消费和企业盈利。' if latest>150 else '就业增速放缓，需警惕经济降温。'}",
+                    "CPIAUCSL":f"CPI指数 {latest:.2f}，环比{'上升' if chg>0 else '下降'} {abs(chg):.2f}。{'通胀压力较大，加息预期升温。' if chg>0.3 else '通胀温和，货币政策压力减轻。'}",
+                    "FEDFUNDS":f"政策利率 {latest:.2f}%，{'高利率压制估值，资金成本上升。' if latest>4 else '低利率环境支持股票估值扩张。'}",
+                    "DGS10":   f"10年债收益率 {latest:.2f}%，{'与股票股息率竞争加剧，资金或从股市流向债市。' if latest>4 else '股票相对债券仍有吸引力。'}",
+                    "UNRATE":  f"失业率 {latest:.1f}%，{'就业市场偏紧，消费韧性强。' if latest<4 else '失业率上升，消费和企业盈利面临压力。'}",
+                    "UMCSENT": f"消费者信心 {latest:.1f}，{'消费者对经济前景乐观，有利于零售和消费板块。' if latest>80 else '消费者信心不足，消费支出可能走弱。'}",
+                }.get(sid, "")
+                if interp:
+                    st.caption(interp)
+            else:
+                err = macro_data.get(sid, {}).get("error", "未知错误")
+                st.info(f"暂无数据：{err}")
+
+    st.divider()
+    st.subheader("🔮 宏观情景对不同板块的影响预测")
+    
+    sectors = {
+        "科技/成长股": {"high_rate": -20, "low_rate": +25, "high_cpi": -15, "low_cpi": +10, "strong_job": +10, "weak_job": -5},
+        "金融股":      {"high_rate": +15, "low_rate": -10, "high_cpi": +5,  "low_cpi": -5,  "strong_job": +8,  "weak_job": -8},
+        "消费股":      {"high_rate": -5,  "low_rate": +8,  "high_cpi": -10, "low_cpi": +5,  "strong_job": +15, "weak_job": -15},
+        "能源股":      {"high_rate": -3,  "low_rate": +3,  "high_cpi": +20, "low_cpi": -10, "strong_job": +5,  "weak_job": -3},
+        "医疗股":      {"high_rate": -5,  "low_rate": +5,  "high_cpi": -3,  "low_cpi": +3,  "strong_job": +5,  "weak_job": +3},
+        "公用事业":    {"high_rate": -15, "low_rate": +15, "high_cpi": -5,  "low_cpi": +5,  "strong_job": +2,  "weak_job": +5},
+    }
+
+    # 判断当前环境
+    rate_env  = "high_rate" if macro_data.get("FEDFUNDS",{}).get("latest",0) > 4 else "low_rate"
+    cpi_env   = "high_cpi"  if macro_data.get("CPIAUCSL",{}).get("change",0) > 0.3 else "low_cpi"
+    job_env   = "strong_job" if macro_data.get("PAYEMS",{}).get("change",0) > 100 else "weak_job"
+
+    sector_scores = {}
+    for sector, impacts in sectors.items():
+        s = impacts[rate_env] + impacts[cpi_env] + impacts[job_env]
+        sector_scores[sector] = s
+
+    sorted_sectors = sorted(sector_scores.items(), key=lambda x: x[1], reverse=True)
+    s_names = [s[0] for s in sorted_sectors]
+    s_scores = [s[1] for s in sorted_sectors]
+    s_colors = ["#0F6E56" if v > 10 else "#1D9E75" if v > 0 else "#D85A30" if v > -10 else "#A32D2D" for v in s_scores]
+
+    fig_sec = go.Figure(go.Bar(
+        x=s_scores, y=s_names, orientation="h",
+        marker_color=s_colors,
+        text=[f"{'+' if v>=0 else ''}{v}" for v in s_scores],
+        textposition="outside",
+    ))
+    fig_sec.update_layout(
+        height=320, plot_bgcolor="#fafafa",
+        xaxis_title="宏观影响评分（正=利多，负=利空）",
+        xaxis=dict(zeroline=True, zerolinecolor="#888", showgrid=True, gridcolor="#eeeeee"),
+        yaxis=dict(showgrid=False),
+        margin=dict(t=20, b=40, l=120, r=60),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_sec, use_container_width=True)
+    st.caption(f"基于当前：{'高利率' if rate_env=='high_rate' else '低利率'} + {'高通胀' if cpi_env=='high_cpi' else '低通胀'} + {'强就业' if job_env=='strong_job' else '弱就业'} 环境自动计算")
+
+    st.divider()
+    # ── 实时财经新闻 ─────────────────────────────────────────────────────────
+    st.subheader("📰 实时财经新闻与地缘政治分析")
+
+    @st.cache_data(ttl=1800)
+    def fetch_financial_news():
+        import urllib.request, xml.etree.ElementTree as ET
+        feeds = [
+            ("https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC&region=US&lang=en-US", "市场"),
+            ("https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVDA,AAPL,MSFT&region=US&lang=en-US", "科技"),
+        ]
+        all_news = []
+        for url, category in feeds:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent":"Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    tree = ET.parse(r)
+                root = tree.getroot()
+                for item in root.findall(".//item")[:8]:
+                    title = item.findtext("title","")
+                    pub   = item.findtext("pubDate","")[:22]
+                    if title:
+                        all_news.append({"title":title,"pub":pub,"category":category})
+            except Exception:
+                pass
+        return all_news[:15]
+
+    def classify_news(title):
+        t = title.lower()
+        geo = ["war","conflict","sanction","military","russia","ukraine","china","taiwan",
+               "iran","missile","attack","invasion","tariff","trade war"]
+        bull = ["rate cut","fed cut","rally","surge","beat","strong","record","ai boost",
+                "upgrade","profit","earnings beat"]
+        bear = ["recession","inflation","rate hike","selloff","crash","miss","weak",
+                "layoff","bankruptcy","downgrade","warning"]
+        if any(k in t for k in geo):
+            return ("🌍","地缘政治","#534AB7","#EEEDFE",
+                    "地缘风险短期利空，推升避险需求，压制科技股和周期股。")
+        elif any(k in t for k in bull) and not any(k in t for k in bear):
+            return ("🟢","利多信号","#0F6E56","#E1F5EE",
+                    "正面消息，可能推动相关板块上涨，成长股和科技股受益。")
+        elif any(k in t for k in bear) and not any(k in t for k in bull):
+            return ("🔴","利空信号","#A32D2D","#FCEBEB",
+                    "负面消息，可能引发回调，防御性资产相对受益。")
+        return ("⚪","中性","#555","#F5F5F5","对市场整体影响中性。")
+
+    news_list = fetch_financial_news()
+    bull_c = bear_c = geo_c = 0
+    for n in news_list:
+        icon,_,_,_,_ = classify_news(n["title"])
+        if icon=="🟢": bull_c+=1
+        elif icon=="🔴": bear_c+=1
+        elif icon=="🌍": geo_c+=1
+
+    total_n = max(len(news_list),1)
+    nc1,nc2,nc3,nc4 = st.columns(4)
+    nc1.metric("📰 新闻数", len(news_list))
+    nc2.metric("🟢 利多", bull_c, f"{bull_c/total_n*100:.0f}%", delta_color="normal")
+    nc3.metric("🔴 利空", bear_c, f"{bear_c/total_n*100:.0f}%", delta_color="inverse")
+    nc4.metric("🌍 地缘", geo_c, f"{geo_c/total_n*100:.0f}%", delta_color="off")
+
+    news_score = (bull_c - bear_c - geo_c*0.5) / total_n
+    if news_score > 0.2:
+        nb,nc2c = "📰 新闻面整体正面，短线情绪偏多","#1D9E75"
+    elif news_score < -0.2:
+        nb,nc2c = "📰 新闻面整体负面，注意短线风险","#A32D2D"
+    else:
+        nb,nc2c = "📰 新闻面中性，市场由基本面主导","#BA7517"
+    st.markdown(f'<div style="background:{nc2c};color:white;padding:10px 16px;border-radius:8px;'
+                f'font-size:14px;font-weight:500;margin-bottom:12px">{nb}</div>',
+                unsafe_allow_html=True)
+
+    for n in news_list:
+        icon,label,tc,bg,impact = classify_news(n["title"])
+        st.markdown(
+            f'<div style="background:{bg};border-left:4px solid {tc};padding:10px 14px;'
+            f'border-radius:6px;margin-bottom:8px">'
+            f'<div style="font-size:13px;font-weight:600;color:{tc}">{icon} [{label}] {n["title"]}</div>'
+            f'<div style="font-size:11px;color:#666;margin-top:4px">📅 {n["pub"]} &nbsp;|&nbsp; '
+            f'<span style="color:{tc}">影响：{impact}</span></div></div>',
+            unsafe_allow_html=True)
+
+    # 保存宏观状态供股票分析器使用
+    st.session_state["macro_signals"] = signals
+    st.session_state["macro_score"]   = score
+    st.session_state["macro_outlook"] = outlook
+    st.session_state["macro_summary"] = summary
+    st.session_state["news_score"]    = news_score
+    st.session_state["news_list"]     = news_list
+
+
+
+# ── Tab 7: 股票分析器 ──────────────────────────────────────────────────────────
+with tabs[6]:
     st.subheader("🔬 股票智能分析器")
     st.caption("输入任意股票代码，自动分析技术面+基本面，给出评级与价格目标")
 
@@ -1982,5 +2419,135 @@ with tabs[5]:
             }
             for r, d in rating_guide.items():
                 st.caption(f"**{r}**：{d}")
+
+            # ── 宏观+微观联动分析 ──────────────────────────────────────────
+            st.divider()
+            st.subheader("🌐 宏观环境 × 个股影响分析")
+            st.caption("结合当前宏观经济指标和新闻动态，分析对本股票的具体影响")
+
+            macro_sig  = st.session_state.get("macro_signals", [])
+            macro_sc   = st.session_state.get("macro_score", None)
+            macro_out  = st.session_state.get("macro_outlook", None)
+            macro_sum  = st.session_state.get("macro_summary", "")
+            news_sc    = st.session_state.get("news_score", 0)
+            news_items = st.session_state.get("news_list", [])
+
+            if macro_sc is None:
+                st.info("💡 请先前往「🌐 宏观分析」Tab 加载宏观数据，然后回到此处查看联动分析。")
+            else:
+                r = result
+                sector  = r.get("sector","未知")
+                beta    = r.get("beta") or 1.0
+                pe      = r.get("pe")
+
+                # 根据股票行业确定宏观敏感度
+                sector_macro_map = {
+                    "Technology":          ("科技股", "高利率环境压制高估值，降息周期受益最大。AI相关科技股对利率最敏感。"),
+                    "Financial Services":  ("金融股", "高利率提升净息差，有利银行盈利；但衰退期贷款违约率上升。"),
+                    "Consumer Cyclical":   ("消费股", "就业市场强健时受益；高通胀压制消费者购买力。"),
+                    "Healthcare":          ("医疗股", "防御性强，经济周期相关性低，适合衰退环境。"),
+                    "Energy":              ("能源股", "与通胀正相关；地缘冲突通常推高油价利好能源股。"),
+                    "Real Estate":         ("房地产", "对利率极度敏感，高利率大幅提升融资成本。"),
+                    "Communication Services":("传媒股","广告收入与经济周期相关；流媒体对利率敏感度中等。"),
+                    "Industrials":         ("工业股", "GDP增长强劲时受益；贸易战和关税直接冲击供应链。"),
+                    "Consumer Defensive":  ("必需消费","防御性最强，衰退期表现优于大盘。"),
+                    "Utilities":           ("公用事业","高利率时与债券竞争，但现金流稳定。"),
+                    "Basic Materials":     ("原材料", "地缘风险和通胀推升原材料价格，周期性强。"),
+                }
+                s_label, s_desc = sector_macro_map.get(sector, ("其他行业", "宏观敏感度中等。"))
+
+                # 综合宏观+新闻+技术面分数
+                combined_score = macro_sc + news_sc * 20
+                macro_color = "#0F6E56" if combined_score > 15 else "#BA7517" if combined_score > -5 else "#A32D2D"
+
+                # 展示综合评判
+                st.markdown(
+                    f'<div style="background:{macro_color};color:white;padding:16px 20px;'
+                    f'border-radius:10px;margin-bottom:14px">'
+                    f'<div style="font-size:16px;font-weight:700">宏观环境对 {r["ticker"]} 的综合影响</div>'
+                    f'<div style="font-size:13px;opacity:0.9;margin-top:6px">'
+                    f'宏观评分：{macro_sc:+d} &nbsp;|&nbsp; 新闻情绪：{"正面" if news_sc>0.1 else "负面" if news_sc<-0.1 else "中性"} &nbsp;|&nbsp; 行业：{s_label}'
+                    f'</div></div>', unsafe_allow_html=True
+                )
+
+                # 行业敏感度分析
+                ml1, ml2 = st.columns(2)
+                with ml1:
+                    st.markdown("**📌 行业宏观敏感度**")
+                    st.markdown(
+                        f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 14px;'
+                        f'font-size:13px;line-height:1.8">'
+                        f'<b>{s_label}</b>：{s_desc}</div>',
+                        unsafe_allow_html=True
+                    )
+                    # Beta影响
+                    if beta:
+                        if beta > 1.5:
+                            beta_msg = f"Beta={beta:.2f}，高波动性股票，宏观利空时跌幅可能超过大盘{(beta-1)*100:.0f}%，利好时涨幅也相应放大。"
+                        elif beta > 1.0:
+                            beta_msg = f"Beta={beta:.2f}，波动性略高于大盘，宏观信号对本股影响被放大。"
+                        elif beta > 0.5:
+                            beta_msg = f"Beta={beta:.2f}，波动性低于大盘，宏观冲击影响相对温和。"
+                        else:
+                            beta_msg = f"Beta={beta:.2f}，防御性极强，几乎不受宏观周期影响。"
+                        st.markdown(
+                            f'<div style="background:#F0F4FF;border-radius:8px;padding:10px 14px;'
+                            f'font-size:13px;line-height:1.7;margin-top:8px">'
+                            f'⚡ <b>波动敏感度</b>：{beta_msg}</div>',
+                            unsafe_allow_html=True
+                        )
+
+                with ml2:
+                    st.markdown("**📋 关键宏观信号对本股影响**")
+                    for icon, title, desc in macro_sig[:4]:
+                        bg  = {"🟢":"#E1F5EE","🟡":"#FAEEDA","🟠":"#FDF0EC","🔴":"#FCEBEB"}.get(icon,"#F5F5F5")
+                        bdr = {"🟢":"#0F6E56","🟡":"#BA7517","🟠":"#D85A30","🔴":"#A32D2D"}.get(icon,"#999")
+                        st.markdown(
+                            f'<div style="background:{bg};border-left:3px solid {bdr};'
+                            f'padding:8px 12px;border-radius:5px;margin-bottom:6px;font-size:12px">'
+                            f'<b>{icon} {title}</b><br>{desc}</div>',
+                            unsafe_allow_html=True
+                        )
+
+                # 相关新闻（过滤与该股相关的）
+                ticker_l = r["ticker"].lower()
+                name_l   = r.get("name","").lower()[:10]
+                relevant_news = [
+                    n for n in news_items
+                    if ticker_l in n["title"].lower() or name_l in n["title"].lower()
+                ] if news_items else []
+
+                if relevant_news:
+                    st.markdown(f"**📰 与 {r['ticker']} 相关的最新新闻**")
+                    for n in relevant_news[:3]:
+                            st.markdown(f"• {n['title']} _{n['pub']}_")
+                elif news_items:
+                    st.caption("暂无直接相关新闻，显示行业背景新闻请前往「宏观分析」Tab查看。")
+
+                # 综合操作建议
+                st.markdown("**🎯 宏观视角下的操作建议**")
+                tech_rating = r["rating"]
+                if combined_score > 15 and tech_rating in ("强力买入","买入"):
+                    final = ("🚀 强力建议", "#0F6E56",
+                             f"技术面{tech_rating} + 宏观环境正面 + {s_label}受益，三重共振。建议积极布局，可适当提高仓位。")
+                elif combined_score > 0 and tech_rating in ("强力买入","买入","持有"):
+                    final = ("📈 建议买入", "#1D9E75",
+                             f"技术面{tech_rating}，宏观中性偏正，{s_label}无明显逆风。建议正常仓位参与。")
+                elif combined_score < -15 and tech_rating in ("卖出","强力卖出"):
+                    final = ("💥 强烈规避", "#A32D2D",
+                             f"技术面{tech_rating} + 宏观环境负面 + {s_label}面临逆风。建议清仓或空仓等待。")
+                elif combined_score < 0 and tech_rating in ("卖出","强力卖出","持有"):
+                    final = ("📉 建议减仓", "#D85A30",
+                             f"技术面{tech_rating}，宏观有逆风，{s_label}面临压力。建议降低仓位至半仓以下。")
+                else:
+                    final = ("⚖️ 中性持有", "#BA7517",
+                             f"技术面{tech_rating}，宏观信号混杂，建议持仓观望，等待更明确信号后再加减仓。")
+
+                st.markdown(
+                    f'<div style="background:{final[1]};color:white;padding:14px 18px;'
+                    f'border-radius:8px;font-size:14px;line-height:1.8">'
+                    f'<b>{final[0]}</b><br>{final[2]}</div>',
+                    unsafe_allow_html=True
+                )
 
             st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
