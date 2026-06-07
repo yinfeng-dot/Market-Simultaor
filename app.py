@@ -931,7 +931,21 @@ with tabs[4]:
             paths_bull = generate_gbm_paths(s0, mu_bull, sig_bull, time_horizon, simulations, seed=42)
             paths_bear = generate_gbm_paths(s0, mu_bear, sig_bear, time_horizon, simulations, seed=42)
 
-            time_axis = np.arange(0, time_horizon + 1)
+            from datetime import datetime
+            import pandas as _pd3
+            current_year = datetime.now().year
+            # X轴用实际年份
+            if time_horizon >= 12:
+                # 按年显示
+                step       = time_horizon // 12
+                time_years = [current_year + i/12 for i in range(time_horizon + 1)]
+                x_labels   = [current_year + i/12 for i in range(time_horizon + 1)]
+                x_title    = "年份"
+            else:
+                time_years = list(range(time_horizon + 1))
+                x_labels   = time_years
+                x_title    = "月份"
+
             fig_trend = go.Figure()
             for lbl, paths, color in [
                 ("📊 基准", paths_base, "#534AB7"),
@@ -940,7 +954,7 @@ with tabs[4]:
             ]:
                 for i in range(paths.shape[1]):
                     fig_trend.add_trace(go.Scatter(
-                        x=time_axis, y=paths[:, i], mode="lines",
+                        x=x_labels, y=paths[:, i], mode="lines",
                         line=dict(color=color, width=2.5 if i==0 else 1,
                                   dash="solid" if i==0 else "dot"),
                         opacity=0.9 if i==0 else 0.25,
@@ -953,11 +967,23 @@ with tabs[4]:
                                 annotation_text=f" 当前价格 ${s0:.2f}",
                                 annotation_position="right",
                                 annotation_font=dict(size=11))
+
+            # X轴刻度：整数年份
+            tick_years  = list(range(current_year, current_year + time_horizon//12 + 1,
+                                     max(1, time_horizon//12//8)))
+            tick_vals   = [y for y in tick_years]
+
             fig_trend.update_layout(
                 height=520,
                 title=dict(text=f"{params['name']} ({auto_ticker}) · {horizon_sel}多情景GBM预测",
                            font=dict(size=14)),
-                xaxis_title=f"时间（{'年' if time_horizon>=60 else '月'}）",
+                xaxis=dict(
+                    title=x_title,
+                    tickmode="array",
+                    tickvals=tick_vals,
+                    ticktext=[str(y) for y in tick_vals],
+                    showgrid=True, gridcolor="#eeeeee",
+                ),
                 yaxis_title="预测价格 ($)",
                 plot_bgcolor="#fafafa",
                 hovermode="x unified",
@@ -1023,7 +1049,18 @@ with tabs[4]:
         paths_bull = generate_gbm_paths(s0, mu_bull, sig_bull, time_horizon, simulations, seed=42)
         paths_bear = generate_gbm_paths(s0, mu_bear, sig_bear, time_horizon, simulations, seed=42)
 
-        time_axis = np.arange(0, time_horizon + 1)
+        from datetime import datetime as _dt
+        _cur_year = _dt.now().year
+        if time_horizon >= 12:
+            _x_labels = [_cur_year + i/12 for i in range(time_horizon + 1)]
+            _tick_yrs = list(range(_cur_year, _cur_year + time_horizon//12 + 1,
+                                   max(1, time_horizon//12//8)))
+            _x_title  = "年份"
+        else:
+            _x_labels = list(range(time_horizon + 1))
+            _tick_yrs = _x_labels
+            _x_title  = "月份"
+
         fig_trend = go.Figure()
         for lbl, paths, color in [
             ("📊 基准", paths_base, "#534AB7"),
@@ -1032,7 +1069,7 @@ with tabs[4]:
         ]:
             for i in range(paths.shape[1]):
                 fig_trend.add_trace(go.Scatter(
-                    x=time_axis, y=paths[:, i], mode="lines",
+                    x=_x_labels, y=paths[:, i], mode="lines",
                     line=dict(color=color, width=2 if i==0 else 1,
                               dash="solid" if i==0 else "dot"),
                     opacity=0.9 if i==0 else 0.3,
@@ -1041,7 +1078,13 @@ with tabs[4]:
         fig_trend.update_layout(
             height=500,
             title=f"未来{horizon_sel_m}多情景价格演化路径（GBM蒙特卡洛）",
-            xaxis_title=f"时间（{'年' if time_horizon>=60 else '月'}）",
+            xaxis=dict(
+                title=_x_title,
+                tickmode="array",
+                tickvals=_tick_yrs,
+                ticktext=[str(y) for y in _tick_yrs],
+                showgrid=True, gridcolor="#eeeeee",
+            ),
             yaxis_title="预测资产价格 ($)",
             plot_bgcolor="#fafafa", hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
