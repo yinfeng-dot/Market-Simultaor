@@ -1018,7 +1018,7 @@ with tabs[5]:
                     marker=dict(size=6, color=color,
                                 line=dict(color="white", width=1.5)),
                     fill="tozeroy",
-                    fillcolor=color.replace("#", "rgba(").rstrip(")") + ",0.08)" if color.startswith("#") else color,
+                    fillcolor=f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},0.08)",
                     hovertemplate=f"<b>%{{x}}</b><br>{ylabel}: %{{y:.2f}}<extra></extra>",
                 ))
                 # 最新值标注
