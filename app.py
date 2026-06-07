@@ -899,6 +899,72 @@ with tabs[4]:
         else:
             # 展示自动填充的参数
             st.success(f"✅ 已自动获取 {params['name']} ({params['ticker']}) 实时数据")
+
+            # ── 投资金额设置 ──────────────────────────────────────────────
+            st.subheader("💰 投资金额设置")
+            inv_c1, inv_c2, inv_c3 = st.columns([2, 1, 2])
+            with inv_c1:
+                invest_amount = st.number_input(
+                    "投资金额", min_value=0.0, value=10000.0, step=1000.0,
+                    format="%.2f", help="输入你计划投入的金额"
+                )
+            with inv_c2:
+                currency = st.selectbox("货币", [
+                    "USD 🇺🇸", "EUR 🇪🇺", "GBP 🇬🇧", "CNY 🇨🇳",
+                    "JPY 🇯🇵", "HKD 🇭🇰", "SGD 🇸🇬", "KRW 🇰🇷",
+                    "AUD 🇦🇺", "CAD 🇨🇦", "CHF 🇨🇭", "INR 🇮🇳",
+                    "MXN 🇲🇽", "BRL 🇧🇷", "SEK 🇸🇪", "NOK 🇳🇴",
+                ])
+
+            # 实时汇率（用yfinance抓取）
+            @st.cache_data(ttl=3600)
+            def get_fx_rate(currency_code: str) -> float:
+                if currency_code == "USD": return 1.0
+                try:
+                    import yfinance as yf
+                    ticker_map = {
+                        "EUR":"EURUSD=X","GBP":"GBPUSD=X","CNY":"CNY=X",
+                        "JPY":"JPY=X","HKD":"HKD=X","SGD":"SGD=X",
+                        "KRW":"KRW=X","AUD":"AUDUSD=X","CAD":"CADUSD=X",
+                        "CHF":"CHF=X","INR":"INR=X","MXN":"MXN=X",
+                        "BRL":"BRL=X","SEK":"SEK=X","NOK":"NOK=X",
+                    }
+                    sym  = ticker_map.get(currency_code)
+                    if not sym: return 1.0
+                    hist = yf.Ticker(sym).history(period="2d")
+                    if hist.empty: return 1.0
+                    rate = float(hist["Close"].iloc[-1])
+                    # For XXX/USD pairs (EUR, GBP, AUD, CAD) rate is already USD per unit
+                    # For USD/XXX pairs (JPY, CNY, HKD etc.) rate is units per USD → invert
+                    direct = ["EUR","GBP","AUD"]
+                    return rate if currency_code in direct else 1.0/rate
+                except:
+                    # Fallback static rates
+                    fallback = {
+                        "EUR":1.08,"GBP":1.27,"CNY":0.138,"JPY":0.0067,
+                        "HKD":0.128,"SGD":0.74,"KRW":0.00072,"AUD":0.65,
+                        "CAD":0.73,"CHF":1.10,"INR":0.012,"MXN":0.052,
+                        "BRL":0.18,"SEK":0.093,"NOK":0.092,
+                    }
+                    return fallback.get(currency_code, 1.0)
+
+            curr_code = currency.split()[0]
+            fx_rate   = get_fx_rate(curr_code)
+            invest_usd = invest_amount * fx_rate
+
+            with inv_c3:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if curr_code != "USD":
+                    st.info(f"≈ **${invest_usd:,.2f} USD** | 汇率: 1 {curr_code} = {fx_rate:.4f} USD")
+                else:
+                    st.info(f"投资金额：**${invest_usd:,.2f} USD**")
+
+            # 计算可购买股数
+            shares = invest_usd / params["price"] if params["price"] > 0 else 0
+            st.caption(f"📊 以当前价格 ${params['price']:.2f} 可购入约 **{shares:.2f} 股** {params['ticker']}")
+
+            st.divider()
+
             p1, p2, p3, p4, p5 = st.columns(5)
             p1.metric("当前价格",    f"${params['price']:.2f}")
             p2.metric("年化预期收益", f"{params['mu']*100:+.1f}%",
@@ -930,6 +996,11 @@ with tabs[4]:
             paths_base = generate_gbm_paths(s0, mu_base, sig_base, time_horizon, simulations, seed=42)
             paths_bull = generate_gbm_paths(s0, mu_bull, sig_bull, time_horizon, simulations, seed=42)
             paths_bear = generate_gbm_paths(s0, mu_bear, sig_bear, time_horizon, simulations, seed=42)
+
+            # 将价格路径转换为投资组合价值
+            port_base = paths_base * shares
+            port_bull = paths_bull * shares
+            port_bear = paths_bear * shares
 
             from datetime import datetime
             import pandas as _pd3
@@ -984,7 +1055,7 @@ with tabs[4]:
                     ticktext=[str(y) for y in tick_vals],
                     showgrid=True, gridcolor="#eeeeee",
                 ),
-                yaxis_title="预测价格 ($)",
+                yaxis_title="价格 ($)",
                 plot_bgcolor="#fafafa",
                 hovermode="x unified",
                 legend=dict(orientation="h", y=1.08, x=0),
@@ -992,17 +1063,59 @@ with tabs[4]:
             )
             st.plotly_chart(fig_trend, use_container_width=True)
 
-            # 期末汇总
+            # ── 期末汇总：股价 + 投资组合价值 ──
+            bull_end_p = np.mean(paths_bull[-1])
+            base_end_p = np.mean(paths_base[-1])
+            bear_end_p = np.mean(paths_bear[-1])
+            bull_port  = np.mean(port_bull[-1])
+            base_port  = np.mean(port_base[-1])
+            bear_port  = np.mean(port_bear[-1])
+
+            def fmt_val(v_usd, code, rate):
+                v_local = v_usd / rate if rate > 0 else v_usd
+                sym = {"USD":"$","EUR":"€","GBP":"£","CNY":"¥","JPY":"¥",
+                       "HKD":"HK$","SGD":"S$","KRW":"₩","AUD":"A$",
+                       "CAD":"C$","CHF":"Fr","INR":"₹","MXN":"MX$",
+                       "BRL":"R$","SEK":"kr","NOK":"kr"}.get(code,"$")
+                if v_local >= 1e9:   return f"{sym}{v_local/1e9:.2f}B"
+                elif v_local >= 1e6: return f"{sym}{v_local/1e6:.2f}M"
+                elif v_local >= 1e3: return f"{sym}{v_local/1e3:.2f}K"
+                else:                return f"{sym}{v_local:.2f}"
+
+            st.subheader(f"📈 {horizon_sel}后投资组合预测（初始投入 {fmt_val(invest_usd, curr_code, fx_rate)}）")
             c1, c2, c3 = st.columns(3)
-            bull_end = np.mean(paths_bull[-1])
-            base_end = np.mean(paths_base[-1])
-            bear_end = np.mean(paths_bear[-1])
-            c1.metric("🚀 乐观情景均值", f"${bull_end:.2f}",
-                      f"{(bull_end/s0-1)*100:+.1f}%")
-            c2.metric("📊 基准情景均值", f"${base_end:.2f}",
-                      f"{(base_end/s0-1)*100:+.1f}%", delta_color="off")
-            c3.metric("🐻 悲观情景均值", f"${bear_end:.2f}",
-                      f"{(bear_end/s0-1)*100:+.1f}%", delta_color="inverse")
+            c1.metric(
+                "🚀 乐观情景",
+                fmt_val(bull_port, curr_code, fx_rate),
+                f"股价 ${bull_end_p:.2f}  |  回报 {(bull_port/invest_usd-1)*100:+.1f}%"
+            )
+            c2.metric(
+                "📊 基准情景",
+                fmt_val(base_port, curr_code, fx_rate),
+                f"股价 ${base_end_p:.2f}  |  回报 {(base_port/invest_usd-1)*100:+.1f}%",
+                delta_color="off"
+            )
+            c3.metric(
+                "🐻 悲观情景",
+                fmt_val(bear_port, curr_code, fx_rate),
+                f"股价 ${bear_end_p:.2f}  |  回报 {(bear_port/invest_usd-1)*100:+.1f}%",
+                delta_color="inverse"
+            )
+
+            if invest_usd > 0:
+                st.markdown(
+                    f'<div style="background:#F8F9FA;border-radius:8px;padding:12px 16px;'
+                    f'font-size:13px;line-height:2;margin-top:8px">'
+                    f'💡 <b>投资回报摘要</b>（初始投入 {fmt_val(invest_usd,curr_code,fx_rate)} · {shares:.2f}股）<br>'
+                    f'🚀 乐观：{fmt_val(invest_usd,curr_code,fx_rate)} → <b>{fmt_val(bull_port,curr_code,fx_rate)}</b>'
+                    f'（{(bull_port/invest_usd-1)*100:+.1f}%，年化约{((bull_port/invest_usd)**(12/time_horizon)-1)*100:+.1f}%）<br>'
+                    f'📊 基准：{fmt_val(invest_usd,curr_code,fx_rate)} → <b>{fmt_val(base_port,curr_code,fx_rate)}</b>'
+                    f'（{(base_port/invest_usd-1)*100:+.1f}%，年化约{((base_port/invest_usd)**(12/time_horizon)-1)*100:+.1f}%）<br>'
+                    f'🐻 悲观：{fmt_val(invest_usd,curr_code,fx_rate)} → <b>{fmt_val(bear_port,curr_code,fx_rate)}</b>'
+                    f'（{(bear_port/invest_usd-1)*100:+.1f}%，年化约{((bear_port/invest_usd)**(12/time_horizon)-1)*100:+.1f}%）'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
             # 参数来源说明
             st.subheader("📋 参数来源说明")
@@ -1085,7 +1198,7 @@ with tabs[4]:
                 ticktext=[str(y) for y in _tick_yrs],
                 showgrid=True, gridcolor="#eeeeee",
             ),
-            yaxis_title="预测资产价格 ($)",
+            yaxis_title="价格 ($)",
             plot_bgcolor="#fafafa", hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         )
