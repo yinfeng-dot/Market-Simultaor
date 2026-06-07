@@ -821,43 +821,240 @@ with tabs[3]:
 
 # ── (实时市场已合并到Tab1) ──────────────────────────────────────────────────────
 
-# ── Tab 5: 趋势预测 ──────────────────────────────────────────────────────────────
+# ── Tab 5: 趋势预测 ─────────────────────────────────────────────────────────────
 with tabs[4]:
-    st.subheader("🔮 核心资产 24 个月多情景价格趋势模拟")
-    col1,col2,col3=st.columns(3)
-    with col1:
-        s0=st.number_input("初始资产价格 ($)",min_value=10.0,value=100.0,step=5.0)
-        time_horizon=st.slider("预测周期 (月)",6,36,24)
-    with col2:
-        base_mu=st.slider("基准年化预期收益率 (μ)",-0.5,1.0,0.15,step=0.05)
-        base_sigma=st.slider("基准年化波动率 (σ)",0.1,1.5,0.40,step=0.05)
-    with col3:
-        macro_shock=st.slider("宏观情绪冲击因子",-5.0,5.0,0.0,step=0.5)
-        simulations=st.selectbox("每情景模拟路径数",[5,10,20],index=0)
+    st.subheader("🔮 核心资产多情景价格趋势模拟")
+
+    # ── 自动/手动模式切换 ──
+    t5_col1, t5_col2 = st.columns([1, 2])
+    with t5_col1:
+        auto_trend = st.toggle("🤖 自动填充市场数据", value=False,
+                               help="从实时市场数据自动推算股票价格、波动率和预期收益率")
+    with t5_col2:
+        if auto_trend:
+            st.info("请在下方选择一支股票，系统将自动从雅虎财经获取实时数据填充参数")
+
     st.divider()
 
-    mu_base=base_mu+(macro_shock*0.02); mu_bull=base_mu+0.30+(macro_shock*0.05); mu_bear=base_mu-0.40+(macro_shock*0.05)
-    sig_base=base_sigma; sig_bull=max(0.1,base_sigma-0.10); sig_bear=base_sigma+0.30
-    paths_base=generate_gbm_paths(s0,mu_base,sig_base,time_horizon,simulations,seed=42)
-    paths_bull=generate_gbm_paths(s0,mu_bull,sig_bull,time_horizon,simulations,seed=42)
-    paths_bear=generate_gbm_paths(s0,mu_bear,sig_bear,time_horizon,simulations,seed=42)
+    if auto_trend:
+        # ── 股票选择 ──
+        t5_ticker_presets = {
+            "纳斯达克ETF": "QQQ", "标普500ETF": "SPY",
+            "英伟达": "NVDA", "苹果": "AAPL", "微软": "MSFT",
+            "特斯拉": "TSLA", "谷歌": "GOOGL", "亚马逊": "AMZN",
+        }
+        t5c1, t5c2 = st.columns([2, 2])
+        with t5c1:
+            preset_name = st.selectbox("快速选择热门资产",
+                                       ["自定义"] + list(t5_ticker_presets.keys()))
+        with t5c2:
+            if preset_name == "自定义":
+                auto_ticker = st.text_input("输入股票代码", value="QQQ",
+                                             placeholder="AAPL / TSLA / 0700.HK").upper()
+            else:
+                auto_ticker = t5_ticker_presets[preset_name]
+                st.markdown(f"**已选择：{auto_ticker}**")
 
-    fig_trend=go.Figure(); time_axis=np.arange(0,time_horizon+1)
-    for lbl,paths,color in [("📊 基准",paths_base,"#534AB7"),("🚀 乐观",paths_bull,"#1D9E75"),("🐻 悲观",paths_bear,"#D85A30")]:
-        for i in range(paths.shape[1]):
-            fig_trend.add_trace(go.Scatter(x=time_axis,y=paths[:,i],mode="lines",
-                line=dict(color=color,width=2 if i==0 else 1,dash="solid" if i==0 else "dot"),
-                opacity=0.9 if i==0 else 0.3,name=f"{lbl} 情景",showlegend=(i==0)))
-    fig_trend.update_layout(height=500,title=f"未来{time_horizon}个月多情景价格演化路径(GBM蒙特卡洛)",
-        xaxis_title="时间 (月)",yaxis_title="预测资产价格 ($)",plot_bgcolor="#fafafa",
-        hovermode="x unified",legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="right",x=1))
-    st.plotly_chart(fig_trend, use_container_width=True)
+        horizon_map  = {"1年": 12, "5年": 60, "10年": 120, "20年": 240}
+        horizon_sel  = st.selectbox("预测周期", list(horizon_map.keys()), index=1)
+        time_horizon = horizon_map[horizon_sel]
+        simulations  = st.selectbox("每情景路径数", [5, 10, 20], index=0)
 
-    c1,c2,c3=st.columns(3)
-    c1.metric("🚀 乐观情景均值",f"${np.mean(paths_bull[-1]):.2f}",f"{(np.mean(paths_bull[-1])/s0-1)*100:.1f}%")
-    c2.metric("📊 基准情景均值",f"${np.mean(paths_base[-1]):.2f}",f"{(np.mean(paths_base[-1])/s0-1)*100:.1f}%",delta_color="off")
-    c3.metric("🐻 悲观情景均值",f"${np.mean(paths_bear[-1]):.2f}",f"{(np.mean(paths_bear[-1])/s0-1)*100:.1f}%",delta_color="inverse")
+        @st.cache_data(ttl=300)
+        def fetch_ticker_params(ticker: str):
+            try:
+                import yfinance as yf, numpy as np_t
+                t    = yf.Ticker(ticker)
+                hist = t.history(period="1y")
+                if hist.empty or len(hist) < 20:
+                    return None
+                close  = hist["Close"].dropna()
+                price  = float(close.iloc[-1])
+                rets   = close.pct_change().dropna()
+                mu_ann = float(rets.mean() * 252)
+                sig_ann= float(rets.std() * (252**0.5))
+                sharpe = mu_ann / sig_ann if sig_ann > 0 else 0
+                info   = {}
+                try: info = t.info
+                except: pass
+                name   = info.get("longName", ticker)
+                sector = info.get("sector", "")
+                beta   = info.get("beta", 1.0) or 1.0
+                return {
+                    "ticker": ticker, "name": name, "sector": sector,
+                    "price": price, "mu": round(mu_ann, 3),
+                    "sigma": round(sig_ann, 3), "sharpe": round(sharpe, 2),
+                    "beta": beta,
+                }
+            except Exception as e:
+                return {"error": str(e)}
 
+        with st.spinner(f"正在从雅虎财经获取 {auto_ticker} 数据..."):
+            params = fetch_ticker_params(auto_ticker)
+
+        if params is None:
+            st.error("数据不足，请尝试其他股票代码。")
+        elif "error" in params:
+            st.error(f"获取失败：{params['error']}")
+        else:
+            # 展示自动填充的参数
+            st.success(f"✅ 已自动获取 {params['name']} ({params['ticker']}) 实时数据")
+            p1, p2, p3, p4, p5 = st.columns(5)
+            p1.metric("当前价格",    f"${params['price']:.2f}")
+            p2.metric("年化预期收益", f"{params['mu']*100:+.1f}%",
+                      "历史均值", delta_color="normal" if params["mu"]>0 else "inverse")
+            p3.metric("年化波动率",   f"{params['sigma']*100:.1f}%",
+                      "历史标准差", delta_color="off")
+            p4.metric("夏普比率",     f"{params['sharpe']:.2f}",
+                      "风险调整收益", delta_color="normal" if params["sharpe"]>0.5 else "inverse")
+            p5.metric("Beta",        f"{params['beta']:.2f}")
+
+            # 宏观冲击因子（根据VIX自动调整）
+            live_t5   = fetch_market_data()
+            vix_t5    = live_t5.get("^VIX", {}).get("price", 20) if live_t5 else 20
+            macro_t5  = round((20 - vix_t5) * 0.1, 1)  # VIX低=正向冲击
+            st.caption(f"📡 宏观冲击因子已根据当前VIX（{vix_t5:.1f}）自动设为 {macro_t5:+.1f}")
+
+            s0         = params["price"]
+            base_mu    = params["mu"]
+            base_sigma = params["sigma"]
+            macro_shock = macro_t5
+
+            mu_base  = base_mu + (macro_shock * 0.02)
+            mu_bull  = base_mu + 0.25 + (macro_shock * 0.05)
+            mu_bear  = base_mu - 0.30 + (macro_shock * 0.05)
+            sig_base = base_sigma
+            sig_bull = max(0.05, base_sigma - 0.08)
+            sig_bear = base_sigma + 0.20
+
+            paths_base = generate_gbm_paths(s0, mu_base, sig_base, time_horizon, simulations, seed=42)
+            paths_bull = generate_gbm_paths(s0, mu_bull, sig_bull, time_horizon, simulations, seed=42)
+            paths_bear = generate_gbm_paths(s0, mu_bear, sig_bear, time_horizon, simulations, seed=42)
+
+            time_axis = np.arange(0, time_horizon + 1)
+            fig_trend = go.Figure()
+            for lbl, paths, color in [
+                ("📊 基准", paths_base, "#534AB7"),
+                ("🚀 乐观", paths_bull, "#1D9E75"),
+                ("🐻 悲观", paths_bear, "#D85A30"),
+            ]:
+                for i in range(paths.shape[1]):
+                    fig_trend.add_trace(go.Scatter(
+                        x=time_axis, y=paths[:, i], mode="lines",
+                        line=dict(color=color, width=2.5 if i==0 else 1,
+                                  dash="solid" if i==0 else "dot"),
+                        opacity=0.9 if i==0 else 0.25,
+                        name=f"{lbl} 情景", showlegend=(i==0),
+                    ))
+
+            # 当前价格基准线
+            fig_trend.add_hline(y=s0, line_dash="dash", line_color="#888",
+                                line_width=1,
+                                annotation_text=f" 当前价格 ${s0:.2f}",
+                                annotation_position="right",
+                                annotation_font=dict(size=11))
+            fig_trend.update_layout(
+                height=520,
+                title=dict(text=f"{params['name']} ({auto_ticker}) · {horizon_sel}多情景GBM预测",
+                           font=dict(size=14)),
+                xaxis_title=f"时间（{'年' if time_horizon>=60 else '月'}）",
+                yaxis_title="预测价格 ($)",
+                plot_bgcolor="#fafafa",
+                hovermode="x unified",
+                legend=dict(orientation="h", y=1.08, x=0),
+                margin=dict(t=70, b=50, l=60, r=100),
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+
+            # 期末汇总
+            c1, c2, c3 = st.columns(3)
+            bull_end = np.mean(paths_bull[-1])
+            base_end = np.mean(paths_base[-1])
+            bear_end = np.mean(paths_bear[-1])
+            c1.metric("🚀 乐观情景均值", f"${bull_end:.2f}",
+                      f"{(bull_end/s0-1)*100:+.1f}%")
+            c2.metric("📊 基准情景均值", f"${base_end:.2f}",
+                      f"{(base_end/s0-1)*100:+.1f}%", delta_color="off")
+            c3.metric("🐻 悲观情景均值", f"${bear_end:.2f}",
+                      f"{(bear_end/s0-1)*100:+.1f}%", delta_color="inverse")
+
+            # 参数来源说明
+            st.subheader("📋 参数来源说明")
+            for label, val, source in [
+                ("初始价格",    f"${s0:.2f}",               "雅虎财经实时收盘价"),
+                ("年化收益率μ", f"{base_mu*100:+.1f}%",     "过去1年日收益率均值×252（年化）"),
+                ("年化波动率σ", f"{base_sigma*100:.1f}%",   "过去1年日收益率标准差×√252（年化）"),
+                ("宏观冲击",    f"{macro_shock:+.1f}",       f"根据当前VIX={vix_t5:.1f}自动计算"),
+                ("乐观μ调整",   f"{mu_bull*100:+.1f}%",     "历史均值 + 25%乐观溢价 + 宏观冲击"),
+                ("悲观μ调整",   f"{mu_bear*100:+.1f}%",     "历史均值 - 30%悲观折扣 + 宏观冲击"),
+            ]:
+                st.markdown(
+                    f'<div style="display:flex;gap:16px;align-items:center;padding:8px 12px;'
+                    f'background:#F8F9FA;border-radius:6px;margin-bottom:5px;font-size:13px">'
+                    f'<b style="min-width:120px;color:#534AB7">{label}</b>'
+                    f'<span style="min-width:70px;font-weight:700">{val}</span>'
+                    f'<span style="color:#666">{source}</span></div>',
+                    unsafe_allow_html=True
+                )
+
+    else:
+        # ── 手动模式（原来的交互界面）──
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            s0              = st.number_input("初始资产价格 ($)", min_value=10.0, value=100.0, step=5.0)
+            horizon_map_m   = {"1年": 12, "5年": 60, "10年": 120, "20年": 240}
+            horizon_sel_m   = st.selectbox("预测周期", list(horizon_map_m.keys()), index=1)
+            time_horizon    = horizon_map_m[horizon_sel_m]
+        with col2:
+            base_mu    = st.slider("基准年化预期收益率 (μ)", -0.5, 1.0, 0.15, step=0.05)
+            base_sigma = st.slider("基准年化波动率 (σ)",     0.1, 1.5, 0.40, step=0.05)
+        with col3:
+            macro_shock  = st.slider("宏观情绪冲击因子", -5.0, 5.0, 0.0, step=0.5)
+            simulations  = st.selectbox("每情景模拟路径数", [5, 10, 20], index=0)
+        st.divider()
+
+        mu_base  = base_mu + (macro_shock * 0.02)
+        mu_bull  = base_mu + 0.30 + (macro_shock * 0.05)
+        mu_bear  = base_mu - 0.40 + (macro_shock * 0.05)
+        sig_base = base_sigma
+        sig_bull = max(0.1, base_sigma - 0.10)
+        sig_bear = base_sigma + 0.30
+        paths_base = generate_gbm_paths(s0, mu_base, sig_base, time_horizon, simulations, seed=42)
+        paths_bull = generate_gbm_paths(s0, mu_bull, sig_bull, time_horizon, simulations, seed=42)
+        paths_bear = generate_gbm_paths(s0, mu_bear, sig_bear, time_horizon, simulations, seed=42)
+
+        time_axis = np.arange(0, time_horizon + 1)
+        fig_trend = go.Figure()
+        for lbl, paths, color in [
+            ("📊 基准", paths_base, "#534AB7"),
+            ("🚀 乐观", paths_bull, "#1D9E75"),
+            ("🐻 悲观", paths_bear, "#D85A30"),
+        ]:
+            for i in range(paths.shape[1]):
+                fig_trend.add_trace(go.Scatter(
+                    x=time_axis, y=paths[:, i], mode="lines",
+                    line=dict(color=color, width=2 if i==0 else 1,
+                              dash="solid" if i==0 else "dot"),
+                    opacity=0.9 if i==0 else 0.3,
+                    name=f"{lbl} 情景", showlegend=(i==0),
+                ))
+        fig_trend.update_layout(
+            height=500,
+            title=f"未来{horizon_sel_m}多情景价格演化路径（GBM蒙特卡洛）",
+            xaxis_title=f"时间（{'年' if time_horizon>=60 else '月'}）",
+            yaxis_title="预测资产价格 ($)",
+            plot_bgcolor="#fafafa", hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        )
+        st.plotly_chart(fig_trend, use_container_width=True)
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("🚀 乐观情景均值", f"${np.mean(paths_bull[-1]):.2f}",
+                  f"{(np.mean(paths_bull[-1])/s0-1)*100:.1f}%")
+        c2.metric("📊 基准情景均值", f"${np.mean(paths_base[-1]):.2f}",
+                  f"{(np.mean(paths_base[-1])/s0-1)*100:.1f}%", delta_color="off")
+        c3.metric("🐻 悲观情景均值", f"${np.mean(paths_bear[-1]):.2f}",
+                  f"{(np.mean(paths_bear[-1])/s0-1)*100:.1f}%", delta_color="inverse")
 
 # ── Tab 6: 宏观经济分析 ──────────────────────────────────────────────────────────
 with tabs[5]:
