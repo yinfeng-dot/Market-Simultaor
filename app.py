@@ -736,65 +736,48 @@ with tabs[5]:
 
     @st.cache_data(ttl=3600)
     def fetch_macro_data():
-        """从 yfinance 抓取宏观代理数据（备用：静态近期数据）"""
+        """从 FRED 免费API 抓取宏观数据"""
+        import urllib.request, json, datetime
+        BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
         results = {}
-
-        # 用 yfinance 抓取宏观代理指标
-        try:
-            import yfinance as yf
-            proxies = {
-                "^TNX":   ("DGS10",   "10年期国债收益率", "%",    "daily"),
-                "^VIX":   ("VIXCLS",  "波动率指数VIX",   "指数", "daily"),
-                "GLD":    ("GOLD",    "黄金ETF价格",     "$",    "daily"),
-                "TIP":    ("T10YIE",  "通胀保值债券",    "$",    "daily"),
-            }
-            for ticker, (sid, name, unit, freq) in proxies.items():
-                try:
-                    t = yf.Ticker(ticker)
-                    hist = t.history(period="3mo")
-                    if not hist.empty:
-                        vals  = [round(float(v), 2) for v in hist["Close"].dropna().values[-12:]]
-                        dates = [str(d)[:10] for d in hist.index[-12:]]
-                        if vals:
-                            results[sid] = {
-                                "name": name, "unit": unit, "freq": freq,
-                                "dates": dates, "values": vals,
-                                "latest": vals[-1],
-                                "prev": vals[-2] if len(vals)>=2 else vals[-1],
-                                "change": vals[-1]-vals[-2] if len(vals)>=2 else 0,
-                            }
-                except Exception:
-                    pass
-        except ImportError:
-            pass
-
-        # 静态备用数据（2026年6月最新公开数据）
-        static = {
-            "FEDFUNDS": ("联邦基金利率", "%",    "monthly",
-                         ["2025-12","2026-01","2026-02","2026-03","2026-04","2026-05"],
-                         [4.33, 4.33, 4.33, 4.33, 4.33, 4.33]),
-            "CPIAUCSL": ("CPI通胀率",    "%",    "monthly",
-                         ["2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],
-                         [315.5, 316.4, 317.1, 317.8, 318.2, 318.9]),
-            "UNRATE":   ("失业率",       "%",    "monthly",
-                         ["2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],
-                         [4.2, 4.1, 4.1, 4.0, 4.1, 4.2]),
-            "PAYEMS":   ("非农就业变化", "K",    "monthly",
-                         ["2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],
-                         [212, 307, 111, 151, 228, 177]),
-            "UMCSENT":  ("密歇根消费者信心","指数","monthly",
-                         ["2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],
-                         [71.8, 74.0, 71.1, 67.8, 57.0, 52.2]),
+        series = {
+            "PAYEMS":   ("非农就业人数", "千人", "monthly"),
+            "CPIAUCSL": ("CPI通胀率",    "%",    "monthly"),
+            "FEDFUNDS": ("联邦基金利率", "%",    "monthly"),
+            "GDP":      ("GDP增长率",    "十亿$","quarterly"),
+            "UNRATE":   ("失业率",       "%",    "monthly"),
+            "DGS10":    ("10年期国债收益率","%", "daily"),
+            "T10YIE":   ("10年通胀预期", "%",    "daily"),
+            "UMCSENT":  ("密歇根消费者信心", "指数", "monthly"),
         }
-        for sid, (name, unit, freq, dates, vals) in static.items():
-            if sid not in results:
-                results[sid] = {
-                    "name": name, "unit": unit, "freq": freq,
-                    "dates": dates, "values": vals,
-                    "latest": vals[-1], "prev": vals[-2],
-                    "change": vals[-1]-vals[-2],
-                    "static": True,
-                }
+        for sid, (name, unit, freq) in series.items():
+            try:
+                url = f"{BASE}{sid}&vintage_date=&realtime_start=&realtime_end="
+                req = urllib.request.Request(
+                    f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}",
+                    headers={"User-Agent": "Mozilla/5.0"}
+                )
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    lines = r.read().decode().strip().split("\n")
+                # 取最近12个数据点
+                data_lines = [l for l in lines[1:] if l.strip() and "." in l][-12:]
+                dates = [l.split(",")[0] for l in data_lines]
+                vals  = []
+                for l in data_lines:
+                    try: vals.append(float(l.split(",")[1]))
+                    except: vals.append(None)
+                vals = [v for v in vals if v is not None]
+                dates = dates[:len(vals)]
+                if vals:
+                    results[sid] = {
+                        "name": name, "unit": unit, "freq": freq,
+                        "dates": dates, "values": vals,
+                        "latest": vals[-1],
+                        "prev": vals[-2] if len(vals) >= 2 else vals[-1],
+                        "change": vals[-1] - vals[-2] if len(vals) >= 2 else 0,
+                    }
+            except Exception as e:
+                results[sid] = {"error": str(e), "name": name}
         return results
 
     def analyze_macro_impact(macro):
@@ -805,13 +788,7 @@ with tabs[5]:
         # CPI分析
         if "CPIAUCSL" in macro and "error" not in macro["CPIAUCSL"]:
             cpi = macro["CPIAUCSL"]
-            # YoY: compare latest vs 12 months ago; fallback to MoM change * 12
-            if len(cpi["values"]) >= 13:
-                cpi_yoy = ((cpi["latest"] / cpi["values"][-13]) - 1) * 100
-            elif len(cpi["values"]) >= 2:
-                cpi_yoy = cpi["change"] / cpi["prev"] * 100 * 12  # annualize MoM
-            else:
-                cpi_yoy = 3.0  # neutral default
+            cpi_yoy = ((cpi["latest"] / cpi["values"][-13]) - 1) * 100 if len(cpi["values"]) >= 13 else cpi["change"]
             if cpi_yoy < 2.5:
                 score += 15
                 signals.append(("🟢", "CPI通胀受控", f"同比+{cpi_yoy:.1f}%，低于美联储2%目标附近，降息预期上升，利多股市。"))
@@ -933,36 +910,33 @@ with tabs[5]:
     # 宏观指标总览
     st.subheader("📊 核心宏观指标（最新值）")
     macro_display = {
-        "FEDFUNDS": ("🏦 联邦基金利率", "%",  "美联储政策利率",    True),
-        "CPIAUCSL": ("📈 CPI指数",      "",   "消费者价格指数",    True),
-        "UNRATE":   ("📉 失业率",       "%",  "劳动市场健康度",    True),
-        "PAYEMS":   ("👷 非农就业变化", "K",  "月度新增就业（千）",False),
-        "DGS10":    ("📜 10年期国债",   "%",  "长端无风险利率",    True),
-        "T10YIE":   ("🌡️ 通胀保值债",  "$",  "通胀预期代理指标",  True),
-        "UMCSENT":  ("😊 消费者信心",   "",   "密歇根大学消费信心",False),
-        "VIXCLS":   ("⚡ VIX波动率",   "指数","市场恐慌程度",      True),
+        "PAYEMS":  ("👷 非农就业",     "K",  "新增就业人数（千）"),
+        "UNRATE":  ("📉 失业率",       "%",  "劳动市场健康度"),
+        "CPIAUCSL":("📈 CPI",         "",   "消费者价格指数"),
+        "FEDFUNDS":("🏦 联邦基金利率", "%",  "美联储政策利率"),
+        "DGS10":   ("📜 10年期国债",   "%",  "长端无风险利率"),
+        "T10YIE":  ("🌡️ 通胀预期",    "%",  "市场10年通胀预期"),
+        "UMCSENT": ("😊 消费者信心",   "",   "密歇根大学消费信心"),
+        "GDP":     ("🏭 GDP",         "$B", "实际国内生产总值"),
     }
-    # 数据来源标注
-    has_static = any(macro_data.get(sid,{}).get("static") for sid in macro_display)
-    if has_static:
-        st.caption("📋 部分数据为2026年5月最新公开数据（静态），实时代理指标来自市场价格")
-
     mcols = st.columns(4)
-    shown = 0
-    for sid, (label, unit, desc, is_bad_up) in macro_display.items():
+    for i, (sid, (label, unit, desc)) in enumerate(macro_display.items()):
         if sid in macro_data and "error" not in macro_data[sid]:
             d = macro_data[sid]
             chg = d["change"]
-            chg_str = f"{'+' if chg>=0 else ''}{chg:.2f}{unit}"
+            chg_str = f"{'+' if chg >= 0 else ''}{chg:.2f}{unit}"
+            # VIX-style: 失业率和CPI上升是利空，标红
+            is_bad_up = sid in ("UNRATE", "CPIAUCSL", "DGS10", "FEDFUNDS")
             delta_color = ("inverse" if is_bad_up else "normal") if chg != 0 else "off"
-            mcols[shown % 4].metric(
-                label=label, value=f"{d['latest']:.2f}{unit}",
-                delta=chg_str, delta_color=delta_color, help=desc,
+            mcols[i % 4].metric(
+                label=f"{label}",
+                value=f"{d['latest']:.2f}{unit}",
+                delta=chg_str,
+                delta_color=delta_color,
+                help=desc,
             )
-            shown += 1
-    # Fill empty slots
-    for _ in range(shown, 8):
-        mcols[_ % 4].metric(label="获取中...", value="—")
+        else:
+            mcols[i % 4].metric(label=label, value="获取中...")
 
     st.divider()
 
