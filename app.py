@@ -633,44 +633,174 @@ with tabs[1]:
                              yaxis_title="首日预期涨幅 (%)", plot_bgcolor="#fafafa", margin=dict(t=10))
     st.plotly_chart(fig_bubble, use_container_width=True)
 
-# ── Tab 3 ──────────────────────────────────────────────────────────────────────
+# ── Tab 3: 泡沫模拟 ─────────────────────────────────────────────────────────────
 with tabs[2]:
-    st.subheader("情景预设")
-    sc_cols=st.columns(4); chosen_sc=None
-    for i,(name,vals) in enumerate(SCENARIOS.items()):
-        if sc_cols[i].button(name, use_container_width=True): chosen_sc=vals
 
-    live_data=fetch_market_data(); auto_sentiment=market_to_sentiment(live_data)
-    if live_data:
-        st.caption(f"📡 实时市场情绪估算：**{auto_sentiment}/100**（基于纳斯达克+VIX+英伟达）")
+    live_data_sim  = fetch_market_data()
+    auto_sentiment = market_to_sentiment(live_data_sim)
+    auto_rate = 4.5
+    if live_data_sim and "^TNX" in live_data_sim:
+        auto_rate = round(live_data_sim["^TNX"]["price"], 2)
+    auto_retail = 70
+    if live_data_sim and "^VIX" in live_data_sim:
+        vix = live_data_sim["^VIX"]["price"]
+        auto_retail = max(20, min(90, int(100 - vix * 2)))
 
-    col_l,col_r=st.columns(2)
-    with col_l:
-        sentiment=st.slider("市场情绪（0=恐慌，100=狂热）",0,100,int(chosen_sc[0]) if chosen_sc else auto_sentiment)
-        rate=st.slider("利率环境（%）",1.0,8.0,float(chosen_sc[1]) if chosen_sc else 4.5,step=0.1)
-    with col_r:
-        ai_speed=st.slider("AI商业化速度（0=慢，100=快）",0,100,int(chosen_sc[2]) if chosen_sc else 60)
-        retail=st.slider("散户参与度（0=低，100=高）",0,100,int(chosen_sc[3]) if chosen_sc else 70)
+    mode_col1, mode_col2 = st.columns([1, 2])
+    with mode_col1:
+        auto_mode = st.toggle("🤖 自动驾驶模式", value=False,
+                              help="开启后从实时市场数据自动计算所有参数")
+    with mode_col2:
+        if auto_mode:
+            st.success(f"✅ 已接入实时数据 · 情绪={auto_sentiment} · 利率={auto_rate}% · 散户={auto_retail}")
+            if st.button("🔄 刷新实时参数", key="refresh_sim"):
+                st.cache_data.clear()
+                st.rerun()
+        else:
+            st.caption("💡 手动模式：拖动滑块或选择情景预设")
 
-    sim=simulate(sentiment,rate,ai_speed,retail)
-    r1,r2,r3=st.columns(3)
-    r1.metric("首日预期涨幅",f"+{sim['pop']}%")
-    r2.metric("6个月后收益",f"{'+' if sim['six_m']>=0 else ''}{sim['six_m']}%")
-    r3.metric("泡沫破裂概率",f"{sim['burst']}%","未来18个月内",delta_color="inverse")
+    st.divider()
 
-    temp_label=("极度过热" if sim["temp"]>80 else "中度过热" if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
-    st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
-    st.info(f"**{sim['label']}**\n\n{sim['desc']}")
+    if auto_mode:
+        sentiment = auto_sentiment
+        rate      = auto_rate
+        ai_speed  = 60
+        retail    = auto_retail
 
-    fig_gauge=go.Figure(go.Indicator(
-        mode="gauge+number", value=sim["burst"], title={"text":"泡沫破裂概率 (%)"},
-        gauge={"axis":{"range":[0,100]},
-               "bar":{"color":"#A32D2D" if sim["burst"]>65 else "#BA7517" if sim["burst"]>40 else "#1D9E75"},
-               "steps":[{"range":[0,40],"color":"#E1F5EE"},{"range":[40,70],"color":"#FAEEDA"},{"range":[70,100],"color":"#FCEBEB"}]},
-    ))
-    fig_gauge.update_layout(height=280,margin=dict(t=40,b=10))
-    st.plotly_chart(fig_gauge, use_container_width=True)
+        st.subheader("📡 实时数据驱动 · 四情景自动分析")
+        st.caption(f"基于当前市场：情绪={sentiment}/100 · 利率={rate}% · 散户参与={retail}/100")
 
+        scenarios_auto = {
+            "🚀 牛市顺风": simulate(min(sentiment+20,100), max(rate-0.5,1.0), min(ai_speed+20,100), min(retail+15,100)),
+            "📊 当前基准": simulate(sentiment, rate, ai_speed, retail),
+            "🐻 泡沫破裂": simulate(max(sentiment-20,0), rate+1.0, max(ai_speed-20,0), max(retail-20,0)),
+            "💥 系统崩溃": simulate(max(sentiment-40,0), rate+2.5, max(ai_speed-40,0), max(retail-40,0)),
+        }
+
+        colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
+        sc_cols4  = st.columns(4)
+        for i, (sc_name, sc_sim) in enumerate(scenarios_auto.items()):
+            with sc_cols4[i]:
+                c = colors_sc[i]
+                pop_str = f"+{sc_sim['pop']}%" if sc_sim['pop']>=0 else f"{sc_sim['pop']}%"
+                st.markdown(
+                    f'<div style="background:{c};color:white;border-radius:10px;'
+                    f'padding:14px 12px;text-align:center;margin-bottom:8px">'
+                    f'<div style="font-size:14px;font-weight:700">{sc_name}</div>'
+                    f'<div style="font-size:26px;font-weight:700;margin:6px 0">{pop_str}</div>'
+                    f'<div style="font-size:11px;opacity:0.85">首日预期涨幅</div></div>',
+                    unsafe_allow_html=True
+                )
+                six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
+                st.metric("6个月收益", six_str)
+                st.metric("泡沫破裂概率", f"{sc_sim['burst']}%", delta_color="inverse")
+                st.progress(sc_sim["temp"]/100, text=f"温度 {sc_sim['temp']}/100")
+
+        st.divider()
+
+        sim = scenarios_auto["📊 当前基准"]
+
+        loose = round(100 - (rate-1)/(8-1)*100)
+        fig_radar = go.Figure(go.Scatterpolar(
+            r=[sentiment, loose, ai_speed, retail, sentiment],
+            theta=["市场情绪","宽松程度","AI速度","散户参与","市场情绪"],
+            fill="toself",
+            fillcolor="rgba(83,74,183,0.15)",
+            line=dict(color="#534AB7", width=2),
+            marker=dict(size=6, color="#534AB7"),
+        ))
+        fig_radar.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0,100])),
+            showlegend=False, height=300,
+            title=dict(text="当前市场四维参数（实时）", font=dict(size=13)),
+            margin=dict(t=50,b=10),
+        )
+
+        fig_gauge2 = go.Figure(go.Indicator(
+            mode="gauge+number", value=sim["burst"],
+            title={"text":"泡沫破裂概率 (%)"},
+            gauge={
+                "axis":{"range":[0,100]},
+                "bar":{"color":"#A32D2D" if sim["burst"]>65 else "#BA7517" if sim["burst"]>40 else "#1D9E75"},
+                "steps":[{"range":[0,40],"color":"#E1F5EE"},
+                          {"range":[40,70],"color":"#FAEEDA"},
+                          {"range":[70,100],"color":"#FCEBEB"}],
+            },
+        ))
+        fig_gauge2.update_layout(height=300, margin=dict(t=50,b=10))
+
+        col_r, col_g = st.columns(2)
+        with col_r:
+            st.plotly_chart(fig_radar, use_container_width=True)
+        with col_g:
+            st.plotly_chart(fig_gauge2, use_container_width=True)
+
+        st.info(f"**{sim['label']}** — {sim['desc']}")
+
+        st.subheader("📋 实时参数来源")
+        vix_val = live_data_sim.get("^VIX",{}).get("price","N/A") if live_data_sim else "N/A"
+        for param, val, source, clr in [
+            ("市场情绪",    f"{sentiment}/100", "纳斯达克涨跌×3 + VIX权重 + 英伟达动量×2", "#534AB7"),
+            ("利率环境",    f"{rate}%",          "10年期美债收益率(^TNX)实时价格",          "#D85A30" if rate>4.5 else "#1D9E75"),
+            ("AI商业化速度",f"{ai_speed}/100",   "基准值60（未来接入AI公司营收数据）",        "#BA7517"),
+            ("散户参与度",  f"{retail}/100",     f"VIX反向计算：VIX越低=散户越活跃（当前VIX≈{vix_val}）","#185FA5"),
+        ]:
+            st.markdown(
+                f'<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;'
+                f'background:#F8F9FA;border-radius:8px;margin-bottom:6px;border-left:4px solid {clr}">'
+                f'<div style="min-width:110px;font-weight:600;color:{clr}">{param}</div>'
+                f'<div style="min-width:60px;font-size:15px;font-weight:700">{val}</div>'
+                f'<div style="font-size:12px;color:#666">{source}</div></div>',
+                unsafe_allow_html=True
+            )
+
+    else:
+        st.subheader("情景预设")
+        sc_cols = st.columns(4)
+        chosen_sc = None
+        for i, (name, vals) in enumerate(SCENARIOS.items()):
+            if sc_cols[i].button(name, use_container_width=True):
+                chosen_sc = vals
+
+        if live_data_sim:
+            st.caption(f"📡 实时市场情绪估算：**{auto_sentiment}/100**（基于纳斯达克+VIX+英伟达）")
+
+        col_l, col_r = st.columns(2)
+        with col_l:
+            sentiment = st.slider("市场情绪（0=恐慌，100=狂热）", 0, 100,
+                                  int(chosen_sc[0]) if chosen_sc else auto_sentiment)
+            rate      = st.slider("利率环境（%）", 1.0, 8.0,
+                                  float(chosen_sc[1]) if chosen_sc else auto_rate, step=0.1)
+        with col_r:
+            ai_speed  = st.slider("AI商业化速度（0=慢，100=快）", 0, 100,
+                                  int(chosen_sc[2]) if chosen_sc else 60)
+            retail    = st.slider("散户参与度（0=低，100=高）", 0, 100,
+                                  int(chosen_sc[3]) if chosen_sc else auto_retail)
+
+        sim = simulate(sentiment, rate, ai_speed, retail)
+        r1, r2, r3 = st.columns(3)
+        r1.metric("首日预期涨幅", f"+{sim['pop']}%")
+        r2.metric("6个月后收益", f"{'+' if sim['six_m']>=0 else ''}{sim['six_m']}%")
+        r3.metric("泡沫破裂概率", f"{sim['burst']}%", "未来18个月内", delta_color="inverse")
+
+        temp_label = ("极度过热" if sim["temp"]>80 else "中度过热"
+                      if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
+        st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
+        st.info(f"**{sim['label']}** — {sim['desc']}")
+
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number", value=sim["burst"],
+            title={"text":"泡沫破裂概率 (%)"},
+            gauge={
+                "axis":{"range":[0,100]},
+                "bar":{"color":"#A32D2D" if sim["burst"]>65 else "#BA7517" if sim["burst"]>40 else "#1D9E75"},
+                "steps":[{"range":[0,40],"color":"#E1F5EE"},
+                          {"range":[40,70],"color":"#FAEEDA"},
+                          {"range":[70,100],"color":"#FCEBEB"}],
+            },
+        ))
+        fig_gauge.update_layout(height=280, margin=dict(t=40,b=10))
+        st.plotly_chart(fig_gauge, use_container_width=True)
 # ── Tab 4 ──────────────────────────────────────────────────────────────────────
 with tabs[3]:
     st.subheader("历史泡沫周期对比")
