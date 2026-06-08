@@ -1117,6 +1117,177 @@ with tabs[4]:
                     unsafe_allow_html=True
                 )
 
+            # ── 蒙地卡罗完整模拟 ────────────────────────────────────────────
+            st.divider()
+            st.subheader("🎲 蒙地卡罗完整模拟")
+            st.caption("使用大量随机路径模拟，展示价格分布的置信区间和概率分析")
+
+            mc_n = st.select_slider("模拟路径数量", options=[100, 500, 1000, 5000], value=500)
+
+            with st.spinner(f"正在运行 {mc_n} 条蒙地卡罗路径..."):
+                mc_paths = generate_gbm_paths(s0, mu_base, sig_base, time_horizon, mc_n, seed=None)
+                mc_port  = mc_paths * shares if invest_usd > 0 else mc_paths
+
+            # 每个时间点的百分位数
+            p5   = np.percentile(mc_paths, 5,  axis=1)
+            p25  = np.percentile(mc_paths, 25, axis=1)
+            p50  = np.percentile(mc_paths, 50, axis=1)
+            p75  = np.percentile(mc_paths, 75, axis=1)
+            p95  = np.percentile(mc_paths, 95, axis=1)
+
+            from datetime import datetime as _dt2
+            _cy2 = _dt2.now().year
+            if time_horizon >= 12:
+                _x2 = [_cy2 + i/12 for i in range(time_horizon + 1)]
+                _ticks2 = list(range(_cy2, _cy2 + time_horizon//12 + 1,
+                                     max(1, time_horizon//12//8)))
+                _xtitle2 = "年份"
+            else:
+                _x2 = list(range(time_horizon + 1))
+                _ticks2 = _x2
+                _xtitle2 = "月份"
+
+            fig_mc = go.Figure()
+
+            # 90% 置信区间填充（浅蓝）
+            fig_mc.add_trace(go.Scatter(
+                x=_x2 + _x2[::-1], y=list(p95) + list(p5[::-1]),
+                fill="toself", fillcolor="rgba(83,74,183,0.08)",
+                line=dict(width=0), name="90% 置信区间",
+                hoverinfo="skip",
+            ))
+            # 50% 置信区间填充（中蓝）
+            fig_mc.add_trace(go.Scatter(
+                x=_x2 + _x2[::-1], y=list(p75) + list(p25[::-1]),
+                fill="toself", fillcolor="rgba(83,74,183,0.18)",
+                line=dict(width=0), name="50% 置信区间",
+                hoverinfo="skip",
+            ))
+            # P5/P95 边界线
+            fig_mc.add_trace(go.Scatter(
+                x=_x2, y=p95, mode="lines", name="P95（乐观95%）",
+                line=dict(color="#1D9E75", width=1.5, dash="dot"),
+            ))
+            fig_mc.add_trace(go.Scatter(
+                x=_x2, y=p5, mode="lines", name="P5（悲观5%）",
+                line=dict(color="#E24B4A", width=1.5, dash="dot"),
+            ))
+            # P25/P75
+            fig_mc.add_trace(go.Scatter(
+                x=_x2, y=p75, mode="lines", name="P75",
+                line=dict(color="#1D9E75", width=1, dash="dash"),
+            ))
+            fig_mc.add_trace(go.Scatter(
+                x=_x2, y=p25, mode="lines", name="P25",
+                line=dict(color="#E24B4A", width=1, dash="dash"),
+            ))
+            # 中位数（P50）
+            fig_mc.add_trace(go.Scatter(
+                x=_x2, y=p50, mode="lines", name="中位数（P50）",
+                line=dict(color="#534AB7", width=2.5),
+            ))
+            # 当前价格线
+            fig_mc.add_hline(
+                y=s0, line_dash="dash", line_color="#888", line_width=1,
+                annotation_text=f" 当前价格 ${s0:.2f}",
+                annotation_position="right",
+                annotation_font=dict(size=11),
+            )
+
+            fig_mc.update_layout(
+                height=480,
+                title=dict(
+                    text=f"{auto_ticker} · {mc_n}条路径蒙地卡罗模拟 · {horizon_sel}",
+                    font=dict(size=14)
+                ),
+                xaxis=dict(
+                    title=_xtitle2,
+                    tickmode="array",
+                    tickvals=_ticks2,
+                    ticktext=[str(y) for y in _ticks2],
+                    showgrid=True, gridcolor="#eeeeee",
+                ),
+                yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
+                plot_bgcolor="#fafafa",
+                hovermode="x unified",
+                legend=dict(orientation="h", y=1.08, x=0),
+                margin=dict(t=70, b=50, l=60, r=100),
+            )
+            st.plotly_chart(fig_mc, use_container_width=True)
+
+            # ── 期末概率分布直方图 ──
+            st.subheader("📊 期末价格概率分布")
+            final_prices = mc_paths[-1]
+            final_ports  = mc_port[-1]
+
+            mc_c1, mc_c2 = st.columns(2)
+
+            with mc_c1:
+                fig_hist_mc = go.Figure()
+                fig_hist_mc.add_trace(go.Histogram(
+                    x=final_prices,
+                    nbinsx=50,
+                    marker_color="#534AB7",
+                    opacity=0.7,
+                    name="期末价格分布",
+                ))
+                fig_hist_mc.add_vline(x=s0, line_dash="dash", line_color="#888",
+                                      annotation_text=f" 现价 ${s0:.2f}",
+                                      annotation_font=dict(size=11))
+                fig_hist_mc.add_vline(x=float(p50[-1]), line_color="#0F6E56", line_width=2,
+                                      annotation_text=f" 中位 ${float(p50[-1]):.2f}",
+                                      annotation_font=dict(color="#0F6E56", size=11))
+                fig_hist_mc.update_layout(
+                    height=320, title=f"期末股价分布（{horizon_sel}后）",
+                    xaxis_title="价格 ($)", yaxis_title="频次",
+                    plot_bgcolor="#fafafa", showlegend=False,
+                    margin=dict(t=50,b=40,l=50,r=20),
+                )
+                st.plotly_chart(fig_hist_mc, use_container_width=True)
+
+            with mc_c2:
+                # 概率统计表
+                pct_above = (final_prices > s0).mean() * 100
+                pct_double = (final_prices > s0*2).mean() * 100
+                pct_half   = (final_prices < s0*0.5).mean() * 100
+                st.markdown("**📋 概率统计**")
+                stats_data = [
+                    ("高于现价概率",      f"{pct_above:.1f}%",
+                     "#0F6E56" if pct_above>50 else "#A32D2D"),
+                    ("翻倍概率（>2x）",   f"{pct_double:.1f}%", "#1D9E75"),
+                    ("腰斩概率（<0.5x）", f"{pct_half:.1f}%",   "#E24B4A"),
+                    ("P5  最坏5%结果",    f"${float(p5[-1]):.2f}", "#E24B4A"),
+                    ("P25 较差25%结果",   f"${float(p25[-1]):.2f}","#D85A30"),
+                    ("P50 中位数结果",    f"${float(p50[-1]):.2f}","#534AB7"),
+                    ("P75 较好75%结果",   f"${float(p75[-1]):.2f}","#1D9E75"),
+                    ("P95 最佳5%结果",    f"${float(p95[-1]):.2f}","#0F6E56"),
+                ]
+                for label, val, color in stats_data:
+                    st.markdown(
+                        f'<div style="display:flex;justify-content:space-between;'
+                        f'padding:7px 12px;background:#F8F9FA;border-radius:6px;'
+                        f'margin-bottom:4px;font-size:13px">'
+                        f'<span>{label}</span>'
+                        f'<span style="font-weight:700;color:{color}">{val}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
+                if invest_usd > 0:
+                    st.markdown("**💰 投资组合概率统计**")
+                    port_above  = (final_ports > invest_usd).mean() * 100
+                    port_double = (final_ports > invest_usd*2).mean() * 100
+                    port_p50    = float(np.percentile(final_ports, 50))
+                    st.markdown(
+                        f'<div style="background:#E1F5EE;border-radius:8px;padding:12px 14px;font-size:13px;line-height:2">'
+                        f'盈利概率：<b style="color:#0F6E56">{port_above:.1f}%</b><br>'
+                        f'翻倍概率：<b style="color:#1D9E75">{port_double:.1f}%</b><br>'
+                        f'中位数结果：<b>{fmt_val(port_p50, curr_code, fx_rate)}</b>'
+                        f'（回报 {(port_p50/invest_usd-1)*100:+.1f}%）'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
             # 参数来源说明
             st.subheader("📋 参数来源说明")
             for label, val, source in [
