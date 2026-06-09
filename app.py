@@ -14,6 +14,64 @@ st.set_page_config(
     layout="wide",
 )
 
+def add_range_tools(fig, range_buttons=True, slider=True, height_add=0):
+    """给任意Plotly图表加上时间轴范围按钮和可拖动滑条"""
+    rb = []
+    if range_buttons:
+        rb = [
+            dict(count=1,  label="1个月", step="month", stepmode="backward"),
+            dict(count=3,  label="3个月", step="month", stepmode="backward"),
+            dict(count=6,  label="6个月", step="month", stepmode="backward"),
+            dict(count=1,  label="1年",   step="year",  stepmode="backward"),
+            dict(count=2,  label="2年",   step="year",  stepmode="backward"),
+            dict(step="all", label="全部"),
+        ]
+    fig.update_xaxes(
+        rangeselector=dict(
+            buttons=rb,
+            bgcolor="#f0f0f0",
+            activecolor="#534AB7",
+            font=dict(size=11),
+            x=0, y=1.02, xanchor="left", yanchor="bottom",
+        ) if range_buttons else dict(),
+        rangeslider=dict(
+            visible=slider,
+            thickness=0.06,
+            bgcolor="#fafafa",
+        ),
+        type="date" if range_buttons else None,
+    )
+    if slider:
+        fig.update_layout(height=fig.layout.height + height_add if fig.layout.height else 400 + height_add)
+    return fig
+
+def add_year_range_tools(fig, start_year, end_year):
+    """给年份轴图表加范围选择按钮（用于趋势预测/蒙地卡罗）"""
+    total_years = end_year - start_year
+    buttons = []
+    for label, years in [("5年",5),("10年",10),("全部",total_years)]:
+        if years <= total_years:
+            buttons.append(dict(
+                label=label,
+                method="relayout",
+                args=[{"xaxis.range": [end_year-years, end_year]}]
+            ))
+    buttons.append(dict(label="全部", method="relayout",
+                        args=[{"xaxis.range": [start_year, end_year]}]))
+    fig.update_layout(
+        updatemenus=[dict(
+            type="buttons", direction="right",
+            x=0, y=1.08, xanchor="left", yanchor="bottom",
+            bgcolor="#f0f0f0", bordercolor="#ddd",
+            font=dict(size=11),
+            buttons=buttons,
+        )]
+    )
+    fig.update_xaxes(
+        rangeslider=dict(visible=True, thickness=0.05, bgcolor="#fafafa"),
+    )
+    return fig
+
 # ── 数据 ──────────────────────────────────────────────────────────────────────
 IPOS = [
     {"name": "SpaceX",       "sector": "太空科技", "val_b": 1750, "rev_b": 12.4,
@@ -811,8 +869,9 @@ with tabs[3]:
         line=dict(color="#BA7517",dash="dot",width=2),mode="lines+markers"))
     fig_hist.add_trace(go.Scatter(x=nodes[:4],y=[100,130,180,240],name="2026 AI IPO(预测)",
         line=dict(color="#534AB7",width=3),mode="lines+markers"))
-    fig_hist.update_layout(height=380,yaxis_title="指数 (基准=100)",
+    fig_hist.update_layout(height=420,yaxis_title="指数 (基准=100)",
                            plot_bgcolor="#fafafa",legend=dict(orientation="h",y=-0.2))
+    fig_hist = add_time_range_tools(fig_hist, range_buttons=True, slider=True)
     st.plotly_chart(fig_hist, use_container_width=True)
     col1,col2,col3=st.columns(3)
     col1.error("**2000 互联网泡沫**\n\n纳斯达克峰值5,048点，随后暴跌78%。1500+科技公司破产，市值蒸发约$5万亿。")
@@ -1061,6 +1120,9 @@ with tabs[4]:
                 legend=dict(orientation="h", y=1.08, x=0),
                 margin=dict(t=70, b=50, l=60, r=100),
             )
+            from datetime import datetime as _dt_tr
+            _sy_tr = _dt_tr.now().year
+            fig_trend = add_year_range_tools(fig_trend, _sy_tr, _sy_tr + time_horizon//12)
             st.plotly_chart(fig_trend, use_container_width=True)
 
             # ── 期末汇总：股价 + 投资组合价值 ──
@@ -1195,7 +1257,7 @@ with tabs[4]:
             )
 
             fig_mc.update_layout(
-                height=480,
+                height=540,
                 title=dict(
                     text=f"{auto_ticker} · {mc_n}条路径蒙地卡罗模拟 · {horizon_sel}",
                     font=dict(size=14)
@@ -1206,13 +1268,17 @@ with tabs[4]:
                     tickvals=_ticks2,
                     ticktext=[str(y) for y in _ticks2],
                     showgrid=True, gridcolor="#eeeeee",
+                    rangeslider=dict(visible=True, thickness=0.05, bgcolor="#fafafa"),
                 ),
                 yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
                 plot_bgcolor="#fafafa",
                 hovermode="x unified",
                 legend=dict(orientation="h", y=1.08, x=0),
-                margin=dict(t=70, b=50, l=60, r=100),
+                margin=dict(t=70, b=60, l=60, r=100),
             )
+            from datetime import datetime as _dt_mc
+            _sy_mc = _dt_mc.now().year
+            fig_mc = add_year_range_tools(fig_mc, _sy_mc, _sy_mc + time_horizon//12)
             st.plotly_chart(fig_mc, use_container_width=True)
 
             # ── 期末概率分布直方图 ──
@@ -1373,6 +1439,9 @@ with tabs[4]:
             plot_bgcolor="#fafafa", hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         )
+        from datetime import datetime as _dt_tr2
+        _sy_tr2 = _dt_tr2.now().year
+        fig_trend = add_year_range_tools(fig_trend, _sy_tr2, _sy_tr2 + time_horizon//12)
         st.plotly_chart(fig_trend, use_container_width=True)
 
         c1, c2, c3 = st.columns(3)
@@ -1690,6 +1759,7 @@ with tabs[5]:
                     margin=dict(t=20, b=40, l=60, r=40),
                     showlegend=False,
                 )
+                fig_m = add_time_range_tools(fig_m, range_buttons=True, slider=True)
                 st.plotly_chart(fig_m, use_container_width=True)
 
                 # 数据解读
@@ -1750,6 +1820,7 @@ with tabs[5]:
         margin=dict(t=20, b=40, l=120, r=60),
         showlegend=False,
     )
+    fig_sec = add_time_range_tools(fig_sec, range_buttons=False, slider=False)
     st.plotly_chart(fig_sec, use_container_width=True)
     st.caption(f"基于当前：{'高利率' if rate_env=='high_rate' else '低利率'} + {'高通胀' if cpi_env=='high_cpi' else '低通胀'} + {'强就业' if job_env=='strong_job' else '弱就业'} 环境自动计算")
 
@@ -2117,13 +2188,14 @@ with tabs[6]:
                                 annotation_font=dict(color="#A32D2D", size=12))
                 fig_c.update_layout(
                     title=dict(text=f"{result['ticker']} · K线 + 斐波那契回撤位", font=dict(size=15)),
-                    height=500, plot_bgcolor="#fafafa",
+                    height=560, plot_bgcolor="#fafafa",
                     xaxis=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
-                               rangeslider=dict(visible=False)),
+                               rangeslider=dict(visible=True, thickness=0.05)),
                     yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
-                    margin=dict(t=50, b=50, l=60, r=160),
+                    margin=dict(t=90, b=50, l=60, r=160),
                     showlegend=False,
                 )
+                add_range_tools(fig_c, range_buttons=True, slider=False)
 
             # ── 图表2：K线 + 均线 + 布林带 ───────────────────────────────
             elif chart_type == "📉 K线 + 均线 + 布林带":
@@ -2167,13 +2239,14 @@ with tabs[6]:
                                 annotation_font=dict(color="#0F6E56", size=12))
                 fig_c.update_layout(
                     title=dict(text=f"{result['ticker']} · K线 + MA20/MA50 + 布林带", font=dict(size=15)),
-                    height=500, plot_bgcolor="#fafafa",
+                    height=580, plot_bgcolor="#fafafa",
                     xaxis=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
-                               rangeslider=dict(visible=False)),
+                               rangeslider=dict(visible=True, thickness=0.05)),
                     yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
-                    legend=dict(orientation="h", y=1.05, x=0),
-                    margin=dict(t=60, b=50, l=60, r=120),
+                    legend=dict(orientation="h", y=1.08, x=0),
+                    margin=dict(t=90, b=50, l=60, r=120),
                 )
+                add_range_tools(fig_c, range_buttons=True, slider=False)
 
             # ── 图表3：RSI ─────────────────────────────────────────────────
             elif chart_type == "📊 RSI指标":
@@ -2214,14 +2287,27 @@ with tabs[6]:
                                 annotation_font=dict(color="#1D9E75", size=11))
                 fig_c.update_layout(
                     title=dict(text=f"{result['ticker']} · RSI 相对强弱指标", font=dict(size=15)),
-                    height=550, plot_bgcolor="#fafafa",
+                    height=600, plot_bgcolor="#fafafa",
                     xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
-                                rangeslider=dict(visible=False)),
+                                rangeslider=dict(visible=True, thickness=0.04)),
                     yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
                     yaxis2=dict(title="RSI", range=[0,100],
                                 showgrid=True, gridcolor="#eeeeee"),
-                    margin=dict(t=60, b=50, l=60, r=80),
+                    margin=dict(t=90, b=50, l=60, r=80),
                     showlegend=False,
+                )
+                # Add range selector to top chart (xaxis1)
+                fig_c.update_xaxes(
+                    rangeselector=dict(
+                        buttons=[
+                            dict(count=1,label="1月",step="month",stepmode="backward"),
+                            dict(count=3,label="3月",step="month",stepmode="backward"),
+                            dict(count=6,label="6月",step="month",stepmode="backward"),
+                            dict(step="all",label="全部"),
+                        ],
+                        bgcolor="#f0f0f0", activecolor="#534AB7",
+                        font=dict(size=11), x=0, y=1.02,
+                    ), selector=dict(type="date"), row=1, col=1
                 )
 
             # ── 图表4：成交量分析 ──────────────────────────────────────────
@@ -2252,13 +2338,25 @@ with tabs[6]:
                 ), row=2, col=1)
                 fig_c.update_layout(
                     title=dict(text=f"{result['ticker']} · 成交量分析", font=dict(size=15)),
-                    height=550, plot_bgcolor="#fafafa",
+                    height=600, plot_bgcolor="#fafafa",
                     xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
-                                rangeslider=dict(visible=False)),
+                                rangeslider=dict(visible=True, thickness=0.04)),
                     yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
                     yaxis2=dict(title="成交量", showgrid=True, gridcolor="#eeeeee"),
-                    legend=dict(orientation="h", y=1.05),
-                    margin=dict(t=60, b=50, l=60, r=60),
+                    legend=dict(orientation="h", y=1.08),
+                    margin=dict(t=90, b=50, l=60, r=60),
+                )
+                fig_c.update_xaxes(
+                    rangeselector=dict(
+                        buttons=[
+                            dict(count=1,label="1月",step="month",stepmode="backward"),
+                            dict(count=3,label="3月",step="month",stepmode="backward"),
+                            dict(count=6,label="6月",step="month",stepmode="backward"),
+                            dict(step="all",label="全部"),
+                        ],
+                        bgcolor="#f0f0f0", activecolor="#534AB7",
+                        font=dict(size=11), x=0, y=1.02,
+                    ), selector=dict(type="date")
                 )
 
             # ── 图表5：OBV能量潮 ───────────────────────────────────────────
@@ -2307,13 +2405,25 @@ with tabs[6]:
                 fig_c.add_hline(y=0, line_color="#888", line_width=1, row=2, col=1)
                 fig_c.update_layout(
                     title=dict(text=f"{result['ticker']} · OBV 能量潮（机构资金流向）", font=dict(size=15)),
-                    height=550, plot_bgcolor="#fafafa",
+                    height=600, plot_bgcolor="#fafafa",
                     xaxis2=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
-                                rangeslider=dict(visible=False)),
+                                rangeslider=dict(visible=True, thickness=0.04)),
                     yaxis=dict(showgrid=True, gridcolor="#eeeeee"),
                     yaxis2=dict(title="OBV", showgrid=True, gridcolor="#eeeeee"),
-                    legend=dict(orientation="h", y=1.05),
-                    margin=dict(t=60, b=50, l=60, r=60),
+                    legend=dict(orientation="h", y=1.08),
+                    margin=dict(t=90, b=50, l=60, r=60),
+                )
+                fig_c.update_xaxes(
+                    rangeselector=dict(
+                        buttons=[
+                            dict(count=1,label="1月",step="month",stepmode="backward"),
+                            dict(count=3,label="3月",step="month",stepmode="backward"),
+                            dict(count=6,label="6月",step="month",stepmode="backward"),
+                            dict(step="all",label="全部"),
+                        ],
+                        bgcolor="#f0f0f0", activecolor="#534AB7",
+                        font=dict(size=11), x=0, y=1.02,
+                    ), selector=dict(type="date")
                 )
 
             st.plotly_chart(fig_c, use_container_width=True)
@@ -2475,9 +2585,24 @@ with tabs[6]:
                 marker_color=["#1D9E75" if c>=o else "#A32D2D"
                               for c,o in zip(hist["Close"],hist["Open"])]),row=3,col=1)
 
-            fig_price.update_layout(height=620,plot_bgcolor="#fafafa",
-                xaxis_rangeslider_visible=False,showlegend=True,
-                legend=dict(orientation="h",y=-0.08))
+            fig_price.update_layout(height=700,plot_bgcolor="#fafafa",
+                showlegend=True,
+                legend=dict(orientation="h",y=-0.06))
+            fig_price.update_xaxes(
+                rangeslider=dict(visible=True, thickness=0.04, bgcolor="#fafafa"),
+                rangeselector=dict(
+                    buttons=[
+                        dict(count=1,label="1月",step="month",stepmode="backward"),
+                        dict(count=3,label="3月",step="month",stepmode="backward"),
+                        dict(count=6,label="6月",step="month",stepmode="backward"),
+                        dict(count=1,label="1年",step="year",stepmode="backward"),
+                        dict(step="all",label="全部"),
+                    ],
+                    bgcolor="#f0f0f0", activecolor="#534AB7",
+                    font=dict(size=11), x=0, y=1.01,
+                ),
+                selector=dict(row=1, col=1),
+            )
             st.plotly_chart(fig_price, use_container_width=True)
 
             # ── 信号列表 ──
@@ -2672,6 +2797,7 @@ with tabs[6]:
                                     yaxis_title="营收 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
+                                fig_rev = add_time_range_tools(fig_rev, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_rev, use_container_width=True)
 
                                 # 自动解读
@@ -2725,6 +2851,7 @@ with tabs[6]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
+                                fig_profit = add_time_range_tools(fig_profit, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_profit, use_container_width=True)
 
                                 # 毛利率解读
@@ -2790,6 +2917,7 @@ with tabs[6]:
                                         legend=dict(orientation="h", y=1.1),
                                         margin=dict(t=60,b=40,l=60,r=40),
                                     )
+                                    fig_bal = add_time_range_tools(fig_bal, range_buttons=False, slider=True)
                                     st.plotly_chart(fig_bal, use_container_width=True)
 
                                     latest_net = net_cash[-1]
@@ -2835,6 +2963,7 @@ with tabs[6]:
                                     yaxis_title="现金流 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
+                                fig_cf = add_time_range_tools(fig_cf, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_cf, use_container_width=True)
 
                                 pos_count = sum(1 for v in ocf_v if v > 0)
@@ -2906,6 +3035,7 @@ with tabs[6]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
+                                fig_ann = add_time_range_tools(fig_ann, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_ann, use_container_width=True)
 
                                 # 年报自动解读
@@ -3066,6 +3196,7 @@ with tabs[6]:
                                     margin=dict(t=70, b=50, l=60, r=40),
                                     hovermode="x unified",
                                 )
+                                fig_fwd = add_time_range_tools(fig_fwd, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_fwd, use_container_width=True)
 
                                 # 预测解读
