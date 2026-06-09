@@ -871,7 +871,6 @@ with tabs[3]:
         line=dict(color="#534AB7",width=3),mode="lines+markers"))
     fig_hist.update_layout(height=420,yaxis_title="指数 (基准=100)",
                            plot_bgcolor="#fafafa",legend=dict(orientation="h",y=-0.2))
-    fig_hist = add_time_range_tools(fig_hist, range_buttons=True, slider=True)
     st.plotly_chart(fig_hist, use_container_width=True)
     col1,col2,col3=st.columns(3)
     col1.error("**2000 互联网泡沫**\n\n纳斯达克峰值5,048点，随后暴跌78%。1500+科技公司破产，市值蒸发约$5万亿。")
