@@ -1758,7 +1758,6 @@ with tabs[5]:
                     margin=dict(t=20, b=40, l=60, r=40),
                     showlegend=False,
                 )
-                fig_m = add_time_range_tools(fig_m, range_buttons=True, slider=True)
                 st.plotly_chart(fig_m, use_container_width=True)
 
                 # 数据解读
@@ -1819,7 +1818,6 @@ with tabs[5]:
         margin=dict(t=20, b=40, l=120, r=60),
         showlegend=False,
     )
-    fig_sec = add_time_range_tools(fig_sec, range_buttons=False, slider=False)
     st.plotly_chart(fig_sec, use_container_width=True)
     st.caption(f"基于当前：{'高利率' if rate_env=='high_rate' else '低利率'} + {'高通胀' if cpi_env=='high_cpi' else '低通胀'} + {'强就业' if job_env=='strong_job' else '弱就业'} 环境自动计算")
 
@@ -2796,7 +2794,6 @@ with tabs[6]:
                                     yaxis_title="营收 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
-                                fig_rev = add_time_range_tools(fig_rev, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_rev, use_container_width=True)
 
                                 # 自动解读
@@ -2850,7 +2847,6 @@ with tabs[6]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
-                                fig_profit = add_time_range_tools(fig_profit, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_profit, use_container_width=True)
 
                                 # 毛利率解读
@@ -2916,7 +2912,6 @@ with tabs[6]:
                                         legend=dict(orientation="h", y=1.1),
                                         margin=dict(t=60,b=40,l=60,r=40),
                                     )
-                                    fig_bal = add_time_range_tools(fig_bal, range_buttons=False, slider=True)
                                     st.plotly_chart(fig_bal, use_container_width=True)
 
                                     latest_net = net_cash[-1]
@@ -2962,7 +2957,6 @@ with tabs[6]:
                                     yaxis_title="现金流 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
-                                fig_cf = add_time_range_tools(fig_cf, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_cf, use_container_width=True)
 
                                 pos_count = sum(1 for v in ocf_v if v > 0)
@@ -3034,7 +3028,6 @@ with tabs[6]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
-                                fig_ann = add_time_range_tools(fig_ann, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_ann, use_container_width=True)
 
                                 # 年报自动解读
@@ -3195,7 +3188,6 @@ with tabs[6]:
                                     margin=dict(t=70, b=50, l=60, r=40),
                                     hovermode="x unified",
                                 )
-                                fig_fwd = add_time_range_tools(fig_fwd, range_buttons=False, slider=True)
                                 st.plotly_chart(fig_fwd, use_container_width=True)
 
                                 # 预测解读
