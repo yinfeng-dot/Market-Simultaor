@@ -893,41 +893,59 @@ with tabs[2]:
                 unsafe_allow_html=True
             )
 
+            # ── 预测时间选择 ──────────────────────────────────────────────
+            st.markdown("**⏱️ 预测时间范围**")
+            time_cols = st.columns([3, 2])
+            with time_cols[0]:
+                sc_months = st.select_slider(
+                    "预测周期",
+                    options=[1, 2, 3, 6, 9, 12, 15, 18],
+                    value=6,
+                    format_func=lambda x: f"{x}个月" if x < 12 else f"{x//12}年" + (f"{x%12}个月" if x%12 else ""),
+                    key="sc_months_slider",
+                )
+            with time_cols[1]:
+                st.markdown(f"<br><span style='font-size:28px;font-weight:700;color:#534AB7'>{sc_months}个月</span>", unsafe_allow_html=True)
+
             # ── 根据Beta和Sigma调整四情景的个股影响 ──────────────────────
             beta  = sc_data["beta"]
             sigma = sc_data["sigma"]
             price = sc_data["price"]
 
-            def stock_scenario(base_mkt_return: float, beta: float, sigma: float, idio_pct: float = 0) -> dict:
-                """计算个股在给定市场情景下的预期表现"""
-                stock_return = base_mkt_return * beta + idio_pct
-                six_m_ret    = stock_return * 0.5
-                risk         = min(95, max(5, int(50 + sigma*50 - stock_return*30)))
-                temp         = min(100, max(0, int(50 + stock_return*25)))
+            def stock_scenario(base_mkt_annual: float, beta: float, sigma: float,
+                               idio_annual: float = 0, months: int = 6) -> dict:
+                """计算个股在给定市场情景、指定月数下的预期表现"""
+                # 将年化收益率转换为指定月数的收益率
+                t_frac       = months / 12
+                stock_annual = base_mkt_annual * beta + idio_annual
+                stock_ret    = (1 + stock_annual) ** t_frac - 1  # 复利
+                risk         = min(95, max(5, int(50 + sigma*50 - stock_annual*30)))
+                temp         = min(100, max(0, int(50 + stock_annual*25)))
                 return {
-                    "pop":    round(stock_return * 100, 1),
-                    "six_m":  round(six_m_ret * 100, 1),
+                    "pop":    round(stock_ret * 100, 1),
+                    "six_m":  round(stock_ret * 100, 1),
                     "burst":  risk,
                     "temp":   temp,
                     "label":  "",
                     "desc":   "",
                 }
 
-            # 四情景下市场预期收益率（基于宏观参数）
+            # 四情景下市场预期年化收益率（基于宏观参数）
             sc_bull_mkt  = (sentiment+20)/100 * 0.15  - (rate-4)*0.02
             sc_base_mkt  = sentiment/100 * 0.10       - (rate-4)*0.015
             sc_bear_mkt  = (sentiment-20)/100 * 0.05  - (rate-3.5)*0.025
             sc_crash_mkt = (sentiment-40)/100 * (-0.05) - (rate-3)*0.04
 
             scenarios_stock = {
-                "🚀 牛市顺风": stock_scenario(sc_bull_mkt,  beta, sigma, +0.05),
-                "📊 当前基准": stock_scenario(sc_base_mkt,  beta, sigma,  0.00),
-                "🐻 泡沫破裂": stock_scenario(sc_bear_mkt,  beta, sigma, -0.05),
-                "💥 系统崩溃": stock_scenario(sc_crash_mkt, beta, sigma, -0.15),
+                "🚀 牛市顺风": stock_scenario(sc_bull_mkt,  beta, sigma, +0.05, sc_months),
+                "📊 当前基准": stock_scenario(sc_base_mkt,  beta, sigma,  0.00, sc_months),
+                "🐻 泡沫破裂": stock_scenario(sc_bear_mkt,  beta, sigma, -0.05, sc_months),
+                "💥 系统崩溃": stock_scenario(sc_crash_mkt, beta, sigma, -0.15, sc_months),
             }
 
-            st.subheader(f"📡 {sc_ticker} · 四情景影响分析（实时）")
-            st.caption(f"基于Beta={beta:.2f} · 年化波动={sigma*100:.1f}% · 市场情绪={sentiment}/100 · 利率={rate}%")
+            period_label = f"{sc_months}个月" if sc_months < 12 else f"{sc_months//12}年" + (f"{sc_months%12}个月" if sc_months%12 else "")
+            st.subheader(f"📡 {sc_ticker} · 四情景影响分析（{period_label}预测）")
+            st.caption(f"Beta={beta:.2f} · 年化波动={sigma*100:.1f}% · 市场情绪={sentiment}/100 · 利率={rate}%")
 
             colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
             sc_cols4  = st.columns(4)
@@ -944,10 +962,10 @@ with tabs[2]:
                         unsafe_allow_html=True
                     )
                     six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
-                    st.metric("6个月收益", six_str)
+                    st.metric(f"{period_label}收益", six_str)
                     # 计算价格目标
                     target_price = price * (1 + sc_sim["six_m"]/100)
-                    st.metric("6月目标价", f"${target_price:.2f}")
+                    st.metric(f"{period_label}目标价", f"${target_price:.2f}")
                     st.progress(sc_sim["temp"]/100, text=f"情景强度 {sc_sim['temp']}/100")
 
             # ── Beta影响说明 ──────────────────────────────────────────────
