@@ -583,7 +583,7 @@ def fetch_stock_analysis(ticker: str):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","🎛️ 泡沫模拟","📜 历史对比","📈 趋势预测","🌐 宏观分析","🔬 股票分析器"])
+tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器"])
 
 # ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
@@ -750,343 +750,8 @@ with tabs[1]:
                              yaxis_title="首日预期涨幅 (%)", plot_bgcolor="#fafafa", margin=dict(t=10))
     st.plotly_chart(fig_bubble, use_container_width=True)
 
-# ── Tab 3: 泡沫模拟 ─────────────────────────────────────────────────────────────
+# ── Tab 3: 历史对比 ─────────────────────────────────────────────────────────────
 with tabs[2]:
-
-    live_data_sim  = fetch_market_data()
-    auto_sentiment = market_to_sentiment(live_data_sim)
-    auto_rate = 4.5
-    if live_data_sim and "^TNX" in live_data_sim:
-        auto_rate = round(live_data_sim["^TNX"]["price"], 2)
-    auto_retail = 70
-    if live_data_sim and "^VIX" in live_data_sim:
-        vix = live_data_sim["^VIX"]["price"]
-        auto_retail = max(20, min(90, int(100 - vix * 2)))
-
-    mode_col1, mode_col2 = st.columns([1, 2])
-    with mode_col1:
-        auto_mode = st.toggle("🤖 自动驾驶模式", value=False,
-                              help="开启后从实时市场数据自动计算所有参数")
-    with mode_col2:
-        if auto_mode:
-            st.success(f"✅ 已接入实时数据 · 情绪={auto_sentiment} · 利率={auto_rate}% · 散户={auto_retail}")
-            if st.button("🔄 刷新实时参数", key="refresh_sim"):
-                st.cache_data.clear()
-                st.rerun()
-        else:
-            st.caption("💡 手动模式：拖动滑块或选择情景预设")
-
-    st.divider()
-
-    if auto_mode:
-        sentiment = auto_sentiment
-        rate      = auto_rate
-        ai_speed  = 60
-        retail    = auto_retail
-
-        # ── 股票/ETF选择器 ──────────────────────────────────────────────
-        st.subheader("🔍 选择分析标的")
-        sc_presets = {
-            "大盘ETF": ["SPY","QQQ","DIA","IWM","VTI"],
-            "AI科技":  ["NVDA","MSFT","GOOGL","META","AMZN","SPCX"],
-            "中概股":  ["BABA","JD","PDD","BIDU","NIO"],
-            "防御型":  ["JNJ","PG","KO","WMT","GLD"],
-            "高风险":  ["TSLA","AMD","PLTR","ARKK","MSTR"],
-        }
-        sc_row1, sc_row2 = st.columns([1,3])
-        with sc_row1:
-            sc_group = st.selectbox("板块", list(sc_presets.keys()), key="sc_group")
-        with sc_row2:
-            sc_ticker_cols = st.columns(len(sc_presets[sc_group]))
-            sc_picked = None
-            for i, tk in enumerate(sc_presets[sc_group]):
-                is_sel = st.session_state.get("sc_ticker") == tk
-                if sc_ticker_cols[i].button(
-                    tk, key=f"sc_btn_{tk}",
-                    use_container_width=True,
-                    type="primary" if is_sel else "secondary"
-                ):
-                    st.session_state["sc_ticker"] = tk
-                    sc_picked = tk
-
-        custom_col, _ = st.columns([2,3])
-        with custom_col:
-            custom_tk = st.text_input("或输入自定义代码", value="",
-                                       placeholder="AAPL / TSLA / SPCX",
-                                       key="sc_custom_input").strip().upper()
-            if custom_tk:
-                st.session_state["sc_ticker"] = custom_tk
-
-        sc_ticker = st.session_state.get("sc_ticker", "SPY")
-        st.caption(f"当前分析标的：**{sc_ticker}**")
-
-        # ── 抓取该股实时数据 ──────────────────────────────────────────────
-        @st.cache_data(ttl=300)
-        def fetch_sc_data(ticker):
-            try:
-                import yfinance as yf, numpy as np_sc
-                t    = yf.Ticker(ticker)
-                hist = t.history(period="1y")
-                if hist.empty or len(hist) < 20:
-                    return None
-                close = hist["Close"].dropna()
-                price = float(close.iloc[-1])
-                rets  = close.pct_change().dropna()
-                mu    = float(rets.mean() * 252)
-                sigma = float(rets.std() * (252**0.5))
-                info  = {}
-                try: info = t.info
-                except: pass
-                beta    = float(info.get("beta", 1.0) or 1.0)
-                name    = info.get("longName", ticker)
-                sector  = info.get("sector", "未知")
-                pe      = info.get("trailingPE")
-                mktcap  = info.get("marketCap")
-                prev    = float(close.iloc[-2]) if len(close)>1 else price
-                chg_pct = (price-prev)/prev*100
-                return {
-                    "ticker": ticker, "name": name, "sector": sector,
-                    "price": price, "chg_pct": chg_pct,
-                    "mu": mu, "sigma": sigma, "beta": beta,
-                    "pe": pe, "mktcap": mktcap,
-                }
-            except Exception as e:
-                return {"error": str(e)}
-
-        with st.spinner(f"正在获取 {sc_ticker} 实时数据..."):
-            sc_data = fetch_sc_data(sc_ticker)
-
-        if sc_data is None or "error" in (sc_data or {}):
-            st.warning(f"无法获取 {sc_ticker} 数据，请检查代码是否正确。")
-            sc_data = None
-
-        st.divider()
-
-        if sc_data:
-            # 股票信息横幅
-            chg_clr = "#0F6E56" if sc_data["chg_pct"] >= 0 else "#A32D2D"
-            cap_str = f"${sc_data['mktcap']/1e12:.2f}T" if sc_data.get("mktcap") and sc_data["mktcap"]>1e12 else                       f"${sc_data['mktcap']/1e9:.1f}B" if sc_data.get("mktcap") else "N/A"
-            st.markdown(
-                f'<div style="background:#1a1a2e;color:white;border-radius:12px;'
-                f'padding:14px 20px;display:flex;align-items:center;gap:20px;margin-bottom:16px">'
-                f'<div style="flex:1">'
-                f'<div style="font-size:16px;font-weight:700">{sc_data["name"]} ({sc_ticker})</div>'
-                f'<div style="font-size:12px;opacity:0.6">{sc_data["sector"]}</div>'
-                f'</div>'
-                f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
-                f'<div style="font-size:26px;font-weight:700">${sc_data["price"]:.2f}</div>'
-                f'<div style="color:{chg_clr};font-size:13px;font-weight:600">{sc_data["chg_pct"]:+.2f}% 今日</div>'
-                f'</div>'
-                f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
-                f'<div style="font-size:12px;opacity:0.6">Beta</div>'
-                f'<div style="font-size:20px;font-weight:700">{sc_data["beta"]:.2f}</div>'
-                f'</div>'
-                f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
-                f'<div style="font-size:12px;opacity:0.6">市值</div>'
-                f'<div style="font-size:20px;font-weight:700">{cap_str}</div>'
-                f'</div>'
-                f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
-                f'<div style="font-size:12px;opacity:0.6">年化波动</div>'
-                f'<div style="font-size:20px;font-weight:700">{sc_data["sigma"]*100:.1f}%</div>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-
-            # ── 预测时间选择 ──────────────────────────────────────────────
-            st.markdown("**⏱️ 预测时间范围**")
-            time_cols = st.columns([3, 2])
-            with time_cols[0]:
-                sc_months = st.select_slider(
-                    "预测周期",
-                    options=[1, 2, 3, 6, 9, 12, 15, 18],
-                    value=6,
-                    format_func=lambda x: f"{x}个月" if x < 12 else f"{x//12}年" + (f"{x%12}个月" if x%12 else ""),
-                    key="sc_months_slider",
-                )
-            with time_cols[1]:
-                st.markdown(f"<br><span style='font-size:28px;font-weight:700;color:#534AB7'>{sc_months}个月</span>", unsafe_allow_html=True)
-
-            # ── 根据Beta和Sigma调整四情景的个股影响 ──────────────────────
-            beta  = sc_data["beta"]
-            sigma = sc_data["sigma"]
-            price = sc_data["price"]
-
-            def stock_scenario(base_mkt_annual: float, beta: float, sigma: float,
-                               idio_annual: float = 0, months: int = 6) -> dict:
-                """计算个股在给定市场情景、指定月数下的预期表现"""
-                # 将年化收益率转换为指定月数的收益率
-                t_frac       = months / 12
-                stock_annual = base_mkt_annual * beta + idio_annual
-                stock_ret    = (1 + stock_annual) ** t_frac - 1  # 复利
-                risk         = min(95, max(5, int(50 + sigma*50 - stock_annual*30)))
-                temp         = min(100, max(0, int(50 + stock_annual*25)))
-                return {
-                    "pop":    round(stock_ret * 100, 1),
-                    "six_m":  round(stock_ret * 100, 1),
-                    "burst":  risk,
-                    "temp":   temp,
-                    "label":  "",
-                    "desc":   "",
-                }
-
-            # 四情景下市场预期年化收益率（基于宏观参数）
-            sc_bull_mkt  = (sentiment+20)/100 * 0.15  - (rate-4)*0.02
-            sc_base_mkt  = sentiment/100 * 0.10       - (rate-4)*0.015
-            sc_bear_mkt  = (sentiment-20)/100 * 0.05  - (rate-3.5)*0.025
-            sc_crash_mkt = (sentiment-40)/100 * (-0.05) - (rate-3)*0.04
-
-            scenarios_stock = {
-                "🚀 牛市顺风": stock_scenario(sc_bull_mkt,  beta, sigma, +0.05, sc_months),
-                "📊 当前基准": stock_scenario(sc_base_mkt,  beta, sigma,  0.00, sc_months),
-                "🐻 泡沫破裂": stock_scenario(sc_bear_mkt,  beta, sigma, -0.05, sc_months),
-                "💥 系统崩溃": stock_scenario(sc_crash_mkt, beta, sigma, -0.15, sc_months),
-            }
-
-            period_label = f"{sc_months}个月" if sc_months < 12 else f"{sc_months//12}年" + (f"{sc_months%12}个月" if sc_months%12 else "")
-            st.subheader(f"📡 {sc_ticker} · 四情景影响分析（{period_label}预测）")
-            st.caption(f"Beta={beta:.2f} · 年化波动={sigma*100:.1f}% · 市场情绪={sentiment}/100 · 利率={rate}%")
-
-            colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
-            sc_cols4  = st.columns(4)
-            for i, (sc_name, sc_sim) in enumerate(scenarios_stock.items()):
-                with sc_cols4[i]:
-                    c = colors_sc[i]
-                    pop_str = f"+{sc_sim['pop']}%" if sc_sim['pop']>=0 else f"{sc_sim['pop']}%"
-                    st.markdown(
-                        f'<div style="background:{c};color:white;border-radius:10px;'
-                        f'padding:14px 12px;text-align:center;margin-bottom:8px">'
-                        f'<div style="font-size:14px;font-weight:700">{sc_name}</div>'
-                        f'<div style="font-size:26px;font-weight:700;margin:6px 0">{pop_str}</div>'
-                        f'<div style="font-size:11px;opacity:0.85">预期涨跌幅</div></div>',
-                        unsafe_allow_html=True
-                    )
-                    six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
-                    st.metric(f"{period_label}收益", six_str)
-                    # 计算价格目标
-                    target_price = price * (1 + sc_sim["six_m"]/100)
-                    st.metric(f"{period_label}目标价", f"${target_price:.2f}")
-                    st.progress(sc_sim["temp"]/100, text=f"情景强度 {sc_sim['temp']}/100")
-
-            # ── Beta影响说明 ──────────────────────────────────────────────
-            st.divider()
-            bc1, bc2 = st.columns(2)
-            with bc1:
-                st.markdown("**⚡ Beta影响解读**")
-                if beta > 1.5:
-                    beta_msg = f"Beta={beta:.2f}，高波动股，市场上涨时放大{beta:.1f}倍收益，下跌时也放大{beta:.1f}倍损失。"
-                    beta_color = "#D85A30"
-                elif beta > 1.0:
-                    beta_msg = f"Beta={beta:.2f}，略高于市场，走势与大盘高度相关但波动稍大。"
-                    beta_color = "#BA7517"
-                elif beta > 0.5:
-                    beta_msg = f"Beta={beta:.2f}，防御性股票，市场剧烈波动时相对稳定。"
-                    beta_color = "#1D9E75"
-                else:
-                    beta_msg = f"Beta={beta:.2f}，极低相关性，几乎独立于大盘走势。"
-                    beta_color = "#0F6E56"
-                st.markdown(
-                    f'<div style="background:#F8F9FA;border-left:4px solid {beta_color};'
-                    f'padding:12px 14px;border-radius:6px;font-size:13px">{beta_msg}</div>',
-                    unsafe_allow_html=True
-                )
-
-            with bc2:
-                st.markdown("**📋 情景参数来源**")
-                vix_val = live_data_sim.get("^VIX",{}).get("price","N/A") if live_data_sim else "N/A"
-                for label, val, clr in [
-                    ("市场情绪",  f"{sentiment}/100", "#534AB7"),
-                    ("利率环境",  f"{rate}%",         "#D85A30"),
-                    ("VIX恐慌",   f"{vix_val}",       "#A32D2D"),
-                    ("个股Beta",  f"{beta:.2f}",      "#185FA5"),
-                    ("年化波动率",f"{sigma*100:.1f}%", "#BA7517"),
-                ]:
-                    st.markdown(
-                        f'<div style="display:flex;justify-content:space-between;'
-                        f'padding:6px 10px;background:#F8F9FA;border-radius:5px;'
-                        f'margin-bottom:4px;font-size:12px">'
-                        f'<span style="color:#666">{label}</span>'
-                        f'<span style="font-weight:700;color:{clr}">{val}</span></div>',
-                        unsafe_allow_html=True
-                    )
-        else:
-            # 无股票数据时退回大盘分析
-            st.subheader("📡 实时数据驱动 · 大盘四情景分析")
-            st.caption(f"基于当前市场：情绪={sentiment}/100 · 利率={rate}%")
-            scenarios_auto = {
-                "🚀 牛市顺风": simulate(min(sentiment+20,100), max(rate-0.5,1.0), min(ai_speed+20,100), min(retail+15,100)),
-                "📊 当前基准": simulate(sentiment, rate, ai_speed, retail),
-                "🐻 泡沫破裂": simulate(max(sentiment-20,0), rate+1.0, max(ai_speed-20,0), max(retail-20,0)),
-                "💥 系统崩溃": simulate(max(sentiment-40,0), rate+2.5, max(ai_speed-40,0), max(retail-40,0)),
-            }
-            colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
-            sc_cols4  = st.columns(4)
-            for i, (sc_name, sc_sim) in enumerate(scenarios_auto.items()):
-                with sc_cols4[i]:
-                    c = colors_sc[i]
-                    pop_str = f"+{sc_sim['pop']}%" if sc_sim['pop']>=0 else f"{sc_sim['pop']}%"
-                    st.markdown(
-                        f'<div style="background:{c};color:white;border-radius:10px;'
-                        f'padding:14px 12px;text-align:center;margin-bottom:8px">'
-                        f'<div style="font-size:14px;font-weight:700">{sc_name}</div>'
-                        f'<div style="font-size:26px;font-weight:700;margin:6px 0">{pop_str}</div>'
-                        f'<div style="font-size:11px;opacity:0.85">首日预期涨幅</div></div>',
-                        unsafe_allow_html=True
-                    )
-                    six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
-                    st.metric("6个月收益", six_str)
-                    st.metric("泡沫破裂概率", f"{sc_sim['burst']}%", delta_color="inverse")
-                    st.progress(sc_sim["temp"]/100, text=f"温度 {sc_sim['temp']}/100")
-
-    else:
-        st.subheader("情景预设")
-        sc_cols = st.columns(4)
-        chosen_sc = None
-        for i, (name, vals) in enumerate(SCENARIOS.items()):
-            if sc_cols[i].button(name, use_container_width=True):
-                chosen_sc = vals
-
-        if live_data_sim:
-            st.caption(f"📡 实时市场情绪估算：**{auto_sentiment}/100**（基于纳斯达克+VIX+英伟达）")
-
-        col_l, col_r = st.columns(2)
-        with col_l:
-            sentiment = st.slider("市场情绪（0=恐慌，100=狂热）", 0, 100,
-                                  int(chosen_sc[0]) if chosen_sc else auto_sentiment)
-            rate      = st.slider("利率环境（%）", 1.0, 8.0,
-                                  float(chosen_sc[1]) if chosen_sc else auto_rate, step=0.1)
-        with col_r:
-            ai_speed  = st.slider("AI商业化速度（0=慢，100=快）", 0, 100,
-                                  int(chosen_sc[2]) if chosen_sc else 60)
-            retail    = st.slider("散户参与度（0=低，100=高）", 0, 100,
-                                  int(chosen_sc[3]) if chosen_sc else auto_retail)
-
-        sim = simulate(sentiment, rate, ai_speed, retail)
-        r1, r2, r3 = st.columns(3)
-        r1.metric("首日预期涨幅", f"+{sim['pop']}%")
-        r2.metric("6个月后收益", f"{'+' if sim['six_m']>=0 else ''}{sim['six_m']}%")
-        r3.metric("泡沫破裂概率", f"{sim['burst']}%", "未来18个月内", delta_color="inverse")
-
-        temp_label = ("极度过热" if sim["temp"]>80 else "中度过热"
-                      if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
-        st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
-        st.info(f"**{sim['label']}** — {sim['desc']}")
-
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number", value=sim["burst"],
-            title={"text":"泡沫破裂概率 (%)"},
-            gauge={
-                "axis":{"range":[0,100]},
-                "bar":{"color":"#A32D2D" if sim["burst"]>65 else "#BA7517" if sim["burst"]>40 else "#1D9E75"},
-                "steps":[{"range":[0,40],"color":"#E1F5EE"},
-                          {"range":[40,70],"color":"#FAEEDA"},
-                          {"range":[70,100],"color":"#FCEBEB"}],
-            },
-        ))
-        fig_gauge.update_layout(height=280, margin=dict(t=40,b=10))
-        st.plotly_chart(fig_gauge, use_container_width=True)
-# ── Tab 4 ──────────────────────────────────────────────────────────────────────
-with tabs[3]:
     st.subheader("历史泡沫周期对比")
     nodes=HISTORICAL["节点"]; fig_hist=go.Figure()
     fig_hist.add_trace(go.Scatter(x=nodes,y=HISTORICAL["2000互联网"],name="2000互联网",
@@ -1105,8 +770,348 @@ with tabs[3]:
 
 # ── (实时市场已合并到Tab1) ──────────────────────────────────────────────────────
 
-# ── Tab 5: 趋势预测 ─────────────────────────────────────────────────────────────
-with tabs[4]:
+# ── Tab 4: 趋势预测 + 泡沫模拟 ────────────────────────────────────────────────────
+with tabs[3]:
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 🎛️ 泡沫模拟（已整合至趋势预测）
+    # ══════════════════════════════════════════════════════════════════════
+    with st.expander("🎛️ 泡沫风险模拟器", expanded=False):
+        
+        live_data_sim  = fetch_market_data()
+        auto_sentiment = market_to_sentiment(live_data_sim)
+        auto_rate = 4.5
+        if live_data_sim and "^TNX" in live_data_sim:
+            auto_rate = round(live_data_sim["^TNX"]["price"], 2)
+        auto_retail = 70
+        if live_data_sim and "^VIX" in live_data_sim:
+            vix = live_data_sim["^VIX"]["price"]
+            auto_retail = max(20, min(90, int(100 - vix * 2)))
+        
+        mode_col1, mode_col2 = st.columns([1, 2])
+        with mode_col1:
+            auto_mode = st.toggle("🤖 自动驾驶模式", value=False,
+                                  help="开启后从实时市场数据自动计算所有参数")
+        with mode_col2:
+            if auto_mode:
+                st.success(f"✅ 已接入实时数据 · 情绪={auto_sentiment} · 利率={auto_rate}% · 散户={auto_retail}")
+                if st.button("🔄 刷新实时参数", key="refresh_sim"):
+                    st.cache_data.clear()
+                    st.rerun()
+            else:
+                st.caption("💡 手动模式：拖动滑块或选择情景预设")
+        
+        st.divider()
+        
+        if auto_mode:
+            sentiment = auto_sentiment
+            rate      = auto_rate
+            ai_speed  = 60
+            retail    = auto_retail
+        
+            # ── 股票/ETF选择器 ──────────────────────────────────────────────
+            st.subheader("🔍 选择分析标的")
+            sc_presets = {
+                "大盘ETF": ["SPY","QQQ","DIA","IWM","VTI"],
+                "AI科技":  ["NVDA","MSFT","GOOGL","META","AMZN","SPCX"],
+                "中概股":  ["BABA","JD","PDD","BIDU","NIO"],
+                "防御型":  ["JNJ","PG","KO","WMT","GLD"],
+                "高风险":  ["TSLA","AMD","PLTR","ARKK","MSTR"],
+            }
+            sc_row1, sc_row2 = st.columns([1,3])
+            with sc_row1:
+                sc_group = st.selectbox("板块", list(sc_presets.keys()), key="sc_group")
+            with sc_row2:
+                sc_ticker_cols = st.columns(len(sc_presets[sc_group]))
+                sc_picked = None
+                for i, tk in enumerate(sc_presets[sc_group]):
+                    is_sel = st.session_state.get("sc_ticker") == tk
+                    if sc_ticker_cols[i].button(
+                        tk, key=f"sc_btn_{tk}",
+                        use_container_width=True,
+                        type="primary" if is_sel else "secondary"
+                    ):
+                        st.session_state["sc_ticker"] = tk
+                        sc_picked = tk
+        
+            custom_col, _ = st.columns([2,3])
+            with custom_col:
+                custom_tk = st.text_input("或输入自定义代码", value="",
+                                           placeholder="AAPL / TSLA / SPCX",
+                                           key="sc_custom_input").strip().upper()
+                if custom_tk:
+                    st.session_state["sc_ticker"] = custom_tk
+        
+            sc_ticker = st.session_state.get("sc_ticker", "SPY")
+            st.caption(f"当前分析标的：**{sc_ticker}**")
+        
+            # ── 抓取该股实时数据 ──────────────────────────────────────────────
+            @st.cache_data(ttl=300)
+            def fetch_sc_data(ticker):
+                try:
+                    import yfinance as yf, numpy as np_sc
+                    t    = yf.Ticker(ticker)
+                    hist = t.history(period="1y")
+                    if hist.empty or len(hist) < 20:
+                        return None
+                    close = hist["Close"].dropna()
+                    price = float(close.iloc[-1])
+                    rets  = close.pct_change().dropna()
+                    mu    = float(rets.mean() * 252)
+                    sigma = float(rets.std() * (252**0.5))
+                    info  = {}
+                    try: info = t.info
+                    except: pass
+                    beta    = float(info.get("beta", 1.0) or 1.0)
+                    name    = info.get("longName", ticker)
+                    sector  = info.get("sector", "未知")
+                    pe      = info.get("trailingPE")
+                    mktcap  = info.get("marketCap")
+                    prev    = float(close.iloc[-2]) if len(close)>1 else price
+                    chg_pct = (price-prev)/prev*100
+                    return {
+                        "ticker": ticker, "name": name, "sector": sector,
+                        "price": price, "chg_pct": chg_pct,
+                        "mu": mu, "sigma": sigma, "beta": beta,
+                        "pe": pe, "mktcap": mktcap,
+                    }
+                except Exception as e:
+                    return {"error": str(e)}
+        
+            with st.spinner(f"正在获取 {sc_ticker} 实时数据..."):
+                sc_data = fetch_sc_data(sc_ticker)
+        
+            if sc_data is None or "error" in (sc_data or {}):
+                st.warning(f"无法获取 {sc_ticker} 数据，请检查代码是否正确。")
+                sc_data = None
+        
+            st.divider()
+        
+            if sc_data:
+                # 股票信息横幅
+                chg_clr = "#0F6E56" if sc_data["chg_pct"] >= 0 else "#A32D2D"
+                cap_str = f"${sc_data['mktcap']/1e12:.2f}T" if sc_data.get("mktcap") and sc_data["mktcap"]>1e12 else                       f"${sc_data['mktcap']/1e9:.1f}B" if sc_data.get("mktcap") else "N/A"
+                st.markdown(
+                    f'<div style="background:#1a1a2e;color:white;border-radius:12px;'
+                    f'padding:14px 20px;display:flex;align-items:center;gap:20px;margin-bottom:16px">'
+                    f'<div style="flex:1">'
+                    f'<div style="font-size:16px;font-weight:700">{sc_data["name"]} ({sc_ticker})</div>'
+                    f'<div style="font-size:12px;opacity:0.6">{sc_data["sector"]}</div>'
+                    f'</div>'
+                    f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
+                    f'<div style="font-size:26px;font-weight:700">${sc_data["price"]:.2f}</div>'
+                    f'<div style="color:{chg_clr};font-size:13px;font-weight:600">{sc_data["chg_pct"]:+.2f}% 今日</div>'
+                    f'</div>'
+                    f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
+                    f'<div style="font-size:12px;opacity:0.6">Beta</div>'
+                    f'<div style="font-size:20px;font-weight:700">{sc_data["beta"]:.2f}</div>'
+                    f'</div>'
+                    f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
+                    f'<div style="font-size:12px;opacity:0.6">市值</div>'
+                    f'<div style="font-size:20px;font-weight:700">{cap_str}</div>'
+                    f'</div>'
+                    f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
+                    f'<div style="font-size:12px;opacity:0.6">年化波动</div>'
+                    f'<div style="font-size:20px;font-weight:700">{sc_data["sigma"]*100:.1f}%</div>'
+                    f'</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+        
+                # ── 预测时间选择 ──────────────────────────────────────────────
+                st.markdown("**⏱️ 预测时间范围**")
+                time_cols = st.columns([3, 2])
+                with time_cols[0]:
+                    sc_months = st.select_slider(
+                        "预测周期",
+                        options=[1, 2, 3, 6, 9, 12, 15, 18],
+                        value=6,
+                        format_func=lambda x: f"{x}个月" if x < 12 else f"{x//12}年" + (f"{x%12}个月" if x%12 else ""),
+                        key="sc_months_slider",
+                    )
+                with time_cols[1]:
+                    st.markdown(f"<br><span style='font-size:28px;font-weight:700;color:#534AB7'>{sc_months}个月</span>", unsafe_allow_html=True)
+        
+                # ── 根据Beta和Sigma调整四情景的个股影响 ──────────────────────
+                beta  = sc_data["beta"]
+                sigma = sc_data["sigma"]
+                price = sc_data["price"]
+        
+                def stock_scenario(base_mkt_annual: float, beta: float, sigma: float,
+                                   idio_annual: float = 0, months: int = 6) -> dict:
+                    """计算个股在给定市场情景、指定月数下的预期表现"""
+                    # 将年化收益率转换为指定月数的收益率
+                    t_frac       = months / 12
+                    stock_annual = base_mkt_annual * beta + idio_annual
+                    stock_ret    = (1 + stock_annual) ** t_frac - 1  # 复利
+                    risk         = min(95, max(5, int(50 + sigma*50 - stock_annual*30)))
+                    temp         = min(100, max(0, int(50 + stock_annual*25)))
+                    return {
+                        "pop":    round(stock_ret * 100, 1),
+                        "six_m":  round(stock_ret * 100, 1),
+                        "burst":  risk,
+                        "temp":   temp,
+                        "label":  "",
+                        "desc":   "",
+                    }
+        
+                # 四情景下市场预期年化收益率（基于宏观参数）
+                sc_bull_mkt  = (sentiment+20)/100 * 0.15  - (rate-4)*0.02
+                sc_base_mkt  = sentiment/100 * 0.10       - (rate-4)*0.015
+                sc_bear_mkt  = (sentiment-20)/100 * 0.05  - (rate-3.5)*0.025
+                sc_crash_mkt = (sentiment-40)/100 * (-0.05) - (rate-3)*0.04
+        
+                scenarios_stock = {
+                    "🚀 牛市顺风": stock_scenario(sc_bull_mkt,  beta, sigma, +0.05, sc_months),
+                    "📊 当前基准": stock_scenario(sc_base_mkt,  beta, sigma,  0.00, sc_months),
+                    "🐻 泡沫破裂": stock_scenario(sc_bear_mkt,  beta, sigma, -0.05, sc_months),
+                    "💥 系统崩溃": stock_scenario(sc_crash_mkt, beta, sigma, -0.15, sc_months),
+                }
+        
+                period_label = f"{sc_months}个月" if sc_months < 12 else f"{sc_months//12}年" + (f"{sc_months%12}个月" if sc_months%12 else "")
+                st.subheader(f"📡 {sc_ticker} · 四情景影响分析（{period_label}预测）")
+                st.caption(f"Beta={beta:.2f} · 年化波动={sigma*100:.1f}% · 市场情绪={sentiment}/100 · 利率={rate}%")
+        
+                colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
+                sc_cols4  = st.columns(4)
+                for i, (sc_name, sc_sim) in enumerate(scenarios_stock.items()):
+                    with sc_cols4[i]:
+                        c = colors_sc[i]
+                        pop_str = f"+{sc_sim['pop']}%" if sc_sim['pop']>=0 else f"{sc_sim['pop']}%"
+                        st.markdown(
+                            f'<div style="background:{c};color:white;border-radius:10px;'
+                            f'padding:14px 12px;text-align:center;margin-bottom:8px">'
+                            f'<div style="font-size:14px;font-weight:700">{sc_name}</div>'
+                            f'<div style="font-size:26px;font-weight:700;margin:6px 0">{pop_str}</div>'
+                            f'<div style="font-size:11px;opacity:0.85">预期涨跌幅</div></div>',
+                            unsafe_allow_html=True
+                        )
+                        six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
+                        st.metric(f"{period_label}收益", six_str)
+                        # 计算价格目标
+                        target_price = price * (1 + sc_sim["six_m"]/100)
+                        st.metric(f"{period_label}目标价", f"${target_price:.2f}")
+                        st.progress(sc_sim["temp"]/100, text=f"情景强度 {sc_sim['temp']}/100")
+        
+                # ── Beta影响说明 ──────────────────────────────────────────────
+                st.divider()
+                bc1, bc2 = st.columns(2)
+                with bc1:
+                    st.markdown("**⚡ Beta影响解读**")
+                    if beta > 1.5:
+                        beta_msg = f"Beta={beta:.2f}，高波动股，市场上涨时放大{beta:.1f}倍收益，下跌时也放大{beta:.1f}倍损失。"
+                        beta_color = "#D85A30"
+                    elif beta > 1.0:
+                        beta_msg = f"Beta={beta:.2f}，略高于市场，走势与大盘高度相关但波动稍大。"
+                        beta_color = "#BA7517"
+                    elif beta > 0.5:
+                        beta_msg = f"Beta={beta:.2f}，防御性股票，市场剧烈波动时相对稳定。"
+                        beta_color = "#1D9E75"
+                    else:
+                        beta_msg = f"Beta={beta:.2f}，极低相关性，几乎独立于大盘走势。"
+                        beta_color = "#0F6E56"
+                    st.markdown(
+                        f'<div style="background:#F8F9FA;border-left:4px solid {beta_color};'
+                        f'padding:12px 14px;border-radius:6px;font-size:13px">{beta_msg}</div>',
+                        unsafe_allow_html=True
+                    )
+        
+                with bc2:
+                    st.markdown("**📋 情景参数来源**")
+                    vix_val = live_data_sim.get("^VIX",{}).get("price","N/A") if live_data_sim else "N/A"
+                    for label, val, clr in [
+                        ("市场情绪",  f"{sentiment}/100", "#534AB7"),
+                        ("利率环境",  f"{rate}%",         "#D85A30"),
+                        ("VIX恐慌",   f"{vix_val}",       "#A32D2D"),
+                        ("个股Beta",  f"{beta:.2f}",      "#185FA5"),
+                        ("年化波动率",f"{sigma*100:.1f}%", "#BA7517"),
+                    ]:
+                        st.markdown(
+                            f'<div style="display:flex;justify-content:space-between;'
+                            f'padding:6px 10px;background:#F8F9FA;border-radius:5px;'
+                            f'margin-bottom:4px;font-size:12px">'
+                            f'<span style="color:#666">{label}</span>'
+                            f'<span style="font-weight:700;color:{clr}">{val}</span></div>',
+                            unsafe_allow_html=True
+                        )
+            else:
+                # 无股票数据时退回大盘分析
+                st.subheader("📡 实时数据驱动 · 大盘四情景分析")
+                st.caption(f"基于当前市场：情绪={sentiment}/100 · 利率={rate}%")
+                scenarios_auto = {
+                    "🚀 牛市顺风": simulate(min(sentiment+20,100), max(rate-0.5,1.0), min(ai_speed+20,100), min(retail+15,100)),
+                    "📊 当前基准": simulate(sentiment, rate, ai_speed, retail),
+                    "🐻 泡沫破裂": simulate(max(sentiment-20,0), rate+1.0, max(ai_speed-20,0), max(retail-20,0)),
+                    "💥 系统崩溃": simulate(max(sentiment-40,0), rate+2.5, max(ai_speed-40,0), max(retail-40,0)),
+                }
+                colors_sc = ["#1D9E75","#534AB7","#D85A30","#A32D2D"]
+                sc_cols4  = st.columns(4)
+                for i, (sc_name, sc_sim) in enumerate(scenarios_auto.items()):
+                    with sc_cols4[i]:
+                        c = colors_sc[i]
+                        pop_str = f"+{sc_sim['pop']}%" if sc_sim['pop']>=0 else f"{sc_sim['pop']}%"
+                        st.markdown(
+                            f'<div style="background:{c};color:white;border-radius:10px;'
+                            f'padding:14px 12px;text-align:center;margin-bottom:8px">'
+                            f'<div style="font-size:14px;font-weight:700">{sc_name}</div>'
+                            f'<div style="font-size:26px;font-weight:700;margin:6px 0">{pop_str}</div>'
+                            f'<div style="font-size:11px;opacity:0.85">首日预期涨幅</div></div>',
+                            unsafe_allow_html=True
+                        )
+                        six_str = f"+{sc_sim['six_m']}%" if sc_sim['six_m']>=0 else f"{sc_sim['six_m']}%"
+                        st.metric("6个月收益", six_str)
+                        st.metric("泡沫破裂概率", f"{sc_sim['burst']}%", delta_color="inverse")
+                        st.progress(sc_sim["temp"]/100, text=f"温度 {sc_sim['temp']}/100")
+        
+        else:
+            st.subheader("情景预设")
+            sc_cols = st.columns(4)
+            chosen_sc = None
+            for i, (name, vals) in enumerate(SCENARIOS.items()):
+                if sc_cols[i].button(name, use_container_width=True):
+                    chosen_sc = vals
+        
+            if live_data_sim:
+                st.caption(f"📡 实时市场情绪估算：**{auto_sentiment}/100**（基于纳斯达克+VIX+英伟达）")
+        
+            col_l, col_r = st.columns(2)
+            with col_l:
+                sentiment = st.slider("市场情绪（0=恐慌，100=狂热）", 0, 100,
+                                      int(chosen_sc[0]) if chosen_sc else auto_sentiment)
+                rate      = st.slider("利率环境（%）", 1.0, 8.0,
+                                      float(chosen_sc[1]) if chosen_sc else auto_rate, step=0.1)
+            with col_r:
+                ai_speed  = st.slider("AI商业化速度（0=慢，100=快）", 0, 100,
+                                      int(chosen_sc[2]) if chosen_sc else 60)
+                retail    = st.slider("散户参与度（0=低，100=高）", 0, 100,
+                                      int(chosen_sc[3]) if chosen_sc else auto_retail)
+        
+            sim = simulate(sentiment, rate, ai_speed, retail)
+            r1, r2, r3 = st.columns(3)
+            r1.metric("首日预期涨幅", f"+{sim['pop']}%")
+            r2.metric("6个月后收益", f"{'+' if sim['six_m']>=0 else ''}{sim['six_m']}%")
+            r3.metric("泡沫破裂概率", f"{sim['burst']}%", "未来18个月内", delta_color="inverse")
+        
+            temp_label = ("极度过热" if sim["temp"]>80 else "中度过热"
+                          if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
+            st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
+            st.info(f"**{sim['label']}** — {sim['desc']}")
+        
+            fig_gauge = go.Figure(go.Indicator(
+                mode="gauge+number", value=sim["burst"],
+                title={"text":"泡沫破裂概率 (%)"},
+                gauge={
+                    "axis":{"range":[0,100]},
+                    "bar":{"color":"#A32D2D" if sim["burst"]>65 else "#BA7517" if sim["burst"]>40 else "#1D9E75"},
+                    "steps":[{"range":[0,40],"color":"#E1F5EE"},
+                              {"range":[40,70],"color":"#FAEEDA"},
+                              {"range":[70,100],"color":"#FCEBEB"}],
+                },
+            ))
+            fig_gauge.update_layout(height=280, margin=dict(t=40,b=10))
+            st.plotly_chart(fig_gauge, use_container_width=True)
+
+    st.divider()
     st.subheader("🔮 核心资产多情景价格趋势模拟")
 
     # ── 自动/手动模式切换 ──
@@ -1677,8 +1682,8 @@ with tabs[4]:
         c3.metric("🐻 悲观情景均值", f"${np.mean(paths_bear[-1]):.2f}",
                   f"{(np.mean(paths_bear[-1])/s0-1)*100:.1f}%", delta_color="inverse")
 
-# ── Tab 6: 宏观经济分析 ──────────────────────────────────────────────────────────
-with tabs[5]:
+# ── Tab 5: 宏观分析 ──────────────────────────────────────────────────────────────
+with tabs[4]:
     st.subheader("🌐 宏观经济指标与股市影响分析")
     st.caption("数据来自 FRED (美联储经济数据库) · 自动分析最新数据并预测对股市的影响")
 
@@ -2139,8 +2144,8 @@ with tabs[5]:
 
 
 
-# ── Tab 7: 股票分析器 ──────────────────────────────────────────────────────────
-with tabs[6]:
+# ── Tab 6: 股票分析器 ──────────────────────────────────────────────────────────
+with tabs[5]:
     st.subheader("🔬 股票智能分析器")
     st.caption("输入任意股票代码，自动分析技术面+基本面，给出评级与价格目标")
 
