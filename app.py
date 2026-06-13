@@ -74,9 +74,10 @@ def add_year_range_tools(fig, start_year, end_year):
 
 # ── 数据 ──────────────────────────────────────────────────────────────────────
 IPOS = [
-    {"name": "SpaceX",       "sector": "太空科技", "val_b": 1750, "rev_b": 12.4,
-     "profitable": True,  "float_pct": 4,  "exp_pop": 22, "bubble_risk": 45, "date": "2026年6月",
-     "desc": "S-1已于5月20日提交，预计6月定价。唯一盈利的超级IPO，收入$124亿，自由现金流为正。流通比例仅4-5%，极度受限。"},
+    {"name": "SpaceX",       "sector": "太空科技", "val_b": 1770, "rev_b": 18.7,
+     "profitable": False, "float_pct": 4,  "exp_pop": 19, "bubble_risk": 45,
+     "date": "2026年6月12日 ✅已上市", "ticker": "SPCX",
+     "desc": "2026年6月12日纳斯达克上市，发行价$135，首日收盘$161（+19%），史上最大IPO。2025年全年营收$187亿（同比+33%），EBITDA $66亿，但GAAP净亏损$49亿。已收购xAI，整合Grok AI和X（Twitter）。累计亏损$413亿。"},
     {"name": "OpenAI",       "sector": "人工智能", "val_b": 1000, "rev_b": 3.4,
      "profitable": False, "float_pct": 5,  "exp_pop": 35, "bubble_risk": 78, "date": "2026年Q4",
      "desc": "ChatGPT母公司，月活超5亿，年收入约$34亿但仍大幅亏损。内部治理复杂，存在法律不确定性。"},
@@ -640,10 +641,68 @@ with tabs[0]:
 
 # ── Tab 2: IPO详情（含估值总览） ────────────────────────────────────────────────
 with tabs[1]:
+
+    # 自动抓取已上市IPO的实时价格
+    @st.cache_data(ttl=300)
+    def fetch_ipo_live_prices():
+        """抓取已上市IPO的实时股价"""
+        try:
+            import yfinance as yf
+            live = {}
+            listed = {"SPCX": "SpaceX"}  # 已上市的IPO
+            for ticker, name in listed.items():
+                try:
+                    t    = yf.Ticker(ticker)
+                    hist = t.history(period="5d")
+                    if not hist.empty:
+                        price = float(hist["Close"].iloc[-1])
+                        prev  = float(hist["Close"].iloc[-2]) if len(hist)>1 else price
+                        live[ticker] = {
+                            "name":       name,
+                            "price":      price,
+                            "change_pct": (price-prev)/prev*100 if prev>0 else 0,
+                            "ipo_price":  135.0,
+                            "from_ipo":   (price-135.0)/135.0*100,
+                        }
+                except Exception:
+                    pass
+            return live
+        except Exception:
+            return {}
+
+    live_ipo = fetch_ipo_live_prices()
+
+    # 已上市公司实时价格横幅
+    if live_ipo:
+        st.subheader("📡 已上市IPO实时行情")
+        for ticker, d in live_ipo.items():
+            clr = "#0F6E56" if d["change_pct"] >= 0 else "#A32D2D"
+            from_ipo_clr = "#0F6E56" if d["from_ipo"] >= 0 else "#A32D2D"
+            st.markdown(
+                f'<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);'
+                f'color:white;padding:16px 20px;border-radius:12px;margin-bottom:16px;'
+                f'display:flex;align-items:center;gap:24px">'
+                f'<div style="font-size:28px">🚀</div>'
+                f'<div style="flex:1">'
+                f'<div style="font-size:18px;font-weight:700">{d["name"]} ({ticker})</div>'
+                f'<div style="font-size:12px;opacity:0.7;margin-top:2px">纳斯达克 · 发行价 $135.00</div>'
+                f'</div>'
+                f'<div style="text-align:right">'
+                f'<div style="font-size:32px;font-weight:700">${d["price"]:.2f}</div>'
+                f'<div style="font-size:14px;color:{clr};font-weight:600">'
+                f'{"+"+str(round(d["change_pct"],2))+"%" if d["change_pct"]>=0 else str(round(d["change_pct"],2))+"%"} 今日</div>'
+                f'<div style="font-size:12px;color:{from_ipo_clr}">'
+                f'较发行价 {"+"+str(round(d["from_ipo"],1))+"%" if d["from_ipo"]>=0 else str(round(d["from_ipo"],1))+"%"}</div>'
+                f'</div></div>',
+                unsafe_allow_html=True
+            )
+        if st.button("🔄 刷新实时价格", key="refresh_ipo_live"):
+            st.cache_data.clear(); st.rerun()
+
     # 估值分布图（从原市场概览移过来）
     st.subheader("核心IPO估值分布")
     names = [c["name"] for c in IPOS]
-    vals  = [c["val_b"] for c in IPOS]
+    vals  = [c["val_b"] for c in IPOS]  # SpaceX已更新为上市后实际市值$1770B
     fig_bar = go.Figure(go.Bar(
         x=names, y=vals, marker_color=COLORS,
         text=[f"${v/1000:.2f}T" if v>=1000 else f"${v}B" for v in vals],
