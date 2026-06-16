@@ -77,6 +77,7 @@ IPOS = [
     {"name": "SpaceX",       "sector": "太空科技", "val_b": 1770, "rev_b": 18.7,
      "profitable": False, "float_pct": 4,  "exp_pop": 19, "bubble_risk": 45,
      "date": "2026年6月12日 ✅已上市", "ticker": "SPCX",
+     "price_now": 206.19, "ipo_price": 135.0,
      "desc": "2026年6月12日纳斯达克上市，发行价$135，首日收盘$161（+19%），史上最大IPO。2025年全年营收$187亿（同比+33%），EBITDA $66亿，但GAAP净亏损$49亿。已收购xAI，整合Grok AI和X（Twitter）。累计亏损$413亿。"},
     {"name": "OpenAI",       "sector": "人工智能", "val_b": 1000, "rev_b": 3.4,
      "profitable": False, "float_pct": 5,  "exp_pop": 35, "bubble_risk": 78, "date": "2026年Q4",
@@ -119,7 +120,7 @@ MARKET_TICKERS = {
     "META":   "Meta",
     "AMZN":   "亚马逊",
     "^GSPC":  "标普500",
-    "SPCE":   "SpaceX(SPCE)",
+    "SPCX":   "SpaceX 🚀",
 }
 
 POPULAR_STOCKS = {
@@ -669,7 +670,8 @@ with tabs[1]:
             import yfinance as yf, math
             live = {}
             # SpaceX上市代码候选（上市初期代码可能不稳定）
-            spacex_candidates = ["SPCE","SPCX","SPX","SPACX"]
+            spacex_candidates = ["SPCX","SPACX","SX"]  # SPCE=Virgin Galactic 不是SpaceX
+            found = False
             for ticker in spacex_candidates:
                 try:
                     t    = yf.Ticker(ticker)
@@ -678,7 +680,7 @@ with tabs[1]:
                     if len(hist) >= 1:
                         price = float(hist["Close"].iloc[-1])
                         prev  = float(hist["Close"].iloc[-2]) if len(hist)>1 else price
-                        if math.isnan(price) or price <= 0:
+                        if math.isnan(price) or price <= 1.0:
                             continue
                         chg = (price-prev)/prev*100 if prev>0 else 0
                         live[ticker] = {
@@ -688,9 +690,20 @@ with tabs[1]:
                             "ipo_price":  135.0,
                             "from_ipo":   round((price-135.0)/135.0*100,1),
                         }
-                        break  # 找到第一个有效的就停止
+                        found = True
+                        break
                 except Exception:
                     continue
+            # 如果yfinance还未同步SPCX，使用静态备用数据
+            if not found:
+                live["SPCX"] = {
+                    "name":       "SpaceX",
+                    "price":      206.19,
+                    "change_pct": 7.12,
+                    "ipo_price":  135.0,
+                    "from_ipo":   round((206.19-135.0)/135.0*100,1),
+                    "static":     True,
+                }
             return live
         except Exception:
             return {}
