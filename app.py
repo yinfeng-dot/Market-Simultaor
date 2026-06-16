@@ -119,6 +119,7 @@ MARKET_TICKERS = {
     "META":   "Meta",
     "AMZN":   "亚马逊",
     "^GSPC":  "标普500",
+    "SPCE":   "SpaceX(SPCE)",
 }
 
 POPULAR_STOCKS = {
@@ -149,21 +150,26 @@ def simulate(sentiment, rate, ai_speed, retail):
 @st.cache_data(ttl=300)
 def fetch_market_data():
     try:
-        import yfinance as yf
+        import yfinance as yf, math
         results = {}
         for ticker, name in MARKET_TICKERS.items():
             try:
                 t    = yf.Ticker(ticker)
-                hist = t.history(period="2d")
+                hist = t.history(period="5d")
+                hist = hist.dropna(subset=["Close"])
                 if len(hist) >= 2:
-                    price      = hist["Close"].iloc[-1]
-                    prev       = hist["Close"].iloc[-2]
+                    price = float(hist["Close"].iloc[-1])
+                    prev  = float(hist["Close"].iloc[-2])
+                    if math.isnan(price) or math.isnan(prev) or prev == 0:
+                        continue
                     change_pct = (price - prev) / prev * 100
+                    if math.isnan(change_pct) or math.isinf(change_pct):
+                        change_pct = 0.0
                     results[ticker] = {
-                        "name": name,
-                        "price": round(float(price), 2),
-                        "change": round(float(price - prev), 2),
-                        "change_pct": round(float(change_pct), 2),
+                        "name":       name,
+                        "price":      round(price, 2),
+                        "change":     round(price - prev, 2),
+                        "change_pct": round(change_pct, 2),
                     }
             except Exception:
                 pass
@@ -660,25 +666,31 @@ with tabs[1]:
     def fetch_ipo_live_prices():
         """抓取已上市IPO的实时股价"""
         try:
-            import yfinance as yf
+            import yfinance as yf, math
             live = {}
-            listed = {"SPCX": "SpaceX"}  # 已上市的IPO
-            for ticker, name in listed.items():
+            # SpaceX上市代码候选（上市初期代码可能不稳定）
+            spacex_candidates = ["SPCE","SPCX","SPX","SPACX"]
+            for ticker in spacex_candidates:
                 try:
                     t    = yf.Ticker(ticker)
                     hist = t.history(period="5d")
-                    if not hist.empty:
+                    hist = hist.dropna(subset=["Close"])
+                    if len(hist) >= 1:
                         price = float(hist["Close"].iloc[-1])
                         prev  = float(hist["Close"].iloc[-2]) if len(hist)>1 else price
+                        if math.isnan(price) or price <= 0:
+                            continue
+                        chg = (price-prev)/prev*100 if prev>0 else 0
                         live[ticker] = {
-                            "name":       name,
-                            "price":      price,
-                            "change_pct": (price-prev)/prev*100 if prev>0 else 0,
+                            "name":       "SpaceX",
+                            "price":      round(price,2),
+                            "change_pct": round(chg,2),
                             "ipo_price":  135.0,
-                            "from_ipo":   (price-135.0)/135.0*100,
+                            "from_ipo":   round((price-135.0)/135.0*100,1),
                         }
+                        break  # 找到第一个有效的就停止
                 except Exception:
-                    pass
+                    continue
             return live
         except Exception:
             return {}
