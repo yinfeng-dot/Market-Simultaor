@@ -2700,13 +2700,15 @@ with tabs[5]:
 
             chart_type = st.session_state["chart_type"]
 
-            hist_c = result["hist"]
+            hist_c = result.get("hist")
             p_now  = result["price_now"]
             p_stop = result["stop_loss"]
             fib    = result["fib_levels"]
 
-            # ── 图表1：K线 + 斐波那契 ──────────────────────────────────────
-            if chart_type == "📈 K线 + 斐波那契":
+            # 静态数据无历史图表
+            if hist_c is None:
+                st.info("📊 图表数据同步中（通常需要3-5个交易日），请稍后再查看K线图。")
+            elif chart_type == "📈 K线 + 斐波那契":
                 fig_c = go.Figure()
                 fig_c.add_trace(go.Candlestick(
                     x=hist_c.index,
@@ -2813,8 +2815,7 @@ with tabs[5]:
                 )
                 add_range_tools(fig_c, range_buttons=True, slider=False)
 
-            # ── 图表3：RSI ─────────────────────────────────────────────────
-            elif chart_type == "📊 RSI指标":
+            elif hist_c is not None and chart_type == "📊 RSI指标":
                 close_s = hist_c["Close"].dropna()
                 delta_s = close_s.diff()
                 gain_s  = delta_s.clip(lower=0).rolling(14).mean()
@@ -2875,8 +2876,7 @@ with tabs[5]:
                     ), selector=dict(type="date"), row=1, col=1
                 )
 
-            # ── 图表4：成交量分析 ──────────────────────────────────────────
-            elif chart_type == "📦 成交量分析":
+            elif hist_c is not None and chart_type == "📦 成交量分析":
                 vol_ma20 = hist_c["Volume"].rolling(20).mean()
                 bar_colors = ["#1D9E75" if c >= o else "#E24B4A"
                               for c, o in zip(hist_c["Close"], hist_c["Open"])]
@@ -2924,8 +2924,7 @@ with tabs[5]:
                     ), selector=dict(type="date")
                 )
 
-            # ── 图表5：OBV能量潮 ───────────────────────────────────────────
-            elif chart_type == "🌊 OBV能量潮":
+            elif hist_c is not None and chart_type == "🌊 OBV能量潮":
                 close_s = hist_c["Close"]
                 vol_s   = hist_c["Volume"]
                 obv_vals = []
