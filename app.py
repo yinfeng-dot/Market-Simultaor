@@ -174,18 +174,31 @@ def fetch_market_data():
 def market_to_sentiment(data):
     if not data:
         return 65
-    score = 50
-    if "^VIX" in data:
-        vix = data["^VIX"]["price"]
-        if vix < 15:   score += 20
-        elif vix < 20: score += 10
-        elif vix < 30: score -= 10
-        else:          score -= 25
-    if "^IXIC" in data:
-        score += data["^IXIC"]["change_pct"] * 3
-    if "NVDA" in data:
-        score += data["NVDA"]["change_pct"] * 2
-    return max(0, min(100, round(score)))
+    import math
+    score = 50.0
+    try:
+        def safe_val(v, default=0.0):
+            try:
+                f = float(v)
+                return default if (math.isnan(f) or math.isinf(f)) else f
+            except Exception:
+                return default
+
+        if "^VIX" in data:
+            vix = safe_val(data["^VIX"]["price"], 20)
+            if vix < 15:   score += 20
+            elif vix < 20: score += 10
+            elif vix < 30: score -= 10
+            else:          score -= 25
+        if "^IXIC" in data:
+            score += safe_val(data["^IXIC"]["change_pct"]) * 3
+        if "NVDA" in data:
+            score += safe_val(data["NVDA"]["change_pct"]) * 2
+        if math.isnan(score) or math.isinf(score):
+            score = 50.0
+    except Exception:
+        score = 50.0
+    return max(0, min(100, int(score)))
 
 def generate_gbm_paths(S0, mu, sigma, T_months, n_paths, seed=None):
     if seed is not None:
