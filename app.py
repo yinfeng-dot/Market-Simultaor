@@ -1111,6 +1111,270 @@ with tabs[3]:
             fig_gauge.update_layout(height=280, margin=dict(t=40,b=10))
             st.plotly_chart(fig_gauge, use_container_width=True)
 
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 💼 投资组合构建器
+    # ══════════════════════════════════════════════════════════════════════
+    with st.expander("💼 投资组合构建器 + 组合预测", expanded=True):
+        st.markdown("#### 构建你的投资组合")
+        st.caption("添加股票/ETF并设置投入金额，系统将自动分析组合风险并预测未来表现")
+
+        if "portfolio" not in st.session_state:
+            st.session_state["portfolio"] = [
+                {"ticker":"SPY",  "amount":5000.0},
+                {"ticker":"NVDA", "amount":3000.0},
+                {"ticker":"QQQ",  "amount":2000.0},
+            ]
+
+        # 快捷预设
+        st.markdown("**快捷预设**")
+        preset_btns = st.columns(4)
+        presets = {
+            "🛡️ 稳健型": [("SPY",5000),("BND",3000),("GLD",2000)],
+            "🚀 成长型": [("QQQ",4000),("NVDA",3000),("MSFT",2000),("TSLA",1000)],
+            "🌏 全球型": [("VTI",3000),("VXUS",2000),("GLD",1000),("BND",2000),("BABA",1000)],
+            "🤖 AI主题": [("NVDA",4000),("MSFT",2000),("GOOGL",2000),("SPCX",2000)],
+        }
+        for i,(pname,ptickers) in enumerate(presets.items()):
+            if preset_btns[i].button(pname, key=f"preset_{i}", use_container_width=True):
+                st.session_state["portfolio"] = [{"ticker":tk,"amount":float(amt)} for tk,amt in ptickers]
+                st.rerun()
+
+        st.divider()
+
+        # 组合编辑器
+        portfolio = st.session_state["portfolio"]
+        total_invest = sum(p["amount"] for p in portfolio)
+
+        hc = st.columns([2,2,1,1])
+        hc[0].markdown("**股票代码**")
+        hc[1].markdown("**投入金额 ($)**")
+        hc[2].markdown("**占比**")
+        hc[3].markdown("**删除**")
+
+        to_remove = []
+        for idx, pos in enumerate(portfolio):
+            rc = st.columns([2,2,1,1])
+            new_ticker = rc[0].text_input("", value=pos["ticker"], key=f"pf_t_{idx}",
+                                           label_visibility="collapsed").strip().upper()
+            new_amount = rc[1].number_input("", value=float(pos["amount"]), min_value=0.0,
+                                             step=500.0, key=f"pf_a_{idx}",
+                                             label_visibility="collapsed")
+            pct = new_amount/total_invest*100 if total_invest>0 else 0
+            rc[2].markdown(f"<br><b>{pct:.0f}%</b>", unsafe_allow_html=True)
+            if rc[3].button("🗑️", key=f"pf_d_{idx}"):
+                to_remove.append(idx)
+            portfolio[idx]["ticker"] = new_ticker
+            portfolio[idx]["amount"] = new_amount
+
+        for i in sorted(to_remove, reverse=True):
+            portfolio.pop(i)
+        if to_remove:
+            st.rerun()
+
+        # 添加新股票
+        ac = st.columns([2,2,1,1])
+        new_tk = ac[0].text_input("", placeholder="代码如 AAPL", key="pf_ntk",
+                                   label_visibility="collapsed").strip().upper()
+        new_amt = ac[1].number_input("", value=1000.0, min_value=0.0, step=500.0,
+                                      key="pf_namt", label_visibility="collapsed")
+        if ac[3].button("➕", key="pf_add", use_container_width=True):
+            if new_tk:
+                portfolio.append({"ticker":new_tk,"amount":new_amt})
+                st.rerun()
+
+        st.session_state["portfolio"] = portfolio
+        total_invest = sum(p["amount"] for p in portfolio)
+
+        st.divider()
+
+        if portfolio and total_invest > 0:
+            pf_c1, pf_c2, pf_c3 = st.columns(3)
+            pf_horizon_map = {"6个月":6,"1年":12,"3年":36,"5年":60,"10年":120,"20年":240}
+            pf_hl = pf_c1.selectbox("预测周期", list(pf_horizon_map.keys()), index=1, key="pf_hl")
+            pf_months = pf_horizon_map[pf_hl]
+            pf_mc_n   = pf_c2.selectbox("模拟路径数", [200,500,1000], index=1, key="pf_mcn")
+            pf_c3.metric("总投资额", f"${total_invest:,.0f}")
+
+            @st.cache_data(ttl=300)
+            def fetch_pf_data(tickers_tuple):
+                import yfinance as yf, numpy as _np
+                result = {}
+                for tk in tickers_tuple:
+                    try:
+                        hist = yf.Ticker(tk).history(period="2y")
+                        if hist.empty or len(hist)<30: continue
+                        close = hist["Close"].dropna()
+                        rets  = close.pct_change().dropna()
+                        info  = {}
+                        try: info = yf.Ticker(tk).info
+                        except: pass
+                        result[tk] = {
+                            "price": float(close.iloc[-1]),
+                            "mu":    float(rets.mean()*252),
+                            "sigma": float(rets.std()*(252**0.5)),
+                            "beta":  float(info.get("beta",1.0) or 1.0),
+                            "name":  info.get("longName",tk)[:18],
+                        }
+                    except: pass
+                return result
+
+            with st.spinner("正在获取组合数据..."):
+                pf_data = fetch_pf_data(tuple(p["ticker"] for p in portfolio))
+
+            valid_pf = [p for p in portfolio if p["ticker"] in pf_data]
+            if not valid_pf:
+                st.error("无法获取任何股票数据，请检查代码是否正确。")
+            else:
+                valid_total = sum(p["amount"] for p in valid_pf)
+                weights = [p["amount"]/valid_total for p in valid_pf]
+
+                # 饼图 + 组合指标
+                pc1, pc2 = st.columns([1,1])
+                with pc1:
+                    pie_colors = ["#185FA5","#534AB7","#1D9E75","#D85A30",
+                                  "#F5A623","#A32D2D","#0F6E56","#BA7517"]
+                    fig_pie = go.Figure(go.Pie(
+                        labels=[p["ticker"] for p in valid_pf],
+                        values=[p["amount"] for p in valid_pf],
+                        marker=dict(colors=pie_colors[:len(valid_pf)]),
+                        hole=0.4, textinfo="label+percent",
+                        hovertemplate="<b>%{label}</b><br>$%{value:,.0f}<br>%{percent}<extra></extra>",
+                    ))
+                    fig_pie.update_layout(height=260, margin=dict(t=10,b=10,l=10,r=10),
+                                          showlegend=False,
+                                          annotations=[dict(text=f"${valid_total:,.0f}",
+                                                            x=0.5, y=0.5, font_size=13, showarrow=False)])
+                    st.plotly_chart(fig_pie, use_container_width=True)
+
+                with pc2:
+                    pf_mu    = sum(w*pf_data[p["ticker"]]["mu"]    for w,p in zip(weights,valid_pf))
+                    pf_sigma = sum(w*pf_data[p["ticker"]]["sigma"] for w,p in zip(weights,valid_pf))
+                    pf_beta  = sum(w*pf_data[p["ticker"]]["beta"]  for w,p in zip(weights,valid_pf))
+                    sharpe   = pf_mu/pf_sigma if pf_sigma>0 else 0
+                    st.markdown("**组合风险指标**")
+                    for lbl, val, clr in [
+                        ("年化预期收益", f"{pf_mu*100:+.1f}%",  "#0F6E56" if pf_mu>0 else "#A32D2D"),
+                        ("年化波动率",   f"{pf_sigma*100:.1f}%","#BA7517"),
+                        ("夏普比率",     f"{sharpe:.2f}",        "#0F6E56" if sharpe>1 else "#BA7517" if sharpe>0.5 else "#A32D2D"),
+                        ("加权Beta",     f"{pf_beta:.2f}",       "#534AB7"),
+                        ("持仓数量",     f"{len(valid_pf)}支",   "#185FA5"),
+                    ]:
+                        st.markdown(
+                            f'<div style="display:flex;justify-content:space-between;padding:6px 10px;'
+                            f'background:#F8F9FA;border-radius:6px;margin-bottom:4px;font-size:13px">'
+                            f'<span style="color:#666">{lbl}</span>'
+                            f'<span style="font-weight:700;color:{clr}">{val}</span></div>',
+                            unsafe_allow_html=True
+                        )
+
+                # 蒙地卡罗
+                import numpy as _np2
+                _np2.random.seed(42)
+                dt = 1/12
+                pf_paths = _np2.zeros((pf_months+1, pf_mc_n))
+                pf_paths[0] = valid_total
+                for step in range(1, pf_months+1):
+                    port_ret = _np2.zeros(pf_mc_n)
+                    for w, pos in zip(weights, valid_pf):
+                        d   = pf_data[pos["ticker"]]
+                        Z   = _np2.random.standard_normal(pf_mc_n)
+                        r   = _np2.exp((d["mu"]-0.5*d["sigma"]**2)*dt + d["sigma"]*_np2.sqrt(dt)*Z) - 1
+                        port_ret += w * r
+                    pf_paths[step] = pf_paths[step-1] * (1 + port_ret)
+
+                from datetime import datetime as _dt_pf
+                _cy = _dt_pf.now().year
+                if pf_months >= 12:
+                    _xpf = [_cy+i/12 for i in range(pf_months+1)]
+                    _tpf = list(range(_cy, _cy+pf_months//12+1, max(1,pf_months//12//6)))
+                    _xt  = "年份"
+                else:
+                    _xpf = list(range(pf_months+1))
+                    _tpf = _xpf
+                    _xt  = "月份"
+
+                pp5  = _np2.percentile(pf_paths, 5,  axis=1)
+                pp25 = _np2.percentile(pf_paths, 25, axis=1)
+                pp50 = _np2.percentile(pf_paths, 50, axis=1)
+                pp75 = _np2.percentile(pf_paths, 75, axis=1)
+                pp95 = _np2.percentile(pf_paths, 95, axis=1)
+
+                fig_pf = go.Figure()
+                fig_pf.add_trace(go.Scatter(x=_xpf+_xpf[::-1], y=list(pp95)+list(pp5[::-1]),
+                    fill="toself", fillcolor="rgba(83,74,183,0.08)",
+                    line=dict(width=0), name="90%置信区间", hoverinfo="skip"))
+                fig_pf.add_trace(go.Scatter(x=_xpf+_xpf[::-1], y=list(pp75)+list(pp25[::-1]),
+                    fill="toself", fillcolor="rgba(83,74,183,0.18)",
+                    line=dict(width=0), name="50%置信区间", hoverinfo="skip"))
+                fig_pf.add_trace(go.Scatter(x=_xpf, y=pp95, mode="lines", name="P95乐观",
+                    line=dict(color="#1D9E75", width=1.5, dash="dot")))
+                fig_pf.add_trace(go.Scatter(x=_xpf, y=pp5,  mode="lines", name="P5悲观",
+                    line=dict(color="#E24B4A", width=1.5, dash="dot")))
+                fig_pf.add_trace(go.Scatter(x=_xpf, y=pp50, mode="lines", name="中位数",
+                    line=dict(color="#534AB7", width=2.5)))
+                fig_pf.add_hline(y=valid_total, line_dash="dash", line_color="#888",
+                                 annotation_text=f" 初始 ${valid_total:,.0f}",
+                                 annotation_position="right",
+                                 annotation_font=dict(size=11))
+                fig_pf.update_layout(
+                    height=400,
+                    title=dict(text=f"投资组合 · {pf_mc_n}条蒙地卡罗 · {pf_hl}", font=dict(size=14)),
+                    xaxis=dict(title=_xt, tickmode="array", tickvals=_tpf,
+                               ticktext=[str(y) for y in _tpf],
+                               showgrid=True, gridcolor="#eeeeee"),
+                    yaxis=dict(title="组合价值 ($)", showgrid=True, gridcolor="#eeeeee"),
+                    plot_bgcolor="#fafafa", hovermode="x unified",
+                    legend=dict(orientation="h", y=1.08, x=0),
+                    margin=dict(t=60,b=50,l=70,r=110),
+                )
+                st.plotly_chart(fig_pf, use_container_width=True)
+
+                # 期末结果
+                final_vals = pf_paths[-1]
+                pct_profit = (final_vals>valid_total).mean()*100
+                pct_double = (final_vals>valid_total*2).mean()*100
+                pct_loss50 = (final_vals<valid_total*0.5).mean()*100
+
+                st.markdown(f"#### 📈 {pf_hl}后预测结果")
+                rc1,rc2,rc3,rc4,rc5 = st.columns(5)
+                rc1.metric("P95 乐观", f"${float(pp95[-1]):,.0f}", f"{(float(pp95[-1])/valid_total-1)*100:+.0f}%")
+                rc2.metric("P75 较好", f"${float(pp75[-1]):,.0f}", f"{(float(pp75[-1])/valid_total-1)*100:+.0f}%")
+                rc3.metric("P50 中位", f"${float(pp50[-1]):,.0f}", f"{(float(pp50[-1])/valid_total-1)*100:+.0f}%", delta_color="off")
+                rc4.metric("P25 较差", f"${float(pp25[-1]):,.0f}", f"{(float(pp25[-1])/valid_total-1)*100:+.0f}%", delta_color="inverse")
+                rc5.metric("P5 悲观",  f"${float(pp5[-1]):,.0f}",  f"{(float(pp5[-1])/valid_total-1)*100:+.0f}%",  delta_color="inverse")
+
+                st.markdown(
+                    f'<div style="background:#F0F4FF;border-radius:10px;padding:14px 18px;'
+                    f'font-size:13px;line-height:2.2;margin-top:8px">'
+                    f'🟢 盈利概率：<b style="color:#0F6E56">{pct_profit:.1f}%</b> &nbsp;|&nbsp; '
+                    f'🚀 翻倍概率：<b style="color:#1D9E75">{pct_double:.1f}%</b> &nbsp;|&nbsp; '
+                    f'🔴 腰斩概率：<b style="color:#A32D2D">{pct_loss50:.1f}%</b> &nbsp;|&nbsp; '
+                    f'中位年化：<b>{((float(pp50[-1])/valid_total)**(12/pf_months)-1)*100:+.1f}%/年</b>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+                # 个股贡献
+                st.markdown("#### 🔍 个股贡献分析")
+                cc = st.columns(len(valid_pf))
+                colors_pf = ["#185FA5","#534AB7","#1D9E75","#D85A30","#F5A623","#A32D2D","#0F6E56","#BA7517"]
+                for i,(pos,w) in enumerate(zip(valid_pf,weights)):
+                    d   = pf_data[pos["ticker"]]
+                    clr = colors_pf[i % len(colors_pf)]
+                    mu_clr = "#0F6E56" if d["mu"]>0 else "#A32D2D"
+                    cc[i].markdown(
+                        f'<div style="background:#F8F9FA;border-radius:8px;padding:10px 8px;'
+                        f'text-align:center;border-top:3px solid {clr}">'
+                        f'<div style="font-weight:700;font-size:14px">{pos["ticker"]}</div>'
+                        f'<div style="font-size:10px;color:#888">{d["name"][:12]}</div>'
+                        f'<div style="font-size:11px;color:#666;margin:3px 0">{w*100:.0f}% · ${pos["amount"]:,.0f}</div>'
+                        f'<div style="color:{mu_clr};font-weight:700;font-size:13px">{d["mu"]*100:+.1f}%/年</div>'
+                        f'<div style="font-size:11px;color:#888">波动 {d["sigma"]*100:.0f}%</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
     st.divider()
     st.subheader("🔮 核心资产多情景价格趋势模拟")
 
