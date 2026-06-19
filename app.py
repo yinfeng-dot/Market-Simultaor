@@ -3123,12 +3123,14 @@ with tabs[5]:
                 bb_mid_s = close.rolling(20).mean()
                 bb_std_s = close.rolling(20).std()
 
-            fig_price = make_subplots(
+            fig_price_ok = hist is not None
+            if fig_price_ok:
+                fig_price = make_subplots(
                 rows=3, cols=1, shared_xaxes=True,
                 row_heights=[0.6, 0.2, 0.2],
                 subplot_titles=("价格走势 + 均线 + 布林带", "RSI (14)", "成交量"),
                 vertical_spacing=0.06,
-            )
+                  )
 
             # K线
             fig_price.add_trace(go.Candlestick(
@@ -3179,7 +3181,8 @@ with tabs[5]:
                 ),
                 selector=dict(row=1, col=1),
             )
-            st.plotly_chart(fig_price, use_container_width=True)
+            if fig_price_ok:
+                st.plotly_chart(fig_price, use_container_width=True)
 
             # ── 信号列表 ──
             st.subheader("📋 技术信号详情")
