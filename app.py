@@ -2990,7 +2990,11 @@ with tabs[5]:
                     ), selector=dict(type="date")
                 )
 
-            st.plotly_chart(fig_c, use_container_width=True)
+            if hist_c is not None:
+                try:
+                    st.plotly_chart(fig_c, use_container_width=True)
+                except Exception:
+                    pass
 
             # ── 长期投资分析 ──
             st.subheader("🏦 长期投资分析")
