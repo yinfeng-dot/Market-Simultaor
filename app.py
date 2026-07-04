@@ -3123,66 +3123,50 @@ with tabs[5]:
                 bb_mid_s = close.rolling(20).mean()
                 bb_std_s = close.rolling(20).std()
 
-            fig_price_ok = hist is not None
-            if fig_price_ok:
-                fig_price = make_subplots(
-                rows=3, cols=1, shared_xaxes=True,
-                row_heights=[0.6, 0.2, 0.2],
-                subplot_titles=("价格走势 + 均线 + 布林带", "RSI (14)", "成交量"),
-                vertical_spacing=0.06,
-                  )
-
-            # K线
-            fig_price.add_trace(go.Candlestick(
-                x=hist.index, open=hist["Open"], high=hist["High"],
-                low=hist["Low"], close=hist["Close"],
-                name="K线", increasing_line_color="#1D9E75", decreasing_line_color="#A32D2D",
-            ), row=1, col=1)
-            fig_price.add_trace(go.Scatter(x=hist.index,y=ma20_s,name="MA20",
-                line=dict(color="#534AB7",width=1.5)),row=1,col=1)
-            fig_price.add_trace(go.Scatter(x=hist.index,y=ma50_s,name="MA50",
-                line=dict(color="#D85A30",width=1.5)),row=1,col=1)
-            fig_price.add_trace(go.Scatter(x=hist.index,y=bb_mid_s+2*bb_std_s,name="布林上轨",
-                line=dict(color="gray",width=1,dash="dot"),showlegend=False),row=1,col=1)
-            fig_price.add_trace(go.Scatter(x=hist.index,y=bb_mid_s-2*bb_std_s,name="布林下轨",
-                line=dict(color="gray",width=1,dash="dot"),
-                fill="tonexty",fillcolor="rgba(128,128,128,0.05)",showlegend=False),row=1,col=1)
-
-            # RSI
-            delta_s = close.diff()
-            gain_s  = delta_s.clip(lower=0).rolling(14).mean()
-            loss_s  = (-delta_s.clip(upper=0)).rolling(14).mean()
-            rsi_s   = 100 - 100/(1+gain_s/loss_s.replace(0,1e-9))
-            fig_price.add_trace(go.Scatter(x=hist.index,y=rsi_s,name="RSI",
-                line=dict(color="#534AB7",width=1.5)),row=2,col=1)
-            fig_price.add_hline(y=70,line_dash="dot",line_color="red",row=2,col=1)
-            fig_price.add_hline(y=30,line_dash="dot",line_color="green",row=2,col=1)
-
-            # 成交量
-            fig_price.add_trace(go.Bar(x=hist.index,y=hist["Volume"],name="成交量",
-                marker_color=["#1D9E75" if c>=o else "#A32D2D"
-                              for c,o in zip(hist["Close"],hist["Open"])]),row=3,col=1)
-
-            fig_price.update_layout(height=700,plot_bgcolor="#fafafa",
-                showlegend=True,
-                legend=dict(orientation="h",y=-0.06))
-            fig_price.update_xaxes(
-                rangeslider=dict(visible=True, thickness=0.04, bgcolor="#fafafa"),
-                rangeselector=dict(
-                    buttons=[
-                        dict(count=1,label="1月",step="month",stepmode="backward"),
-                        dict(count=3,label="3月",step="month",stepmode="backward"),
-                        dict(count=6,label="6月",step="month",stepmode="backward"),
-                        dict(count=1,label="1年",step="year",stepmode="backward"),
-                        dict(step="all",label="全部"),
-                    ],
-                    bgcolor="#f0f0f0", activecolor="#534AB7",
-                    font=dict(size=11), x=0, y=1.01,
-                ),
-                selector=dict(row=1, col=1),
-            )
-            if fig_price_ok:
-                st.plotly_chart(fig_price, use_container_width=True)
+            if hist is not None:
+                try:
+                    from plotly.subplots import make_subplots as _ms
+                    _fp = _ms(rows=3, cols=1, shared_xaxes=True,
+                              row_heights=[0.6,0.2,0.2],
+                              subplot_titles=("价格走势+均线+布林带","RSI(14)","成交量"),
+                              vertical_spacing=0.06)
+                    _fp.add_trace(go.Candlestick(
+                        x=hist.index,open=hist["Open"],high=hist["High"],
+                        low=hist["Low"],close=hist["Close"],name="K线",
+                        increasing_line_color="#1D9E75",decreasing_line_color="#A32D2D",
+                        showlegend=False),row=1,col=1)
+                    _close=hist["Close"]
+                    _ma20=_close.rolling(20).mean()
+                    _ma50=_close.rolling(min(50,len(_close))).mean()
+                    _bb_m=_close.rolling(20).mean()
+                    _bb_s=_close.rolling(20).std()
+                    _fp.add_trace(go.Scatter(x=hist.index,y=_ma20,name="MA20",
+                        line=dict(color="#534AB7",width=1.5)),row=1,col=1)
+                    _fp.add_trace(go.Scatter(x=hist.index,y=_ma50,name="MA50",
+                        line=dict(color="#D85A30",width=1.5)),row=1,col=1)
+                    _fp.add_trace(go.Scatter(x=hist.index,y=_bb_m+2*_bb_s,name="布林上轨",
+                        line=dict(color="gray",width=1,dash="dot"),showlegend=False),row=1,col=1)
+                    _fp.add_trace(go.Scatter(x=hist.index,y=_bb_m-2*_bb_s,name="布林下轨",
+                        line=dict(color="gray",width=1,dash="dot"),
+                        fill="tonexty",fillcolor="rgba(128,128,128,0.05)",showlegend=False),row=1,col=1)
+                    _d=_close.diff()
+                    _g=_d.clip(lower=0).rolling(14).mean()
+                    _l=(-_d.clip(upper=0)).rolling(14).mean()
+                    _rsi=100-100/(1+_g/_l.replace(0,1e-9))
+                    _fp.add_trace(go.Scatter(x=hist.index,y=_rsi,name="RSI",
+                        line=dict(color="#534AB7",width=1.5)),row=2,col=1)
+                    _fp.add_hline(y=70,line_dash="dot",line_color="red",row=2,col=1)
+                    _fp.add_hline(y=30,line_dash="dot",line_color="green",row=2,col=1)
+                    _bc=["#1D9E75" if c>=o else "#A32D2D"
+                         for c,o in zip(hist["Close"],hist["Open"])]
+                    _fp.add_trace(go.Bar(x=hist.index,y=hist["Volume"],name="成交量",
+                        marker_color=_bc),row=3,col=1)
+                    _fp.update_layout(height=620,plot_bgcolor="#fafafa",
+                        xaxis_rangeslider_visible=False,showlegend=True,
+                        legend=dict(orientation="h",y=-0.08))
+                    st.plotly_chart(_fp, use_container_width=True)
+                except Exception as _e:
+                    st.warning(f"图表加载失败：{_e}")
 
             # ── 信号列表 ──
             st.subheader("📋 技术信号详情")
