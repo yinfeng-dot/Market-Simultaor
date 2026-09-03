@@ -1,4 +1,4 @@
-"""
+    """
 2026 大型IPO与泡沫风险模拟器 - Streamlit版（含实时数据+趋势预测+股票分析器）
 """
 
@@ -114,6 +114,7 @@ COLORS = ["#185FA5","#534AB7","#7F77DD","#1D9E75","#D85A30","#0F6E56"]
 MARKET_TICKERS = {
     "^IXIC":  "纳斯达克",
     "^VIX":   "恐慌指数(VIX)",
+    "^TNX":   "10年期国债收益率",
     "NVDA":   "英伟达",
     "MSFT":   "微软",
     "GOOGL":  "谷歌",
@@ -128,7 +129,74 @@ POPULAR_STOCKS = {
     "AI":   ["NVDA","AMD","SMCI","PLTR","AI","SOUN","BBAI","KULR"],
     "中概股":["BABA","JD","PDD","BIDU","NIO","XPEV","LI"],
     "ETF":  ["QQQ","SPY","ARKK","SOXX","VGT"],
+    "加密货币": ["BTC-USD","ETH-USD","SOL-USD","BNB-USD","XRP-USD","DOGE-USD"],
+    "有色金属/矿业": ["GLD","SLV","GDX","FCX","NEM","SCCO"],
 }
+
+# 加密货币 / 有色金属实时行情用的代码表（Tab1 市场概览）
+CRYPTO_TICKERS = {
+    "BTC-USD": "比特币",
+    "ETH-USD": "以太坊",
+    "SOL-USD": "Solana",
+    "BNB-USD": "币安币",
+    "XRP-USD": "瑞波币",
+    "DOGE-USD":"狗狗币",
+}
+METALS_TICKERS = {
+    "GC=F": "黄金期货",
+    "SI=F": "白银期货",
+    "HG=F": "铜期货",
+    "GDX":  "金矿股ETF",
+    "SLV":  "白银ETF",
+    "FCX":  "自由港矿业(铜)",
+}
+
+# 赛道潜力叙事：优先按具体代码匹配，其次按行业(sector)匹配
+TRACK_POTENTIAL = {
+    "BTC-USD": ("数字黄金 / 价值存储", "#F5A623",
+                "比特币的核心叙事是稀缺性（总量2100万枚）+ 机构采用（现货ETF、企业资产负债表配置）。长期潜力取决于能否持续被主流金融体系接纳为价值存储资产；减半周期后的供给收缩是历史上主要的上涨催化剂，但监管政策和宏观流动性仍是最大变量。"),
+    "ETH-USD": ("智能合约平台 / Layer2 + DeFi生态", "#534AB7",
+                "以太坊是最大的智能合约与DeFi结算层，潜力绑定于Layer2扩容、质押收益（PoS）和现实世界资产（RWA）上链叙事。竞争风险来自Solana等高性能公链的分流，长期表现取决于生态开发者活跃度和费率优化。"),
+    "SOL-USD": ("高性能公链", "#1D9E75",
+                "Solana主打高吞吐低费率，叙事集中在链上交易（DeFi/meme币/支付）和机构级应用尝试。生态增长速度快是优势，但历史上出现过网络宕机问题，长期能否稳定承载更大规模应用是核心变量。"),
+    "BNB-USD": ("交易所生态币", "#BA7517",
+                "币安币的价值支撑主要来自全球最大加密交易所的手续费折扣、销毁机制和BNB Chain生态。潜力与交易所监管风险、交易量周期高度相关，天花板受限于中心化交易所模式本身的监管不确定性。"),
+    "XRP-USD": ("跨境支付", "#185FA5",
+                "瑞波定位跨境支付清算网络，潜力取决于传统金融机构的实际采用率。长期看点在于监管明朗后能否切入传统清算体系的市场份额，但目前实际企业采用规模仍有限。"),
+    "DOGE-USD":("Meme币 / 社区驱动", "#D85A30",
+                "狗狗币缺乏实质技术护城河，价格主要由社区热度、名人效应和市场投机情绪驱动，没有现金流或基本面支撑，长期赛道潜力评级最低，更接近投机品而非资产配置标的。"),
+    "GC=F": ("避险资产 / 抗通胀", "#F5A623", "黄金的长期需求锚定在央行购金、地缘政治避险和抗通胀属性上。潜力相对稳定但增长空间有限，更适合作为组合的\"压舱石\"而非成长型配置，长期收益通常跑输股票类资产。"),
+    "GLD":  ("避险资产 / 抗通胀", "#F5A623", "黄金ETF跟踪金价，逻辑同黄金期货：央行购金、地缘避险和抗通胀是长期支撑，适合作为组合的防御性配置而非成长型标的。"),
+    "SI=F": ("工业+贵金属双属性", "#999999", "白银兼具贵金属避险属性和光伏/电子工业需求，近年受益于新能源（光伏银浆）需求增长，波动性高于黄金，价格弹性更大但风险也更高。"),
+    "SLV":  ("工业+贵金属双属性", "#999999", "白银ETF跟踪银价，兼具避险和工业（光伏、电子）双重需求驱动，波动性高于黄金类资产。"),
+    "HG=F": ("电气化 / 新能源基建金属", "#D85A30", "铜被称为\"新能源金属之王\"，核心逻辑是电动车、电网升级和数据中心建设带来的结构性需求增长，叠加全球矿山资本开支不足导致的供给约束，长期潜力被广泛看好，但短期高度受宏观周期（尤其中国需求）影响。"),
+    "GDX":  ("黄金矿业股（金价的杠杆敞口）", "#F5A623", "金矿股相对金价通常有杠杆效应（金价上涨时涨幅更大，下跌时跌幅也更大），额外叠加了矿山运营成本、产量和管理层资本配置能力等公司层面风险。"),
+    "FCX":  ("铜矿开采（新能源金属敞口）", "#D85A30", "自由港是全球最大的上市铜生产商之一，业绩与铜价高度挂钩，长期受益于电气化和新能源基建需求，但需关注矿山所在地（印尼等）的政治/税收风险。"),
+    "NEM":  ("黄金开采", "#F5A623", "全球最大黄金生产商之一，是获取金价敞口同时博取运营杠杆的方式，长期表现取决于金价走势和自身成本控制/矿山寿命。"),
+    "SCCO": ("铜矿开采（新能源金属敞口）", "#D85A30", "南方铜业是全球成本最低的铜生产商之一，长期受益于电气化需求增长和高股息率，但同样面临大宗商品价格周期性波动风险。"),
+}
+SECTOR_TRACK_MAP = {
+    "Technology":          ("科技 / AI基础设施", "AI算力、云计算和软件平台的长期增长驱动力强，但估值普遍较高，需警惕AI资本开支周期见顶的风险。"),
+    "Financial Services":  ("金融服务", "受益于净息差和资本市场活跃度，长期增长相对稳健但弹性有限，衰退期需警惕信贷质量恶化。"),
+    "Consumer Cyclical":   ("可选消费", "增长与居民收入和信心高度相关，潜力取决于消费升级/降级周期，波动性较大。"),
+    "Healthcare":          ("医疗健康", "人口老龄化提供长期结构性需求，创新药和器械是主要增长点，防御属性强，适合长期配置。"),
+    "Energy":              ("能源", "传统能源受地缘政治和OPEC+产量政策影响大，长期面临能源转型压力，但短期现金流和分红能力强。"),
+    "Real Estate":         ("房地产 / REITs", "对利率极度敏感，长期潜力取决于城镇化和资产证券化程度，高利率环境下承压明显。"),
+    "Communication Services":("传媒 / 互联网", "广告和订阅收入受经济周期影响，长期看点在于内容/流量变现效率和AI应用落地。"),
+    "Industrials":         ("工业 / 制造", "受益于基建投资和供应链本土化趋势，长期增长稳健但对全球贸易环境敏感。"),
+    "Consumer Defensive":  ("必需消费", "需求刚性强，防御属性突出，长期增长天花板较低但现金流稳定，适合稳健配置。"),
+    "Utilities":           ("公用事业", "现金流极其稳定，但成长性有限，主要作为高股息防御性资产配置。"),
+    "Basic Materials":     ("原材料 / 大宗商品", "受益于全球工业化和新能源转型带来的结构性需求，周期性强，供给端约束是核心逻辑。"),
+}
+
+def get_track_info(ticker, sector=None):
+    """返回 (赛道名称, 主题色, 潜力叙述)，优先按代码匹配，其次按行业匹配"""
+    if ticker in TRACK_POTENTIAL:
+        return TRACK_POTENTIAL[ticker]
+    if sector in SECTOR_TRACK_MAP:
+        name, desc = SECTOR_TRACK_MAP[sector]
+        return (name, "#534AB7", desc)
+    return ("综合板块", "#666666", "暂无该行业的专项赛道分析，建议结合公司基本面和所处行业竞争格局自行评估长期成长空间。")
 
 # ── 工具函数 ──────────────────────────────────────────────────────────────────
 def simulate(sentiment, rate, ai_speed, retail):
@@ -638,7 +706,7 @@ def fetch_stock_analysis(ticker: str):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器"])
+tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器","💰 我的持仓"])
 
 # ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
@@ -681,6 +749,81 @@ with tabs[0]:
         st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算")
     else:
         st.warning("无法获取实时数据，请检查网络连接。")
+
+    st.divider()
+    st.subheader("💎 加密货币 & 有色金属/矿业")
+
+    @st.cache_data(ttl=180)
+    def fetch_crypto_metals_data(tickers_dict):
+        try:
+            import yfinance as yf, math
+            results = {}
+            for ticker, name in tickers_dict.items():
+                try:
+                    t    = yf.Ticker(ticker)
+                    hist = t.history(period="5d")
+                    hist = hist.dropna(subset=["Close"])
+                    if len(hist) >= 2:
+                        price = float(hist["Close"].iloc[-1])
+                        prev  = float(hist["Close"].iloc[-2])
+                        if math.isnan(price) or math.isnan(prev) or prev == 0:
+                            continue
+                        change_pct = (price - prev) / prev * 100
+                        if math.isnan(change_pct) or math.isinf(change_pct):
+                            change_pct = 0.0
+                        results[ticker] = {
+                            "name": name, "price": round(price, 2),
+                            "change_pct": round(change_pct, 2),
+                        }
+                except Exception:
+                    pass
+            return results
+        except ImportError:
+            return {}
+
+    cm_tab1, cm_tab2 = st.tabs(["🪙 加密货币", "⛏️ 有色金属/矿业"])
+    with cm_tab1:
+        crypto_data = fetch_crypto_metals_data(CRYPTO_TICKERS)
+        if crypto_data:
+            ccols = st.columns(len(crypto_data))
+            for i, (tk, info) in enumerate(crypto_data.items()):
+                ccols[i].metric(info["name"], f"${info['price']:,.2f}", f"{info['change_pct']:+.2f}%")
+            fig_crypto = go.Figure(go.Bar(
+                x=[v["name"] for v in crypto_data.values()],
+                y=[v["change_pct"] for v in crypto_data.values()],
+                marker_color=["#A32D2D" if v["change_pct"] < 0 else "#0F6E56" for v in crypto_data.values()],
+                text=[f"{v['change_pct']:+.2f}%" for v in crypto_data.values()], textposition="outside",
+            ))
+            fig_crypto.update_layout(height=280, yaxis_title="24h涨跌幅 (%)", plot_bgcolor="#fafafa",
+                                     showlegend=False, margin=dict(t=20, b=20),
+                                     yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
+            st.plotly_chart(fig_crypto, use_container_width=True)
+            avg_chg = sum(v["change_pct"] for v in crypto_data.values()) / len(crypto_data)
+            crypto_mood = ("🔥 普遍上涨，风险偏好回升" if avg_chg > 2 else
+                           "📉 普遍下跌，避险情绪升温" if avg_chg < -2 else "⚖️ 涨跌互现，方向不明")
+            st.caption(f"加密市场整体：{crypto_mood}（平均涨跌 {avg_chg:+.2f}%） · 可在「🔬 股票分析器」或「💰 我的持仓」输入 BTC-USD / ETH-USD 等代码查看详细技术面分析")
+        else:
+            st.warning("无法获取加密货币实时数据。")
+
+    with cm_tab2:
+        metals_data = fetch_crypto_metals_data(METALS_TICKERS)
+        if metals_data:
+            mcols2 = st.columns(len(metals_data))
+            for i, (tk, info) in enumerate(metals_data.items()):
+                mcols2[i].metric(info["name"], f"${info['price']:,.2f}", f"{info['change_pct']:+.2f}%")
+            fig_metals = go.Figure(go.Bar(
+                x=[v["name"] for v in metals_data.values()],
+                y=[v["change_pct"] for v in metals_data.values()],
+                marker_color=["#A32D2D" if v["change_pct"] < 0 else "#0F6E56" for v in metals_data.values()],
+                text=[f"{v['change_pct']:+.2f}%" for v in metals_data.values()], textposition="outside",
+            ))
+            fig_metals.update_layout(height=280, yaxis_title="今日涨跌幅 (%)", plot_bgcolor="#fafafa",
+                                     showlegend=False, margin=dict(t=20, b=20),
+                                     yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
+            st.plotly_chart(fig_metals, use_container_width=True)
+            st.caption("有色金属/矿业股走势通常与美元指数、实际利率和新能源基建需求相关，铜价常被视为全球经济增长的领先指标（\"铜博士\"）")
+        else:
+            st.warning("无法获取有色金属数据。")
 
     st.divider()
     st.subheader("📈 2026 IPO市场总览")
@@ -1551,7 +1694,7 @@ with tabs[3]:
                     ticker_map = {
                         "EUR":"EURUSD=X","GBP":"GBPUSD=X","CNY":"CNY=X",
                         "JPY":"JPY=X","HKD":"HKD=X","SGD":"SGD=X",
-                        "KRW":"KRW=X","AUD":"AUDUSD=X","CAD":"CADUSD=X",
+                        "KRW":"KRW=X","AUD":"AUDUSD=X","CAD":"CAD=X",
                         "CHF":"CHF=X","INR":"INR=X","MXN":"MXN=X",
                         "BRL":"BRL=X","SEK":"SEK=X","NOK":"NOK=X",
                     }
@@ -1713,23 +1856,29 @@ with tabs[3]:
 
             st.subheader(f"📈 {horizon_sel}后投资组合预测（初始投入 {fmt_val(invest_usd, curr_code, fx_rate)}）")
             c1, c2, c3 = st.columns(3)
-            c1.metric(
-                "🚀 乐观情景",
-                fmt_val(bull_port, curr_code, fx_rate),
-                f"股价 ${bull_end_p:.2f}  |  回报 {(bull_port/invest_usd-1)*100:+.1f}%"
-            )
-            c2.metric(
-                "📊 基准情景",
-                fmt_val(base_port, curr_code, fx_rate),
-                f"股价 ${base_end_p:.2f}  |  回报 {(base_port/invest_usd-1)*100:+.1f}%",
-                delta_color="off"
-            )
-            c3.metric(
-                "🐻 悲观情景",
-                fmt_val(bear_port, curr_code, fx_rate),
-                f"股价 ${bear_end_p:.2f}  |  回报 {(bear_port/invest_usd-1)*100:+.1f}%",
-                delta_color="inverse"
-            )
+            if invest_usd > 0:
+                c1.metric(
+                    "🚀 乐观情景",
+                    fmt_val(bull_port, curr_code, fx_rate),
+                    f"股价 ${bull_end_p:.2f}  |  回报 {(bull_port/invest_usd-1)*100:+.1f}%"
+                )
+                c2.metric(
+                    "📊 基准情景",
+                    fmt_val(base_port, curr_code, fx_rate),
+                    f"股价 ${base_end_p:.2f}  |  回报 {(base_port/invest_usd-1)*100:+.1f}%",
+                    delta_color="off"
+                )
+                c3.metric(
+                    "🐻 悲观情景",
+                    fmt_val(bear_port, curr_code, fx_rate),
+                    f"股价 ${bear_end_p:.2f}  |  回报 {(bear_port/invest_usd-1)*100:+.1f}%",
+                    delta_color="inverse"
+                )
+            else:
+                st.info("💡 投资金额为0，仅展示股价预测，不计算回报率（回报率需要非零投资金额才有意义）。")
+                c1.metric("🚀 乐观情景股价", f"${bull_end_p:.2f}")
+                c2.metric("📊 基准情景股价", f"${base_end_p:.2f}")
+                c3.metric("🐻 悲观情景股价", f"${bear_end_p:.2f}")
 
             if invest_usd > 0:
                 st.markdown(
@@ -3917,5 +4066,235 @@ with tabs[5]:
                     f'<b>{final[0]}</b><br>{final[2]}</div>',
                     unsafe_allow_html=True
                 )
+
+            st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
+
+# ── Tab 7: 我的持仓 ──────────────────────────────────────────────────────────────
+with tabs[6]:
+    st.subheader("💰 我的持仓")
+    st.caption("记录你的真实持仓（含成本价），自动分析盈亏原因、长期投资前景与赛道潜力 · 支持股票/ETF/加密货币/大宗商品期货")
+
+    if "holdings" not in st.session_state:
+        st.session_state["holdings"] = [
+            {"ticker": "NVDA",    "qty": 10.0,  "cost": 120.0},
+            {"ticker": "BTC-USD", "qty": 0.05,  "cost": 60000.0},
+        ]
+
+    st.markdown("**添加/编辑持仓**")
+    hh = st.columns([2, 2, 2, 1])
+    hh[0].markdown("**代码**")
+    hh[1].markdown("**数量**")
+    hh[2].markdown("**平均成本价 ($)**")
+    hh[3].markdown("**删除**")
+
+    holdings = st.session_state["holdings"]
+    h_to_remove = []
+    for idx, pos in enumerate(holdings):
+        rc = st.columns([2, 2, 2, 1])
+        new_tk = rc[0].text_input("", value=pos["ticker"], key=f"h_t_{idx}",
+                                   label_visibility="collapsed").strip().upper()
+        new_qty = rc[1].number_input("", value=float(pos["qty"]), min_value=0.0,
+                                      step=1.0, key=f"h_q_{idx}", label_visibility="collapsed")
+        new_cost = rc[2].number_input("", value=float(pos["cost"]), min_value=0.0,
+                                       step=1.0, key=f"h_c_{idx}", label_visibility="collapsed")
+        if rc[3].button("🗑️", key=f"h_d_{idx}"):
+            h_to_remove.append(idx)
+        holdings[idx]["ticker"] = new_tk
+        holdings[idx]["qty"]    = new_qty
+        holdings[idx]["cost"]   = new_cost
+
+    for i in sorted(h_to_remove, reverse=True):
+        holdings.pop(i)
+    if h_to_remove:
+        st.rerun()
+
+    ac = st.columns([2, 2, 2, 1])
+    add_tk = ac[0].text_input("", placeholder="如 AAPL / BTC-USD / GDX", key="h_ntk",
+                               label_visibility="collapsed").strip().upper()
+    add_qty = ac[1].number_input("", value=1.0, min_value=0.0, step=1.0,
+                                  key="h_nqty", label_visibility="collapsed")
+    add_cost = ac[2].number_input("", value=100.0, min_value=0.0, step=1.0,
+                                   key="h_ncost", label_visibility="collapsed")
+    if ac[3].button("➕", key="h_add", use_container_width=True):
+        if add_tk:
+            holdings.append({"ticker": add_tk, "qty": add_qty, "cost": add_cost})
+            st.rerun()
+
+    st.session_state["holdings"] = holdings
+    st.divider()
+
+    valid_holdings = [h for h in holdings if h["ticker"] and h["qty"] > 0 and h["cost"] > 0]
+
+    if not valid_holdings:
+        st.info("👆 请添加至少一个持仓（代码、数量、成本价均需大于0）。股票用 AAPL 这类代码，加密货币用 BTC-USD 这类代码，大宗商品期货用 GC=F（黄金）/ HG=F（铜）这类代码。")
+    else:
+        with st.spinner("正在获取持仓实时数据并分析..."):
+            pos_results = {}
+            for h in valid_holdings:
+                tk = h["ticker"]
+                if tk not in pos_results:
+                    pos_results[tk] = fetch_stock_analysis(tk)
+
+        rows = []
+        for h in valid_holdings:
+            r = pos_results.get(h["ticker"])
+            if r is None or "error" in r:
+                continue
+            cur_price = r["price_now"]
+            mv      = h["qty"] * cur_price
+            cost_v  = h["qty"] * h["cost"]
+            pnl     = mv - cost_v
+            pnl_pct = (cur_price - h["cost"]) / h["cost"] * 100
+            rows.append({"h": h, "r": r, "mv": mv, "cost_v": cost_v, "pnl": pnl, "pnl_pct": pnl_pct})
+
+        bad_tickers = [h["ticker"] for h in valid_holdings
+                       if pos_results.get(h["ticker"]) is None or "error" in pos_results.get(h["ticker"], {})]
+        if bad_tickers:
+            st.warning(f"以下代码无法获取数据，请检查拼写：{', '.join(sorted(set(bad_tickers)))}")
+
+        if not rows:
+            st.error("无法获取任何持仓的数据，请检查代码是否正确。")
+        else:
+            total_cost    = sum(x["cost_v"] for x in rows)
+            total_mv      = sum(x["mv"] for x in rows)
+            total_pnl     = total_mv - total_cost
+            total_pnl_pct = (total_mv / total_cost - 1) * 100 if total_cost > 0 else 0
+
+            st.markdown("#### 📊 持仓总览")
+            oc1, oc2, oc3, oc4 = st.columns(4)
+            oc1.metric("总成本", f"${total_cost:,.2f}")
+            oc2.metric("当前市值", f"${total_mv:,.2f}")
+            oc3.metric("总盈亏", f"${total_pnl:+,.2f}", f"{total_pnl_pct:+.1f}%",
+                       delta_color="normal" if total_pnl >= 0 else "inverse")
+            win_n = sum(1 for x in rows if x["pnl"] >= 0)
+            oc4.metric("盈利/持仓数", f"{win_n}/{len(rows)}")
+
+            pie_c, list_c = st.columns([1, 2])
+            with pie_c:
+                fig_hp = go.Figure(go.Pie(
+                    labels=[x["h"]["ticker"] for x in rows],
+                    values=[max(x["mv"], 0.01) for x in rows],
+                    hole=0.4, textinfo="label+percent",
+                    marker=dict(colors=(COLORS * 3)[:len(rows)]),
+                ))
+                fig_hp.update_layout(height=280, margin=dict(t=10, b=10, l=10, r=10), showlegend=False,
+                                     annotations=[dict(text=f"${total_mv:,.0f}", x=0.5, y=0.5,
+                                                       font_size=13, showarrow=False)])
+                st.plotly_chart(fig_hp, use_container_width=True)
+
+            with list_c:
+                for x in rows:
+                    h, r = x["h"], x["r"]
+                    clr = "#0F6E56" if x["pnl"] >= 0 else "#A32D2D"
+                    st.markdown(
+                        f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                        f'background:#F8F9FA;border-left:4px solid {clr};border-radius:6px;'
+                        f'padding:8px 14px;margin-bottom:6px;font-size:13px">'
+                        f'<span><b>{h["ticker"]}</b> · {h["qty"]:g} @ ${h["cost"]:.2f}</span>'
+                        f'<span style="color:{clr};font-weight:700">${x["pnl"]:+,.2f}（{x["pnl_pct"]:+.1f}%）</span>'
+                        f'</div>', unsafe_allow_html=True
+                    )
+
+            st.divider()
+
+            # ── 整体持仓评估（长期怎么样）──
+            st.markdown("#### 🎯 整体持仓长期评估")
+            weighted_lt = sum(x["r"]["lt_score"] * max(x["mv"], 0.01) for x in rows) / total_mv if total_mv > 0 else 0
+            n_bull = sum(1 for x in rows if x["r"]["lt_score"] >= 60)
+            n_bear = sum(1 for x in rows if x["r"]["lt_score"] < 45)
+            verdict_color = "#0F6E56" if weighted_lt >= 60 else "#BA7517" if weighted_lt >= 45 else "#A32D2D"
+            verdict_text = ("整体持仓长期质量偏高，多数标的具备可持续的成长逻辑，适合继续持有并定期复核。" if weighted_lt >= 60 else
+                            "整体持仓长期质量中性，建议定期跟踪基本面变化，逢高适度调整配置结构。" if weighted_lt >= 45 else
+                            "整体持仓长期质量偏弱，建议重新评估配置结构，逐步向长期评分更高的标的倾斜。")
+            st.markdown(
+                f'<div style="background:{verdict_color};color:white;padding:14px 18px;border-radius:10px;font-size:14px">'
+                f'<b>持仓加权长期评分：{weighted_lt:.0f}/100</b>　|　长期看好 {n_bull} 个持仓　·　长期偏弱 {n_bear} 个持仓<br>'
+                f'<span style="font-size:13px;opacity:0.9">{verdict_text}</span></div>',
+                unsafe_allow_html=True
+            )
+
+            st.divider()
+            st.markdown("#### 🔍 逐个持仓深度分析")
+            st.caption("展开每个持仓查看：盈亏归因（为什么涨/跌）· 长期投资前景 · 所属赛道的市场潜力")
+
+            def analyze_position_pnl(h, r, pnl_pct):
+                """分析单个持仓的盈亏原因"""
+                lines = []
+                cur, cost = r["price_now"], h["cost"]
+                direction = "盈利" if pnl_pct >= 0 else "亏损"
+                lines.append(f"**成本价 ${cost:.2f} → 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
+
+                if r["mom_1m"] > 5:
+                    lines.append(f"📈 近1个月上涨 {r['mom_1m']:+.1f}%，短期动能是近期表现的主要驱动力。")
+                elif r["mom_1m"] < -5:
+                    lines.append(f"📉 近1个月下跌 {r['mom_1m']:.1f}%，短期抛压是近期走弱的主因。")
+                else:
+                    lines.append(f"➡️ 近1个月走势平淡（{r['mom_1m']:+.1f}%），短期没有明显单边驱动。")
+
+                if r["rsi"] > 70:
+                    lines.append(f"RSI={r['rsi']:.1f} 处于超买区间，若持仓正在盈利，需警惕短线获利回吐风险。")
+                elif r["rsi"] < 30:
+                    lines.append(f"RSI={r['rsi']:.1f} 处于超卖区间，若持仓正在亏损，历史上此位置出现反弹的概率较高。")
+
+                if r["macd_hist"] > 0:
+                    lines.append("MACD柱为正，多头动能仍在，短期趋势偏向支撑价格。")
+                else:
+                    lines.append("MACD柱为负，空头动能主导，短期趋势仍偏弱，是压制价格的因素之一。")
+
+                if r["obv_trend"] == "上升":
+                    lines.append(f"OBV资金面显示净流入（高于均线{r['obv_pct']:.1f}%），资金仍在积极参与，对价格形成支撑。")
+                else:
+                    lines.append(f"OBV资金面显示净流出（低于均线{abs(r['obv_pct']):.1f}%），资金持续撤离是价格承压的重要原因之一。")
+
+                macro_sc  = st.session_state.get("macro_score")
+                macro_out = st.session_state.get("macro_outlook")
+                if macro_sc is not None:
+                    beta = r.get("beta") or 1.0
+                    if pnl_pct < 0 and macro_sc < 0:
+                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），高利率/通胀等逆风因素叠加该标的Beta={beta:.2f}，放大了下跌压力——部分亏损可归因于系统性宏观风险，而非仅仅是标的自身问题。")
+                    elif pnl_pct >= 0 and macro_sc > 0:
+                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），顺风环境叠加该标的Beta={beta:.2f}放大了涨幅——部分盈利受益于系统性宏观利好，而非仅仅是个股alpha。")
+                    else:
+                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），与该持仓当前走势方向不完全一致，说明个股/资产自身的基本面或资金面因素目前占主导。")
+                else:
+                    lines.append("💡 前往「🌐 宏观分析」Tab 加载宏观数据后，此处会补充宏观环境对该持仓盈亏的归因分析。")
+
+                return lines
+
+            for x in rows:
+                h, r = x["h"], x["r"]
+                icon = "🟢" if x["pnl"] >= 0 else "🔴"
+                with st.expander(f"{icon} {h['ticker']} · {r.get('name', h['ticker'])} — 盈亏 {x['pnl_pct']:+.1f}%",
+                                 expanded=False):
+                    pc1, pc2, pc3, pc4 = st.columns(4)
+                    pc1.metric("持仓数量", f"{h['qty']:g}")
+                    pc2.metric("成本 / 现价", f"${h['cost']:.2f} / ${r['price_now']:.2f}")
+                    pc3.metric("盈亏金额", f"${x['pnl']:+,.2f}")
+                    pc4.metric("盈亏比例", f"{x['pnl_pct']:+.1f}%",
+                               delta_color="normal" if x["pnl_pct"] >= 0 else "inverse")
+
+                    st.markdown("**🧠 盈亏归因分析（为什么涨/跌）**")
+                    for line in analyze_position_pnl(h, r, x["pnl_pct"]):
+                        st.markdown(f"- {line}")
+
+                    st.markdown("**🏦 长期投资前景**")
+                    st.markdown(
+                        f'<div style="background:#F8F9FA;border-left:4px solid {r["lt_color"]};'
+                        f'padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:10px">'
+                        f'<b style="color:{r["lt_color"]}">{r["lt_rating"]}</b>（长期评分 {r["lt_score"]}/100）'
+                        f'&nbsp;·&nbsp;夏普比率 {r["sharpe"]:.2f}'
+                        f'&nbsp;·&nbsp;20日趋势斜率 {r["slope_pct"]:+.2f}%/日'
+                        f'&nbsp;·&nbsp;价格{"高于" if r["price_now"]>r["ma200"] else "低于"}MA200'
+                        f'</div>', unsafe_allow_html=True
+                    )
+
+                    st.markdown("**🚀 赛道 / 市场潜力分析**")
+                    track_name, track_color, track_desc = get_track_info(h["ticker"], r.get("sector"))
+                    st.markdown(
+                        f'<div style="background:#F8F9FA;border-left:4px solid {track_color};'
+                        f'padding:10px 14px;border-radius:6px;font-size:13px">'
+                        f'<b style="color:{track_color}">{track_name}</b><br>{track_desc}'
+                        f'</div>', unsafe_allow_html=True
+                    )
 
             st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
