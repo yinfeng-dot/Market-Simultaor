@@ -308,40 +308,103 @@ div[data-testid="stProgress"] > div > div > div {
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ⚡ 自动刷新：开启后整个页面按设定间隔重跑，行情缓存到期即重新抓取
+# 👀 盯盘模式：只在你盯盘的这段时间里自动刷新，时间一到自动停止
 # ══════════════════════════════════════════════════════════════════════════════
+def watch_status():
+    """返回 (是否盯盘中, 刷新间隔秒, 剩余秒)，并处理会话到期"""
+    from datetime import datetime as _dtn
+    ss = st.session_state
+    until = ss.get("watch_until")
+    if until:
+        left = (until - _dtn.now()).total_seconds()
+        if left <= 0:
+            ss["watch_until"] = None
+            ss["watch_expired"] = True
+            return False, ss.get("watch_iv", 60), 0
+        return True, ss.get("watch_iv", 60), int(left)
+    return False, ss.get("watch_iv", 60), 0
+
+def start_watch(minutes=None, interval=None):
+    from datetime import datetime as _dtn, timedelta as _td
+    import time as _t
+    ss = st.session_state
+    ss["watch_iv"] = interval or ss.get("watch_iv", 60)
+    ss["watch_min"] = minutes or ss.get("watch_min", 15)
+    ss["watch_until"] = _dtn.now() + _td(minutes=ss["watch_min"])
+    ss["watch_count"] = 0
+    ss["watch_last"] = _t.time()      # 时间闸门起点，防止启动瞬间连环重跑
+    ss.pop("watch_expired", None)
+
+def stop_watch():
+    st.session_state["watch_until"] = None
+    st.session_state.pop("watch_expired", None)
+
 def setup_auto_refresh():
     from datetime import datetime as _dtn
+    ss = st.session_state
+    active, iv, left = watch_status()
     with st.sidebar:
-        st.markdown("### ⚡ 实时更新")
-        on = st.toggle("自动刷新数据", value=False, key="auto_refresh",
-                       help="开启后页面会按下方间隔自动重新抓取行情，无需手动点刷新")
-        interval = st.selectbox(
-            "刷新间隔", [30, 60, 120, 300], index=1, key="auto_refresh_interval",
-            format_func=lambda s: f"{s} 秒" if s < 60 else f"{s // 60} 分钟",
-            disabled=not on)
+        st.markdown("### 👀 盯盘模式")
         st.caption(f"本次数据更新于 **{_dtn.now().strftime('%H:%M:%S')}**")
-        if on:
-            st.success(f"🟢 每 {interval} 秒自动刷新中")
+        if active:
+            st.success(f"🟢 盯盘中 · 每 {iv} 秒自动刷新\n\n"
+                       f"⏳ 剩余 {left//60:02d}:{left%60:02d}　·　已刷新 {ss.get('watch_count', 0)} 次")
+            b1, b2 = st.columns(2)
+            if b1.button("⏹ 结束盯盘", use_container_width=True, key="watch_stop"):
+                stop_watch(); st.rerun()
+            if b2.button("⏱ 再延长", use_container_width=True, key="watch_extend",
+                         help=f"再延长 {ss.get('watch_min', 15)} 分钟"):
+                start_watch(); st.rerun()
         else:
-            st.caption("⚪ 当前为手动模式，点页面内的「🔄 刷新」按钮更新")
+            if ss.pop("watch_expired", False):
+                st.info("⏸️ 盯盘时段已结束，自动刷新已停止（避免你离开后继续空转）。需要时再点开始。")
+            c1, c2 = st.columns(2)
+            _iv = c1.selectbox("刷新间隔", [30, 60, 120, 300],
+                               index=[30, 60, 120, 300].index(ss.get("watch_iv", 60)),
+                               key="watch_iv_sel",
+                               format_func=lambda s: f"{s} 秒" if s < 60 else f"{s // 60} 分钟")
+            _mn = c2.selectbox("盯盘时长", [5, 15, 30, 60],
+                               index=[5, 15, 30, 60].index(ss.get("watch_min", 15)),
+                               key="watch_min_sel", format_func=lambda m: f"{m} 分钟")
+            if st.button("▶️ 开始盯盘", use_container_width=True, type="primary", key="watch_start"):
+                start_watch(minutes=_mn, interval=_iv); st.rerun()
+            st.caption("⚪ 当前为手动模式：只有你操作页面或点刷新时才会取新数据，不消耗后台资源。")
         st.caption("行情来自雅虎财经，美股约延迟15分钟；加密货币 24 小时连续报价。")
         if st.button("🔄 立即强制刷新全部数据", use_container_width=True, key="force_refresh_all"):
             st.cache_data.clear()
             st.rerun()
-    return on, interval
+    return active, iv
 
 _auto_on, _auto_interval = setup_auto_refresh()
 
 if _auto_on and hasattr(st, "fragment"):
     try:
-        @st.fragment(run_every=_auto_interval)
+        # 心跳片段本身很轻（只重跑自己），真正的整页刷新由下面的时间闸门控制，
+        # 否则「片段启动即重跑整页 → 整页重跑又重建片段」会变成死循环。
+        _tick_every = max(3, min(_auto_interval, 10))
+
+        @st.fragment(run_every=_tick_every)
         def _auto_refresh_ticker():
-            if st.session_state.get("auto_refresh"):
+            import time as _t
+            from datetime import datetime as _d
+            ss = st.session_state
+            if not ss.get("watch_until"):
+                return
+            def _do_rerun():
                 try:
                     st.rerun(scope="app")
                 except TypeError:      # 老版本 st.rerun 不支持 scope
                     st.rerun()
+            if _d.now() >= ss["watch_until"]:          # 盯盘时段结束，自动停
+                ss["watch_until"] = None
+                ss["watch_expired"] = True
+                _do_rerun()
+                return
+            _now = _t.time()
+            if _now - ss.get("watch_last", 0) >= ss.get("watch_iv", 60):
+                ss["watch_last"] = _now
+                ss["watch_count"] = ss.get("watch_count", 0) + 1
+                _do_rerun()
         _auto_refresh_ticker()
     except Exception:
         st.sidebar.caption("⚠️ 当前 Streamlit 版本不支持自动刷新，请使用手动刷新按钮。")
@@ -1592,8 +1655,30 @@ with tabs[0]:
 
     live_data_t1 = fetch_market_data()
     if live_data_t1:
-        if st.button("🔄 刷新实时数据", key="refresh_t1"):
+        _w_on, _w_iv, _w_left = watch_status()
+        _wc1, _wc2, _wc3 = st.columns([1.1, 1.3, 3.6])
+        if _wc1.button("🔄 刷新实时数据", key="refresh_t1", use_container_width=True):
             st.cache_data.clear(); st.rerun()
+        if _w_on:
+            if _wc2.button("⏹ 结束盯盘", key="watch_stop_t1", use_container_width=True):
+                stop_watch(); st.rerun()
+            _wc3.markdown(
+                f'<div class="arow" style="margin-top:2px;background:rgba(29,158,117,.14);'
+                f'border:1px solid rgba(29,158,117,.35)">'
+                f'<span style="font-size:13px;color:#0F6E56;font-weight:600">'
+                f'🟢 盯盘中 · 每 {_w_iv} 秒自动刷新 · 剩余 {_w_left//60:02d}:{_w_left%60:02d} · '
+                f'已刷新 {st.session_state.get("watch_count", 0)} 次</span></div>',
+                unsafe_allow_html=True)
+        else:
+            if _wc2.button("👀 开始盯盘", key="watch_start_t1", use_container_width=True, type="primary"):
+                start_watch(); st.rerun()
+            _wc3.markdown(
+                f'<div class="arow" style="margin-top:2px">'
+                f'<span style="font-size:12.5px;color:#64748b">'
+                f'⚪ 手动模式：数据只在你操作时更新。点「开始盯盘」后会每 '
+                f'{st.session_state.get("watch_iv", 60)} 秒自动刷新一次，'
+                f'{st.session_state.get("watch_min", 15)} 分钟后自动停止（可在左侧边栏调整）。</span></div>',
+                unsafe_allow_html=True)
 
         cards_t1 = []
         for ticker, info in live_data_t1.items():
