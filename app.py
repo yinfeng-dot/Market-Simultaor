@@ -744,6 +744,7 @@ TICKER_UNIVERSE = {
     "JPM":"摩根大通", "BAC":"美国银行", "WFC":"富国银行", "GS":"高盛", "MS":"摩根士丹利",
     "C":"花旗集团", "SCHW":"嘉信理财", "BLK":"贝莱德", "V":"Visa", "MA":"万事达 Mastercard",
     "AXP":"美国运通", "BRK-B":"伯克希尔 B", "TFC":"Truist Financial", "TRV":"旅行者保险",
+    "ICE":"洲际交易所 ICE", "CME":"芝商所 CME", "NDAQ":"纳斯达克交易所",
     # 医疗消费工业
     "UNH":"联合健康", "JNJ":"强生", "LLY":"礼来", "PFE":"辉瑞", "MRK":"默沙东",
     "ABBV":"艾伯维", "TMO":"赛默飞世尔", "ABT":"雅培", "DHR":"丹纳赫", "AMGN":"安进",
@@ -812,6 +813,58 @@ def search_tickers(query, limit=12):
 def _uni_label(tk):
     nm = TICKER_UNIVERSE.get(tk)
     return f"{tk} — {nm}" if nm else tk
+
+# 常见写错的代码 → 正确代码（公司名、简称、现货代号等）
+TICKER_ALIASES = {
+    "TESLA": "TSLA", "特斯拉": "TSLA", "SPACEX": "SPCX", "太空探索": "SPCX",
+    "APPLE": "AAPL", "苹果": "AAPL", "GOOGLE": "GOOGL", "谷歌": "GOOGL",
+    "AMAZON": "AMZN", "亚马逊": "AMZN", "NVIDIA": "NVDA", "英伟达": "NVDA",
+    "MICROSOFT": "MSFT", "微软": "MSFT", "FACEBOOK": "META", "NETFLIX": "NFLX",
+    "ALIBABA": "BABA", "阿里巴巴": "BABA", "BLOCK": "XYZ", "SQ": "XYZ",
+    "BTC": "BTC-USD", "BITCOIN": "BTC-USD", "比特币": "BTC-USD",
+    "ETH": "ETH-USD", "ETHEREUM": "ETH-USD", "以太坊": "ETH-USD",
+    "SOL": "SOL-USD", "SOLANA": "SOL-USD", "XRP": "XRP-USD", "RIPPLE": "XRP-USD",
+    "DOGE": "DOGE-USD", "BNB": "BNB-USD", "ADA": "ADA-USD", "LTC": "LTC-USD",
+    "XAU": "GLD", "XAUUSD": "GLD", "GOLD": "GLD", "黄金": "GLD",
+    "XAG": "SLV", "SILVER": "SLV", "白银": "SLV",
+    "COPPER": "HG=F", "铜": "HG=F", "OIL": "USO", "原油": "USO", "WTI": "USO",
+    "SP500": "SPY", "S&P500": "SPY", "标普500": "SPY",
+    "NASDAQ": "QQQ", "纳斯达克": "QQQ", "纳指": "QQQ",
+    "TENCENT": "0700.HK", "腾讯": "0700.HK", "US STEEL": "XME", "USSTEEL": "XME",
+}
+
+def suggest_ticker(tk):
+    """把写错的代码猜成正确代码；猜不出就返回 None（宁可不猜，也不瞎猜）"""
+    import re as _re
+    t = (tk or "").strip().upper()
+    if not t or t in TICKER_UNIVERSE:
+        return None
+    if t in TICKER_ALIASES:                       # 1. 已知别名，最可靠
+        return TICKER_ALIASES[t]
+    if f"{t}-USD" in TICKER_UNIVERSE:             # 2. 加密货币漏写后缀
+        return f"{t}-USD"
+    if len(t) < 3:                                # 3. 太短无从判断，交给下拉框去选
+        return None
+    for cand, nm in TICKER_UNIVERSE.items():      # 4. 按公司名匹配：须是完整单词或名称开头
+        words = [w for w in _re.split(r"[\s（）()/·—-]+", nm.upper()) if w]
+        if t in words or nm.upper().startswith(t):
+            return cand
+    for cand in TICKER_UNIVERSE:                  # 5. 代码前缀（输入够长时才用）
+        if cand.startswith(t):
+            return cand
+    return None
+
+def report_invalid_tickers(requested, valid, where="分析"):
+    """把被丢掉的代码明确告诉用户，并给出「你是不是想输入…」建议"""
+    missing = [t for t in requested if t and t not in valid]
+    if not missing:
+        return
+    lines = []
+    for t in missing:
+        s = suggest_ticker(t)
+        lines.append(f"**{t}** → 建议改成 **{s}**（{TICKER_UNIVERSE.get(s, '')}）" if s
+                     else f"**{t}** → 雅虎财经查不到这个代码")
+    st.warning(f"⚠️ 有 {len(missing)} 个代码取不到行情，已不计入{where}：\n\n" + "\n\n".join(f"· {l}" for l in lines))
 
 def ticker_autocomplete(key, default=None, label="股票代码（边打边出提示）", label_visibility="visible",
                         help_text="输入首字母即可联想，如 X → XOM / XLK / XRP-USD；库里没有的代码也可以直接输入，如 0700.HK"):
@@ -2461,8 +2514,9 @@ with tabs[3]:
         to_remove = []
         for idx, pos in enumerate(portfolio):
             rc = st.columns([2,2,1,1])
-            new_ticker = rc[0].text_input("", value=pos["ticker"], key=f"pf_t_{idx}",
-                                           label_visibility="collapsed").strip().upper()
+            with rc[0]:
+                new_ticker = ticker_autocomplete(f"pf_t_{idx}", default=pos["ticker"],
+                                                 label="股票代码", label_visibility="collapsed")
             new_amount = rc[1].number_input("", value=float(pos["amount"]), min_value=0.0,
                                              step=500.0, key=f"pf_a_{idx}",
                                              label_visibility="collapsed")
@@ -2480,8 +2534,9 @@ with tabs[3]:
 
         # 添加新股票
         ac = st.columns([2,2,1,1])
-        new_tk = ac[0].text_input("", placeholder="代码如 AAPL", key="pf_ntk",
-                                   label_visibility="collapsed").strip().upper()
+        with ac[0]:
+            new_tk = ticker_autocomplete("pf_ntk", default="",
+                                         label="新增股票代码", label_visibility="collapsed")
         new_amt = ac[1].number_input("", value=1000.0, min_value=0.0, step=500.0,
                                       key="pf_namt", label_visibility="collapsed")
         if ac[3].button("➕", key="pf_add", use_container_width=True):
@@ -2500,7 +2555,7 @@ with tabs[3]:
             pf_hl = pf_c1.selectbox("预测周期", list(pf_horizon_map.keys()), index=1, key="pf_hl")
             pf_months = pf_horizon_map[pf_hl]
             pf_mc_n   = pf_c2.selectbox("模拟路径数", [200,500,1000], index=1, key="pf_mcn")
-            pf_c3.metric("总投资额", f"${total_invest:,.0f}")
+            pf_c3.metric("总投资额", f"${total_invest:,.0f}", "填写金额合计", delta_color="off")
 
             @st.cache_data(ttl=300)
             def fetch_pf_data(tickers_tuple):
@@ -2529,11 +2584,19 @@ with tabs[3]:
                 pf_data = fetch_pf_data(tuple(p["ticker"] for p in portfolio))
 
             valid_pf = [p for p in portfolio if p["ticker"] in pf_data]
+            report_invalid_tickers([p["ticker"] for p in portfolio], set(pf_data.keys()), where="组合分析")
             if not valid_pf:
-                st.error("无法获取任何股票数据，请检查代码是否正确。")
+                st.error("没有任何一个代码能取到行情，因此无法分析。请用上面的下拉框重新选择标的"
+                         "（输入首字母就会出候选，例如输入 TS 会出现 TSLA）。")
             else:
                 valid_total = sum(p["amount"] for p in valid_pf)
                 weights = [p["amount"]/valid_total for p in valid_pf]
+                if abs(valid_total - total_invest) > 0.01:
+                    why(f"上方「总投资额」显示的是你填写的全部金额 **${total_invest:,.0f}**，"
+                        f"但其中只有 **${valid_total:,.0f}** 对应的代码能取到真实行情，"
+                        f"下面的饼图、风险指标和蒙地卡罗模拟**只用这 ${valid_total:,.0f} 计算**。"
+                        f"把上面标红的代码改对之后，这两个数字就会一致。",
+                        "warn", title="为什么饼图和总投资额对不上")
 
                 # 饼图 + 组合指标
                 pc1, pc2 = st.columns([1,1])
@@ -5355,10 +5418,9 @@ with tabs[6]:
             rows.append({"h": h, "r": r, "mv": mv, "cost_v": cost_v, "pnl": pnl, "pnl_pct": pnl_pct,
                         "ccy_code": ccy_code, "cost_usd": cost_usd})
 
-        bad_tickers = [h["ticker"] for h in valid_holdings
-                       if pos_results.get(h["ticker"]) is None or "error" in pos_results.get(h["ticker"], {})]
-        if bad_tickers:
-            st.warning(f"以下代码无法获取数据，请检查拼写：{', '.join(sorted(set(bad_tickers)))}")
+        _ok_tks = {h["ticker"] for h in valid_holdings
+                   if pos_results.get(h["ticker"]) and "error" not in pos_results.get(h["ticker"], {})}
+        report_invalid_tickers([h["ticker"] for h in valid_holdings], _ok_tks, where="持仓统计")
 
         if not rows:
             st.error("无法获取任何持仓的数据，请检查代码是否正确。")
@@ -5662,9 +5724,7 @@ with tabs[7]:
         if _rets is None or _rets.shape[1] < 2:
             st.error("有效数据不足，请检查代码是否正确（至少需要 2 个能取到数据的资产）。")
         else:
-            _missing = [t for t in _hg_tickers if t not in _rets.columns]
-            if _missing:
-                st.warning(f"以下代码取不到数据，已跳过：{', '.join(_missing)}")
+            report_invalid_tickers(_hg_tickers, set(_rets.columns), where="相关性与Alpha/Beta计算")
 
             _n = _rets.shape[1]
             _corr = _rets.corr()
