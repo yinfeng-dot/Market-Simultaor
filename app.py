@@ -99,6 +99,21 @@ div[data-testid="stPlotlyChart"] {
     box-shadow: 0 8px 28px rgba(15,23,42,0.07);
 }
 
+/* ── 隐藏 Plotly 工具栏（下载图片/缩放等按钮）── */
+.js-plotly-plot .modebar, .modebar-container, .modebar { display: none !important; }
+
+/* ── 数值解读条：告诉用户"为什么是这个结果" ── */
+.whybox {
+    font-size: 11.8px; line-height: 1.7; color: #334155;
+    padding: 8px 12px; border-radius: 10px; margin: -6px 0 14px;
+}
+.stApp .whybox, .stApp .whybox span { color: #334155; }
+.whybox .wt { font-weight: 700; }
+.whybox .calc {
+    display: block; margin-top: 4px; font-size: 11px; color: #5b6678;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ── 折叠面板 / 提示框 ── */
 div[data-testid="stExpander"] {
     background: rgba(255,255,255,0.52);
@@ -416,7 +431,193 @@ def glass_chart(fig, **kwargs):
         pass
     kwargs.setdefault("use_container_width", True)
     kwargs.setdefault("theme", None)   # 不套用 Streamlit 深色图表模板
-    return st.plotly_chart(fig, **kwargs)
+    kwargs.setdefault("config", {"displayModeBar": False, "displaylogo": False,
+                                 "scrollZoom": False})
+    try:
+        return st.plotly_chart(fig, **kwargs)
+    except TypeError:                  # 老版本 Streamlit 不支持 config 参数
+        kwargs.pop("config", None)
+        return st.plotly_chart(fig, **kwargs)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📖 数值解读引擎：每个指标都告诉用户"这个数字为什么是这样、意味着什么"
+# ══════════════════════════════════════════════════════════════════════════════
+_WHY_C  = {"good": "#0F6E56", "bad": "#A32D2D", "warn": "#BA7517", "neutral": "#475569"}
+_WHY_BG = {"good": "rgba(29,158,117,.10)", "bad": "rgba(226,75,74,.10)",
+           "warn": "rgba(186,117,23,.10)", "neutral": "rgba(100,116,139,.09)"}
+
+def why_html(text, tone="neutral", calc=None, title="为什么是这个结果"):
+    import re
+    c, bg = _WHY_C.get(tone, "#475569"), _WHY_BG.get(tone, "rgba(100,116,139,.09)")
+    text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)   # HTML 块内不会解析 markdown 粗体
+    calc_html = f'<span class="calc">{calc}</span>' if calc else ""
+    return (f'<div class="whybox" style="border-left:3px solid {c};background:{bg}">'
+            f'<span class="wt" style="color:{c}">{title}：</span>{text}{calc_html}</div>')
+
+def why(text, tone="neutral", calc=None, title="为什么是这个结果", target=None):
+    """在指标下方渲染一条解读"""
+    (target or st).markdown(why_html(text, tone, calc, title), unsafe_allow_html=True)
+
+def interpret_market(ticker, info):
+    """解读市场概览里的每个标的：(解读文字, 语气)"""
+    p, chg = info["price"], info["change_pct"]
+    name = info["name"]
+
+    if ticker == "^VIX":
+        if p < 13:
+            base, tone = (f"VIX 现在 {p:.2f}，处在**极低区间（低于13）**。它衡量的是标普500未来30天的预期波动，"
+                          f"这么低说明几乎没人花钱买下跌保险、市场偏自满——historically 这种时候一旦有利空，回调反而更猛。"), "warn"
+        elif p < 20:
+            base, tone = (f"VIX 现在 {p:.2f}，属于**平静区间（13–20）**。市场预期未来一个月不会有大波动，"
+                          f"风险偏好正常，资金愿意待在股票等风险资产里，这对高估值的AI和IPO标的是有利环境。"), "good"
+        elif p < 30:
+            base, tone = (f"VIX 现在 {p:.2f}，已进入**紧张区间（20–30）**。投资者正在为下跌买保险，"
+                          f"避险需求上升时，最先被卖掉的通常就是没有盈利支撑的高估值成长股。"), "warn"
+        else:
+            base, tone = (f"VIX 现在 {p:.2f}，处于**恐慌区间（高于30）**。历史上这种水平只在系统性风险事件中出现"
+                          f"（如2008、2020年3月），此时泡沫类资产的抛压最集中。"), "bad"
+        move = ("今日**大幅回落**，说明恐慌情绪在快速消退、风险偏好回升" if chg < -5 else
+                "今日**明显上升**，说明市场正在加速买入下跌保护、担忧升温" if chg > 5 else
+                "今日变化不大，情绪维持现状")
+        return base + f" {move}（{chg:+.2f}%）。", tone
+
+    if ticker == "^TNX":
+        if p < 3:
+            body, tone = (f"10年期美债收益率 {p:.2f}%，处于**低位**。它是全球资产定价的「无风险利率」基准，"
+                          f"越低意味着未来现金流折现回来越值钱，对靠远期故事支撑的成长股最有利。"), "good"
+        elif p < 4.5:
+            body, tone = (f"10年期美债收益率 {p:.2f}%，处于**中性偏紧区间**。股票相对债券的吸引力被削弱，"
+                          f"但还不至于压垮估值，市场会更看重公司能不能真正赚钱。"), "warn"
+        else:
+            body, tone = (f"10年期美债收益率 {p:.2f}%，**偏高**。无风险利率越高，折现率就越高，"
+                          f"没有当期盈利、只靠远期增长故事的AI股和新股受到的估值压制最大——这也是泡沫风险模型里利率权重很重的原因。"), "bad"
+        return body + f" 今日{chg:+.2f}%。", tone
+
+    if ticker in ("^IXIC", "^GSPC"):
+        idx = "纳斯达克（科技股集中）" if ticker == "^IXIC" else "标普500（宽基大盘）"
+        if chg > 1.5:
+            return f"{idx}今日上涨 {chg:+.2f}%，属于**明显放量的风险偏好回升**，通常伴随资金从防御性板块流向成长股。", "good"
+        if chg > 0:
+            return f"{idx}今日小幅收涨 {chg:+.2f}%，市场情绪偏稳，没有出现方向性突破。", "good"
+        if chg > -1.5:
+            return f"{idx}今日小幅回落 {chg:+.2f}%，属于正常波动区间，暂时看不出趋势反转。", "neutral"
+        return f"{idx}今日下跌 {chg:+.2f}%，跌幅偏大，需要留意是否有宏观利空（利率、通胀或财报）在发酵。", "bad"
+
+    if ticker == "SPCX":
+        return (f"SpaceX 现价 ${p:.2f}，今日{chg:+.2f}%。作为2026年最大的IPO，它的走势是市场对"
+                f"「高估值、未盈利、故事驱动」这一类资产风险偏好的直接体温计。"), ("good" if chg >= 0 else "bad")
+
+    # 个股
+    if chg > 3:
+        return f"{name}今日大涨 {chg:+.2f}%，明显强于大盘，多半有个股层面的催化（财报、订单或行业消息）在推动。", "good"
+    if chg > 0:
+        return f"{name}今日收涨 {chg:+.2f}%，跟随大盘小幅走强，属于常规波动。", "good"
+    if chg > -3:
+        return f"{name}今日回落 {chg:+.2f}%，幅度不大，更像是随大盘整理而非个股利空。", "neutral"
+    return f"{name}今日下跌 {chg:+.2f}%，跌幅偏大，建议结合「股票分析器」看是技术面破位还是基本面出了问题。", "bad"
+
+def interpret_crypto(ticker, info):
+    chg, name, p = info["change_pct"], info["name"], info["price"]
+    role = {
+        "BTC-USD": "比特币是整个加密市场的风险偏好温度计，与纳斯达克的相关性近年明显上升，流动性宽松时涨得最凶",
+        "ETH-USD": "以太坊的价格绑定链上活跃度（DeFi、Layer2、RWA），比比特币多一层「生态使用率」的基本面",
+        "SOL-USD": "Solana 属于高贝塔品种，牛市涨幅通常超过主流币，回撤也更深",
+        "BNB-USD": "币安币与交易所交易量和销毁机制挂钩，受监管消息影响特别大",
+        "XRP-USD": "瑞波的价格主要由监管进展和跨境支付采用消息驱动，技术面之外的事件风险高",
+        "DOGE-USD": "狗狗币没有现金流和技术护城河，价格几乎完全由社区情绪和名人效应驱动",
+    }.get(ticker, "该币种价格主要由市场情绪和流动性驱动")
+    if chg > 3:
+        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，**涨势明显**。{role}。", "good"
+    if chg > 0:
+        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅走强。{role}。", "good"
+    if chg > -3:
+        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅回落，属于加密市场的日常波动。{role}。", "neutral"
+    return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，**跌幅较大**。{role}。", "bad"
+
+def interpret_metal(ticker, info):
+    chg, p = info["change_pct"], info["price"]
+    logic = {
+        "GC=F": "黄金涨跌主要看**实际利率和避险需求**：实际利率下行或地缘风险升温时黄金走强",
+        "SI=F": "白银是**贵金属+工业金属**双重属性，除了避险，还受光伏和电子需求影响，弹性比黄金大",
+        "HG=F": "铜被称为「铜博士」，是**全球经济需求的领先指标**，电动车、电网和数据中心建设是长期需求来源",
+        "GDX": "金矿股相对金价有**杠杆效应**，金价涨1%时矿股往往涨2-3%，但也多了矿山成本和运营风险",
+        "SLV": "白银ETF跟踪银价，走势同时受避险情绪和工业（光伏）需求影响",
+        "FCX": "自由港是全球最大上市铜生产商之一，业绩与铜价高度绑定，可视为**铜价的放大器**",
+    }.get(ticker, "该品种主要受大宗商品供需和美元汇率影响")
+    if chg > 2:
+        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，**涨幅明显**。{logic}。", "good"
+    if chg > 0:
+        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅走强。{logic}。", "good"
+    if chg > -2:
+        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅回落。{logic}。", "neutral"
+    return f"现价 ${p:,.2f}，今日{chg:+.2f}%，**跌幅较大**。{logic}。", "bad"
+
+def explain_sentiment(data, score):
+    """拆解市场情绪分是怎么算出来的"""
+    terms, notes = ["中性起点 50"], []
+    if "^VIX" in data:
+        v = data["^VIX"]["price"]
+        pts = 20 if v < 15 else 10 if v < 20 else -10 if v < 30 else -25
+        terms.append(f"VIX {v:.1f} → {pts:+d}")
+        notes.append(f"VIX {v:.1f}（{'低波动加分' if pts > 0 else '波动升高扣分'}）")
+    if "^IXIC" in data:
+        c = data["^IXIC"]["change_pct"]
+        terms.append(f"纳指 {c:+.2f}% × 3 → {c*3:+.1f}")
+        notes.append(f"纳指今日{c:+.2f}%")
+    if "NVDA" in data:
+        c = data["NVDA"]["change_pct"]
+        terms.append(f"英伟达 {c:+.2f}% × 2 → {c*2:+.1f}")
+        notes.append(f"英伟达（AI风向标）{c:+.2f}%")
+    label = ("极度恐慌" if score < 20 else "恐慌" if score < 40 else
+             "中性" if score < 60 else "乐观" if score < 80 else "极度狂热")
+    tone = "bad" if score < 40 else "neutral" if score < 60 else "good" if score < 80 else "warn"
+    text = (f"这个 **{score}/100（{label}）** 不是拍脑袋来的，而是由三个实时数据加权算出来的："
+            + "、".join(notes) + "。三者共同决定了当前风险偏好水平，分数越高说明市场越愿意为高估值资产买单。")
+    return text, tone, "计算过程：" + "　".join(terms) + f"　=　{score}"
+
+def explain_simulate(sentiment, rate, ai_speed, retail, sim):
+    """拆解泡沫模拟器的四个输出分别是怎么算出来的"""
+    def fmt(terms, total, unit="%"):
+        return "　".join(terms) + f"　=　{total}{unit}"
+
+    pop_terms = [f"基础 5", f"情绪 {sentiment}×0.4={sentiment*0.4:+.1f}",
+                 f"AI速度 {ai_speed}×0.2={ai_speed*0.2:+.1f}",
+                 f"利率 {rate}%×2={-rate*2:+.1f}", f"散户 {retail}×0.15={retail*0.15:+.1f}"]
+    six_terms = [f"(情绪{sentiment}-50)×0.3={(sentiment-50)*0.3:+.1f}",
+                 f"(AI{ai_speed}-50)×0.2={(ai_speed-50)*0.2:+.1f}",
+                 f"(利率{rate}-4)×8={-(rate-4)*8:+.1f}",
+                 f"(散户{retail}-50)×0.1={(retail-50)*0.1:+.1f}"]
+    burst_terms = [f"基础 100", f"情绪 {sentiment}×0.4={-sentiment*0.4:+.1f}",
+                   f"AI速度 {ai_speed}×0.2={-ai_speed*0.2:+.1f}",
+                   f"利率 {rate}%×6={rate*6:+.1f}", f"散户 {retail}×0.05={-retail*0.05:+.1f}"]
+
+    # 找出影响最大的驱动因素
+    drivers = {"市场情绪": sentiment*0.4, "AI商业化速度": ai_speed*0.2,
+               "利率环境": -rate*2, "散户参与度": retail*0.15}
+    top = max(drivers.items(), key=lambda kv: abs(kv[1]))
+    drag = min(drivers.items(), key=lambda kv: kv[1])
+
+    return {
+        "pop": (f"首日涨幅是四个输入的加权和：情绪和散户热度推高发行日溢价，利率则是唯一的拖累项。"
+                f"当前**{top[0]}贡献最大（{top[1]:+.1f}）**，"
+                f"而**{drag[0]}拖累最多（{drag[1]:+.1f}）**。",
+                "good" if sim["pop"] > 20 else "neutral",
+                fmt(pop_terms, sim["pop"])),
+        "six_m": (f"6个月收益衡量的是「上市热度退潮后还剩多少」。它以中性值（情绪50、AI50、散户50、利率4%）为基准，"
+                  f"只看偏离量，所以数值通常远小于首日涨幅。利率每高出基准1个百分点就直接扣8个点，是四项里权重最重的。",
+                  "good" if sim["six_m"] > 0 else "bad",
+                  fmt(six_terms, sim["six_m"])),
+        "burst": (f"泡沫破裂概率从100分往下扣：情绪越乐观、AI落地越快、散户越活跃，破裂概率越低；"
+                  f"而利率是唯一的**加分项（权重最高，×6）**，因为历史上刺破泡沫的通常都是利率上行"
+                  f"（2000年互联网、2021年SPAC都是如此）。当前利率 {rate}% 贡献了 {rate*6:+.1f} 的破裂概率。",
+                  "bad" if sim["burst"] > 65 else "warn" if sim["burst"] > 40 else "good",
+                  fmt(burst_terms, sim["burst"])),
+        "temp": (f"泡沫温度计是情绪(40%)、AI速度(30%)、散户参与(20%)和低利率红利(10%)的综合打分，"
+                 f"越接近100说明市场越亢奋。它和破裂概率是一体两面：温度越高，一旦流动性收紧，回撤空间也越大。",
+                 "warn" if sim["temp"] > 60 else "neutral",
+                 f"情绪 {sentiment}×0.4　AI {ai_speed}×0.3　散户 {retail}×0.2　"
+                 f"低利率红利 (100-{rate}×8)×0.1　=　{sim['temp']}/100"),
+    }
 
 def add_range_tools(fig, range_buttons=True, slider=True, height_add=0):
     """给任意Plotly图表加上时间轴范围按钮和可拖动滑条"""
@@ -1184,6 +1385,11 @@ with tabs[0]:
             ))
         render_asset_grid(cards_t1, min_width=235)
 
+        with st.expander("📖 每个指标怎么读？（点开看每个数字为什么是这样）", expanded=True):
+            for ticker, info in live_data_t1.items():
+                txt, tone = interpret_market(ticker, info)
+                why(txt, tone, title=f"{info['name']}")
+
         st.subheader("今日涨跌幅")
         tl_t1 = [v["name"] for v in live_data_t1.values()]
         ch_t1 = [v["change_pct"] for v in live_data_t1.values()]
@@ -1204,7 +1410,8 @@ with tabs[0]:
                     else "中性" if sentiment_t1 < 60 else "乐观" if sentiment_t1 < 80 else "极度狂热")
         st.subheader(f"当前市场情绪：{label_t1}（{sentiment_t1}/100）")
         st.progress(sentiment_t1 / 100)
-        st.caption("基于纳斯达克涨跌幅、VIX恐慌指数、英伟达股价综合计算")
+        _s_txt, _s_tone, _s_calc = explain_sentiment(live_data_t1, sentiment_t1)
+        why(_s_txt, _s_tone, calc=_s_calc, title="这个分数怎么来的")
     else:
         st.warning("无法获取实时数据，请检查网络连接。")
 
@@ -1262,7 +1469,15 @@ with tabs[0]:
             avg_chg = sum(v["change_pct"] for v in crypto_data.values()) / len(crypto_data)
             crypto_mood = ("🔥 普遍上涨，风险偏好回升" if avg_chg > 2 else
                            "📉 普遍下跌，避险情绪升温" if avg_chg < -2 else "⚖️ 涨跌互现，方向不明")
-            st.caption(f"加密市场整体：{crypto_mood}（平均涨跌 {avg_chg:+.2f}%） · 可在「🔬 股票分析器」或「💰 我的持仓」输入 BTC-USD / ETH-USD 等代码查看详细技术面分析")
+            why(f"加密市场整体 **{crypto_mood}**，平均涨跌 {avg_chg:+.2f}%。加密资产没有现金流估值锚，"
+                f"价格几乎完全由流动性和风险偏好驱动，所以它常常是市场情绪的**放大版**——"
+                f"美联储宽松时涨得比纳斯达克更凶，收紧时也跌得更深。",
+                "good" if avg_chg > 0 else "bad", title="整体怎么看")
+            with st.expander("📖 每个币怎么读？", expanded=False):
+                for tk, info in crypto_data.items():
+                    txt, tone = interpret_crypto(tk, info)
+                    why(txt, tone, title=info["name"])
+            st.caption("可在「🔬 股票分析器」或「💰 我的持仓」输入 BTC-USD / ETH-USD 等代码查看详细技术面分析")
         else:
             st.warning("无法获取加密货币实时数据。")
 
@@ -1286,7 +1501,16 @@ with tabs[0]:
                                      showlegend=False, margin=dict(t=20, b=20),
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
             glass_chart(fig_metals, use_container_width=True)
-            st.caption("有色金属/矿业股走势通常与美元指数、实际利率和新能源基建需求相关，铜价常被视为全球经济增长的领先指标（\"铜博士\"）")
+            _m_avg = sum(v["change_pct"] for v in metals_data.values()) / len(metals_data)
+            why(f"板块平均 {_m_avg:+.2f}%。有色金属有两条独立的定价逻辑："
+                f"**贵金属（金/银）看实际利率和避险需求**——实际利率下行或地缘冲突升温时走强；"
+                f"**工业金属（铜）看全球经济需求**——电动车、电网升级和数据中心建设是长期需求来源。"
+                f"所以金涨铜跌通常意味着市场在担心衰退，金铜齐涨则多半是通胀预期在升温。",
+                "good" if _m_avg > 0 else "neutral", title="整体怎么看")
+            with st.expander("📖 每个品种怎么读？", expanded=False):
+                for tk, info in metals_data.items():
+                    txt, tone = interpret_metal(tk, info)
+                    why(txt, tone, title=info["name"])
         else:
             st.warning("无法获取有色金属数据。")
 
@@ -1298,9 +1522,35 @@ with tabs[0]:
     c3.metric("AI占风投比例", "80%", "泡沫风险高", delta_color="inverse")
     c4.metric("泡沫综合指数", "74/100", "⚠ 高度警戒", delta_color="inverse")
 
+    _ipo_why = [
+        ("预期总市值 $3.12T",
+         "把2026年12家待上市公司的最新一轮估值加总得到。$3.12万亿这个体量本身就是信号——"
+         "相当于一次性要市场消化掉一个「英伟达级别」的市值，而这些公司绝大多数还没有稳定盈利。", "warn"),
+        ("Q1融资额 $42.6B 同比+45%",
+         "一级市场融资额同比大增45%，说明资金正在加速涌入Pre-IPO阶段。融资越容易，公司上市时的"
+         "估值起点就越高，留给二级市场投资者的安全边际也就越薄。", "warn"),
+        ("AI占风投比例 80%",
+         "每100元风险投资里有80元投向AI。这个集中度在历史上只有2000年的互联网和2021年的SPAC可比——"
+         "**赛道越拥挤，一旦叙事证伪，资金同时撤离造成的踩踏就越严重**。", "bad"),
+        ("泡沫综合指数 74/100",
+         "由估值倍数（P/S）、盈利覆盖率、资金集中度和锁定期抛压四项加权得到。74分落在「高度警戒」区间"
+         "（70以上），意味着当前定价已经把很多乐观假设提前兑现了。", "bad"),
+    ]
+    with st.expander("📖 这四个数字分别说明什么？", expanded=False):
+        for t, d, tone in _ipo_why:
+            why(d, tone, title=t)
+
     st.subheader("市场集中度风险")
+    _conc_why = {
+        "AI估值集中": "衡量市值有多少集中在少数AI标的上。88%意味着整个板块的涨跌几乎由几家公司决定，分散投资在这里失效了。",
+        "流动性压力": "衡量市场有没有足够的资金接住这些新股。79%说明在高利率环境下，能承接$3万亿新增供给的增量资金并不充裕。",
+        "盈利能力缺口": "待上市公司中亏损企业的占比与亏损幅度。72%说明大部分标的的估值靠的是远期预期，而不是当期利润。",
+        "锁定期后抛压": "IPO后约180天锁定期到期时，早期投资者和员工可抛售的股份占比。65%属于偏高水平，通常对应解禁后的一波明显回调。",
+        "市场吸收能力": "市场实际能消化多少新增供给。42%是唯一的低分项——**分数越低越危险**，说明供给远超需求承接力。",
+    }
     for label, val in {"AI估值集中":88,"流动性压力":79,"盈利能力缺口":72,"锁定期后抛压":65,"市场吸收能力":42}.items():
         st.progress(val/100, text=f"{label}：**{val}%**")
+        why(_conc_why[label], "bad" if val >= 70 or label == "市场吸收能力" else "warn", title=label)
 
 # ── Tab 2: IPO详情（含估值总览） ────────────────────────────────────────────────
 with tabs[1]:
@@ -1772,15 +2022,25 @@ with tabs[3]:
                                       int(chosen_sc[3]) if chosen_sc else auto_retail)
         
             sim = simulate(sentiment, rate, ai_speed, retail)
+            _ex = explain_simulate(sentiment, rate, ai_speed, retail, sim)
             r1, r2, r3 = st.columns(3)
             r1.metric("首日预期涨幅", f"+{sim['pop']}%")
             r2.metric("6个月后收益", f"{'+' if sim['six_m']>=0 else ''}{sim['six_m']}%")
             r3.metric("泡沫破裂概率", f"{sim['burst']}%", "未来18个月内", delta_color="inverse")
-        
+
+            why(_ex["pop"][0],   _ex["pop"][1],   calc=_ex["pop"][2],   title="首日预期涨幅",   target=r1)
+            why(_ex["six_m"][0], _ex["six_m"][1], calc=_ex["six_m"][2], title="6个月后收益",   target=r2)
+            why(_ex["burst"][0], _ex["burst"][1], calc=_ex["burst"][2], title="泡沫破裂概率", target=r3)
+
             temp_label = ("极度过热" if sim["temp"]>80 else "中度过热"
                           if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
             st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
+            why(_ex["temp"][0], _ex["temp"][1], calc=_ex["temp"][2], title=f"温度计 {sim['temp']}/100（{temp_label}）")
             st.info(f"**{sim['label']}** — {sim['desc']}")
+            why(f"这句结论对应的是破裂概率 {sim['burst']}% 所落在的区间："
+                f"0–19%→极度乐观、20–39%→温和上行、40–59%→基准预期、60–79%→高度警觉、80%以上→泡沫破裂风险。"
+                f"所以你调动滑块让破裂概率跨过某个整二十的门槛时，这段文字才会换。",
+                "neutral", title="这段结论怎么选出来的")
         
             fig_gauge = go.Figure(go.Indicator(
                 mode="gauge+number", value=sim["burst"],
@@ -3189,6 +3449,41 @@ with tabs[5]:
                       "超卖" if result['rsi']<30 else "超买" if result['rsi']>70 else "正常")
             m5.metric("综合评分", f"{result['score']}/100")
 
+            # ── 逐项解释这五个数字 ──
+            _sig = result.get("signals", [])
+            _pos = sum(1 for s in _sig if s[0] == "✅")
+            _neg = sum(1 for s in _sig if s[0] == "🔴")
+            _neu = len(_sig) - _pos - _neg
+            _p, _ma20, _ma50 = result["price_now"], result["ma20"], result["ma50"]
+            _pos_desc = ("同时站上MA20和MA50，均线呈多头排列" if _p > _ma20 > _ma50 else
+                         "跌破MA20和MA50，均线呈空头排列" if _p < _ma20 < _ma50 else
+                         "在均线之间反复，方向尚未确认")
+            why(f"现价是最近一个交易日的收盘价。相对均线看，它{_pos_desc}"
+                f"（MA20=${_ma20:.2f}，MA50=${_ma50:.2f}）——均线位置决定了下面所有技术信号的基调。",
+                "good" if _p > _ma20 else "bad", title="当前价格", target=m1)
+            why(f"目标价不是分析师给的，是本模型按「综合评分档位 + 3个月动量 + RSI 修正」算出来的。"
+                f"当前评分 {result['score']} 落在「{result['rating']}」档，再叠加3个月动量 {result['mom_3m']:+.1f}%，"
+                f"得到 {result['price_target_pct']:+.1f}% 的空间。**它反映的是技术面延续性，不是基本面估值。**",
+                "good" if result["price_target_pct"] >= 0 else "bad", title="价格目标", target=m2)
+            why(f"当前价距52周最高价 ${result['price_52w_high']:.2f} 还有 {result['price_from_high']:.1f}%。"
+                + ("离高点很近，说明趋势强势，但也意味着上方没有套牢盘做参照，回调时缺乏支撑位。"
+                   if result["price_from_high"] > -5 else
+                   "距离高点有明显回撤空间，说明股价已经历过一轮调整，上方存在套牢抛压。"),
+                "good" if result["price_from_high"] > -10 else "warn", title="52周最高", target=m3)
+            why(f"RSI 用过去14天的涨跌幅算出来：涨得多、跌得少，数值就高。"
+                + (f"现在 {result['rsi']:.1f} **超过70属于超买**，说明短期买盘透支，回调风险上升。"
+                   if result["rsi"] > 70 else
+                   f"现在 {result['rsi']:.1f} **低于30属于超卖**，短期抛压释放较充分，反弹概率偏高。"
+                   if result["rsi"] < 30 else
+                   f"现在 {result['rsi']:.1f} 在30–70的中性区间，没有明显的超买或超卖信号。"),
+                "bad" if result["rsi"] > 70 else "good" if result["rsi"] < 30 else "neutral",
+                title="RSI (14)", target=m4)
+            why(f"评分从 **50分中性起点** 出发，由下方「技术信号详情」里的每一条信号加减而来："
+                f"本次共 **{_pos} 条利多信号加分、{_neg} 条利空信号减分、{_neu} 条中性**，最终得到 {result['score']} 分，"
+                f"对应「{result['rating']}」评级（80+强力买入／65+买入／45+持有／30+卖出／30以下强力卖出）。",
+                "good" if result["score"] >= 65 else "bad" if result["score"] < 45 else "neutral",
+                title="综合评分", target=m5)
+
             # ── 买입/卖출理由 ──
             st.subheader("🧠 分析师意见")
 
@@ -3297,6 +3592,47 @@ with tabs[5]:
             qi8.metric("MA200趋势", f"${result['ma200']:.2f}",
                        "价格在上方✓" if result['price_now']>result['ma200'] else "价格在下方✗",
                        delta_color="normal" if result['price_now']>result['ma200'] else "inverse")
+
+            # ── 逐项解释这八个量化指标 ──
+            why(f"ATR 是过去14天「每天最大波动幅度」的平均值。${result['atr']:.2f} 相当于股价的 "
+                f"{result['atr_pct']:.1f}%，意思是**这只票平均每天上下晃动这么多**。"
+                + ("波动偏大，设止损时要留足空间，否则容易被日常波动扫出局。" if result['atr_pct'] > 3
+                   else "波动温和，适合设置较紧的止损。"),
+                "warn" if result['atr_pct'] > 3 else "neutral", title="ATR波幅", target=qi1)
+            why(f"止损位 = 现价 − 1.5×ATR = ${result['price_now']:.2f} − 1.5×${result['atr']:.2f} "
+                f"= **${result['stop_loss']:.2f}**（{result['stop_loss_pct']:.1f}%）。"
+                f"用ATR而不是固定百分比，是为了让止损宽度匹配这只票自身的波动性——波动大的票给更宽的空间。",
+                "neutral", title="建议止损位", target=qi2)
+            why(f"夏普比率 = 日均收益 ÷ 日收益标准差 × √252，衡量**每承担一单位风险能换来多少回报**。"
+                + (f"{result['sharpe']:.2f} 属于优秀（>1.5），收益是靠稳定上涨而非大起大落赚来的。" if result['sharpe'] > 1.5
+                   else f"{result['sharpe']:.2f} 属于良好（0.5–1.5），风险与收益基本匹配。" if result['sharpe'] > 0.5
+                   else f"{result['sharpe']:.2f} 偏低甚至为负，说明这段时间承担的波动没换来相应回报，不如持有现金。"),
+                "good" if result['sharpe'] > 1.5 else "neutral" if result['sharpe'] > 0.5 else "bad",
+                title="夏普比率", target=qi3)
+            why(f"对最近20个交易日的收盘价做一元线性回归，取斜率再除以现价，得到 **{result['slope_pct']:+.2f}%/日**。"
+                f"它排除了单日跳空的干扰，比「近一月涨跌幅」更能反映趋势的**持续性**。"
+                + ("目前斜率为正，趋势向上。" if result['slope_pct'] > 0.1
+                   else "目前斜率为负，趋势向下。" if result['slope_pct'] < -0.1 else "斜率接近0，处于横盘整理。"),
+                "good" if result['slope_pct'] > 0.1 else "bad" if result['slope_pct'] < -0.1 else "neutral",
+                title="趋势斜率", target=qi4)
+            why(f"OBV（能量潮）把上涨日的成交量累加、下跌日的成交量扣减，用来判断**资金是在进还是在出**。"
+                f"当前OBV{'高于' if result['obv_pct'] > 0 else '低于'}其20日均线 {abs(result['obv_pct']):.1f}%，"
+                + ("说明资金持续净流入，价格上涨有量能支撑。" if result['obv_trend'] == "上升"
+                   else "说明资金在净流出，即使价格没怎么跌，也要警惕后续补跌。"),
+                "good" if result['obv_trend'] == "上升" else "bad", title="OBV资金趋势", target=qi5)
+            why(f"把52周最高价 ${result['price_52w_high']:.2f} 到最低价 ${result['price_52w_low']:.2f} 这段区间，"
+                f"按斐波那契比例（23.6%/38.2%/50%/61.8%/78.6%）切分。"
+                f"**${result['nearest_support']:.2f} 是现价下方最近的那条线**，跌到这里通常会遇到买盘承接。",
+                "neutral", title="斐波那契支撑", target=qi6)
+            why(f"同一套斐波那契分割线中，**现价上方最近的一条是 ${result['nearest_resistance']:.2f}**。"
+                f"上涨到这个位置往往会遇到前期套牢盘解套抛售，需要放量才能有效突破。",
+                "neutral", title="斐波那契阻力", target=qi7)
+            _ma200_gap = (result['price_now'] - result['ma200']) / result['ma200'] * 100
+            why(f"MA200 是过去200个交易日的平均成本，被视为**牛熊分界线**。"
+                f"现价{'高于' if _ma200_gap > 0 else '低于'}它 {abs(_ma200_gap):.1f}%，"
+                + ("处于长期上升结构中，是长线资金愿意持有的基本前提。" if _ma200_gap > 0
+                   else "处于长期下降结构中，长线买入前最好等价格重新站回这条线之上。"),
+                "good" if _ma200_gap > 0 else "bad", title="MA200趋势", target=qi8)
 
             # 斐波那契水平图
             st.subheader("📊 技术图表")
@@ -4655,6 +4991,22 @@ with tabs[6]:
                        delta_color="normal" if total_pnl >= 0 else "inverse")
             win_n = sum(1 for x in rows if x["pnl"] >= 0)
             oc4.metric("盈利/持仓数", f"{win_n}/{len(rows)}")
+
+            _best = max(rows, key=lambda x: x["pnl"])
+            _worst = min(rows, key=lambda x: x["pnl"])
+            why(f"= 每个持仓的「数量 × 成本价」之和（非美元成本已按实时汇率折算）。"
+                f"这是你实际投进去的本金，也是所有收益率的分母。", "neutral", title="总成本", target=oc1)
+            why(f"= 每个持仓的「数量 × 最新价」之和。价格取自雅虎财经的最近收盘价，"
+                f"所以盘中看到的是上一个交易日收盘的口径，不是实时逐笔。", "neutral", title="当前市值", target=oc2)
+            why(f"= 当前市值 − 总成本 = ${total_mv:,.2f} − ${total_cost:,.2f}。"
+                f"这轮盈亏主要由 **{_best['h']['ticker']}（{_best['pnl']:+,.0f}）** 贡献，"
+                f"**{_worst['h']['ticker']}（{_worst['pnl']:+,.0f}）** 拖累最多。"
+                f"下方「逐个持仓深度分析」里会逐一解释每只为什么涨/跌。",
+                "good" if total_pnl >= 0 else "bad", calc=f"${total_mv:,.2f} − ${total_cost:,.2f} = ${total_pnl:+,.2f}"
+                f"　→　{total_pnl_pct:+.1f}%", title="总盈亏", target=oc3)
+            why(f"{len(rows)} 个持仓中有 {win_n} 个当前处于盈利。这个比例反映的是**选股胜率**，"
+                f"但它和总盈亏不是一回事——一个重仓的大亏损可以盖过好几个小盈利，所以要和上面的总盈亏一起看。",
+                "good" if win_n * 2 >= len(rows) else "warn", title="盈利/持仓数", target=oc4)
 
             pie_c, list_c = st.columns([1, 2])
             with pie_c:
