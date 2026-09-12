@@ -1358,7 +1358,7 @@ def fetch_stock_analysis(ticker: str):
 st.title("📈 2026 大型IPO与泡沫风险模拟器")
 st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器","💰 我的持仓"])
+tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器","💰 我的持仓","🏆 投资圣杯"])
 
 # ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
@@ -5150,3 +5150,366 @@ with tabs[6]:
                     )
 
             st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
+
+# ── Tab 8: 投资圣杯（达里欧分散化法则） ────────────────────────────────────────────
+with tabs[7]:
+    st.subheader("🏆 投资圣杯 · 达里欧的分散化法则")
+    st.caption("Ray Dalio：「把 15 个以上互不相关的收益流组合起来，能在不牺牲收益的前提下把风险降低约 80%」—— 这是投资里唯一的免费午餐")
+
+    why("达里欧发现：决定组合风险的不是你持有多少个标的，而是这些标的**彼此有多不相关**。"
+        "持有 10 只都在 AI 赛道上的股票，看起来很分散，实际只是同一个赌注下了 10 次；"
+        "而股票 + 长久期国债 + 黄金 + 大宗商品这种组合，即使只有 4 个，风险下降幅度也远大于前者。"
+        "下面这条曲线就是圣杯的核心：**相关性越低，曲线掉得越快**。",
+        "neutral", calc="组合风险 σₚ = σ × √( 1/n + (n−1)/n × ρ )　　n=资产个数，ρ=平均相关性",
+        title="什么是投资圣杯")
+
+    # ── 1. 圣杯理论曲线 ──
+    _hg_n = np.arange(1, 21)
+    fig_hg = go.Figure()
+    for _rho, _clr in [(0.0, "#0F6E56"), (0.2, "#1D9E75"), (0.4, "#BA7517"), (0.6, "#A32D2D")]:
+        _risk = np.sqrt(1 / _hg_n + (_hg_n - 1) / _hg_n * _rho) * 100
+        fig_hg.add_trace(go.Scatter(
+            x=_hg_n, y=_risk, mode="lines", name=f"平均相关性 ρ={_rho:.1f}",
+            line=dict(color=_clr, width=2.6),
+            hovertemplate=f"ρ={_rho:.1f}<br>%{{x}} 个资产<br>风险为单一资产的 %{{y:.0f}}%<extra></extra>",
+        ))
+    fig_hg.add_vline(x=5, line_dash="dot", line_color="#888", line_width=1.2,
+                     annotation_text=" 5个资产", annotation_font=dict(size=11))
+    fig_hg.add_vline(x=15, line_dash="dot", line_color="#534AB7", line_width=1.2,
+                     annotation_text=" 达里欧建议的15个", annotation_font=dict(size=11, color="#534AB7"))
+    fig_hg.update_layout(
+        height=380, title=dict(text="圣杯曲线：资产越多、相关性越低，风险下降越快", font=dict(size=14)),
+        xaxis=dict(title="互不相关的资产个数", dtick=1, showgrid=True, gridcolor="#eeeeee"),
+        yaxis=dict(title="组合风险（相对单一资产 %）", showgrid=True, gridcolor="#eeeeee"),
+        legend=dict(orientation="h", y=1.1, x=0), margin=dict(t=70, b=50, l=60, r=30),
+        hovermode="x unified",
+    )
+    glass_chart(fig_hg)
+    why("看 ρ=0（绿线）：1个资产风险是100%，5个降到45%，15个只剩26%——**风险砍掉约四分之三，而预期收益一分没少**。"
+        "再看 ρ=0.6（红线）：从1个加到15个，风险只从100%降到约80%，加再多也降不下去了，"
+        "因为 n→∞ 时曲线收敛于 √ρ（=77%）。这就是为什么达里欧强调「**不相关**」比「多」重要得多。",
+        "good", title="这条曲线在说什么")
+
+    st.divider()
+
+    # ── 2. 选择要分析的资产 ──
+    st.markdown("#### 🎯 分析你自己的组合")
+    _hold_tks = [h["ticker"] for h in st.session_state.get("holdings", []) if h.get("ticker")]
+    if "hg_tickers" not in st.session_state:
+        st.session_state["hg_tickers"] = (_hold_tks if len(_hold_tks) >= 2
+                                          else ["SPY", "TLT", "GLD", "DBC", "VNQ", "BTC-USD"])
+
+    _hg_presets = {
+        "🌦️ 全天候(达里欧)": ["VTI", "TLT", "IEF", "GLD", "DBC"],
+        "📊 股债黄金": ["SPY", "TLT", "GLD"],
+        "🌍 多元分散": ["SPY", "EFA", "VWO", "TLT", "GLD", "DBC", "VNQ", "BTC-USD"],
+        "🤖 AI集中(反面教材)": ["NVDA", "AMD", "SMCI", "MSFT", "GOOGL", "META"],
+    }
+    _pc = st.columns(len(_hg_presets) + 1)
+    for _i, (_pn, _pt) in enumerate(_hg_presets.items()):
+        if _pc[_i].button(_pn, key=f"hg_preset_{_i}", use_container_width=True):
+            st.session_state["hg_tickers"] = _pt
+            st.rerun()
+    if _pc[-1].button("💰 用我的持仓", key="hg_use_holdings", use_container_width=True,
+                      disabled=len(_hold_tks) < 2):
+        st.session_state["hg_tickers"] = _hold_tks
+        st.rerun()
+
+    _hg_c1, _hg_c2, _hg_c3 = st.columns([3, 1, 1])
+    _hg_raw = _hg_c1.text_input("资产代码（逗号分隔，建议 5 个以上）",
+                                value=", ".join(st.session_state["hg_tickers"]), key="hg_input")
+    _hg_period = _hg_c2.selectbox("回看区间", ["1y", "2y", "3y", "5y"], index=1, key="hg_period")
+    _hg_bench = _hg_c3.selectbox("Beta基准", ["SPY", "QQQ", "VTI"], index=0, key="hg_bench")
+    _hg_tickers = [t.strip().upper() for t in _hg_raw.replace("，", ",").split(",") if t.strip()]
+    st.session_state["hg_tickers"] = _hg_tickers
+
+    @st.cache_data(ttl=900, show_spinner=False)
+    def fetch_returns_matrix(tickers, period, bench):
+        """抓取各资产日收益率并对齐到共同交易日"""
+        import yfinance as yf, pandas as pd
+        series = {}
+        for tk in list(tickers) + [bench]:
+            try:
+                h = yf.Ticker(tk).history(period=period)
+                c = h["Close"].dropna()
+                if len(c) < 60:
+                    continue
+                r = c.pct_change().dropna()
+                idx = pd.to_datetime(r.index)
+                try:
+                    idx = idx.tz_localize(None)
+                except (TypeError, AttributeError):
+                    idx = idx.tz_convert(None) if getattr(idx, "tz", None) else idx
+                r.index = idx.normalize()
+                r = r[~r.index.duplicated(keep="last")]
+                series[tk] = r
+            except Exception:
+                continue
+        if len(series) < 2:
+            return None, None
+        df = pd.DataFrame(series).dropna()
+        if len(df) < 40:
+            return None, None
+        # 基准单独取一列；若用户自己也选了基准，它仍保留在资产里（此时 β=1、α=0、R²=100%）
+        bench_s = df[bench] if bench in df.columns else None
+        keep = [t for t in tickers if t in df.columns]
+        if len(keep) < 2:
+            return None, None
+        return df[keep], bench_s
+
+    if len(_hg_tickers) < 2:
+        st.info("👆 请至少输入 2 个资产代码（要看出圣杯效应，建议 5 个以上且分属不同资产类别）")
+    else:
+        with st.spinner("正在计算相关性矩阵与 Alpha/Beta..."):
+            _rets, _bench_r = fetch_returns_matrix(tuple(_hg_tickers), _hg_period, _hg_bench)
+
+        if _rets is None or _rets.shape[1] < 2:
+            st.error("有效数据不足，请检查代码是否正确（至少需要 2 个能取到数据的资产）。")
+        else:
+            _missing = [t for t in _hg_tickers if t not in _rets.columns]
+            if _missing:
+                st.warning(f"以下代码取不到数据，已跳过：{', '.join(_missing)}")
+
+            _n = _rets.shape[1]
+            _corr = _rets.corr()
+            _vols = _rets.std() * np.sqrt(252)
+            _mask = ~np.eye(_n, dtype=bool)
+            _rho_bar = float(_corr.values[_mask].mean())
+            _pf_ret = _rets.mean(axis=1)                       # 等权组合
+            _pf_vol = float(_pf_ret.std() * np.sqrt(252))
+            _avg_vol = float(_vols.mean())
+            _div_benefit = (1 - _pf_vol / _avg_vol) * 100 if _avg_vol > 0 else 0
+            _n_eff = _n / (1 + (_n - 1) * max(_rho_bar, 0.0001))
+
+            # ── 核心结论卡 ──
+            k1, k2, k3, k4 = st.columns(4)
+            k1.metric("资产个数", f"{_n} 个", "达标 ✓" if _n >= 5 else "少于5个",
+                      delta_color="normal" if _n >= 5 else "inverse")
+            k2.metric("平均相关性 ρ", f"{_rho_bar:.2f}", "越低越好", delta_color="off")
+            k3.metric("有效分散数", f"{_n_eff:.1f} 个", f"名义{_n}个", delta_color="off")
+            k4.metric("风险下降幅度", f"{_div_benefit:.1f}%",
+                      f"{_avg_vol*100:.1f}% → {_pf_vol*100:.1f}%", delta_color="normal")
+
+            why(f"你选了 {_n} 个资产，它们两两之间的平均相关性是 **{_rho_bar:.2f}**。"
+                + ("相关性很低，接近达里欧说的「互不相关的收益流」。" if _rho_bar < 0.3 else
+                   "相关性偏高，说明它们很大程度上在赌同一件事。" if _rho_bar < 0.6 else
+                   "相关性非常高，这些资产基本是同涨同跌，分散效果有限。"),
+                "good" if _rho_bar < 0.3 else "warn" if _rho_bar < 0.6 else "bad",
+                title=f"平均相关性 {_rho_bar:.2f}", target=k2)
+            why(f"名义上你有 {_n} 个资产，但因为它们彼此相关，实际只相当于 **{_n_eff:.1f} 个独立赌注**。"
+                f"相关性越高，这个数字缩水得越厉害——这才是衡量「真分散」的指标。",
+                "good" if _n_eff >= 5 else "warn" if _n_eff >= 3 else "bad",
+                calc=f"{_n} ÷ (1 + {_n-1} × {_rho_bar:.2f}) = {_n_eff:.1f}",
+                title=f"有效分散数 {_n_eff:.1f}", target=k3)
+            why(f"单个资产的平均年化波动率是 {_avg_vol*100:.1f}%，而等权组合的实际波动率只有 {_pf_vol*100:.1f}%，"
+                f"**风险被抹掉了 {_div_benefit:.1f}%**。这部分降低完全来自资产之间的不相关性，"
+                f"不需要你放弃任何预期收益——这就是达里欧说的免费午餐。",
+                "good" if _div_benefit > 25 else "warn",
+                calc=f"1 − {_pf_vol*100:.1f}% ÷ {_avg_vol*100:.1f}% = {_div_benefit:.1f}%",
+                title=f"风险下降 {_div_benefit:.1f}%", target=k4)
+
+            st.divider()
+
+            # ── 3. 相关性矩阵 ──
+            st.markdown("#### 🔥 相关性矩阵")
+            fig_corr = go.Figure(go.Heatmap(
+                z=_corr.values, x=list(_corr.columns), y=list(_corr.columns),
+                colorscale="RdYlGn_r", zmin=-1, zmax=1,
+                text=np.round(_corr.values, 2), texttemplate="%{text}",
+                textfont=dict(size=11), colorbar=dict(title="相关性"),
+                hovertemplate="%{y} vs %{x}<br>相关性 %{z:.2f}<extra></extra>",
+            ))
+            fig_corr.update_layout(height=90 + 52 * _n, margin=dict(t=20, b=40, l=90, r=30))
+            glass_chart(fig_corr)
+
+            _pairs = []
+            _cols = list(_corr.columns)
+            for _i in range(_n):
+                for _j in range(_i + 1, _n):
+                    _pairs.append((_cols[_i], _cols[_j], float(_corr.iloc[_i, _j])))
+            _pairs.sort(key=lambda x: x[2])
+            _lowest, _highest = _pairs[0], _pairs[-1]
+            why(f"绿色=不相关（好），红色=同涨同跌（分散无效）。"
+                f"当前**最理想的一对是 {_lowest[0]} 与 {_lowest[1]}（{_lowest[2]:.2f}）**，"
+                f"它们几乎独立，是组合里真正起分散作用的部分；"
+                f"而 **{_highest[0]} 与 {_highest[1]} 的相关性高达 {_highest[2]:.2f}**，"
+                + ("这两个基本可以看作同一个资产，同时持有并不会带来额外的分散效果。"
+                   if _highest[2] > 0.7 else "相关性偏高，分散作用有限。"),
+                "neutral", title="怎么读这张图")
+
+            st.divider()
+
+            # ── 4. 你的组合在圣杯曲线上的位置 ──
+            st.markdown("#### 📍 你的组合在圣杯曲线上的位置")
+            fig_pos = go.Figure()
+            for _rho, _clr in [(0.0, "#0F6E56"), (0.2, "#1D9E75"), (0.4, "#BA7517"), (0.6, "#A32D2D")]:
+                fig_pos.add_trace(go.Scatter(
+                    x=_hg_n, y=np.sqrt(1 / _hg_n + (_hg_n - 1) / _hg_n * _rho) * 100,
+                    mode="lines", name=f"ρ={_rho:.1f}", line=dict(color=_clr, width=1.8, dash="dot"),
+                    hoverinfo="skip",
+                ))
+            fig_pos.add_trace(go.Scatter(
+                x=[_n], y=[_pf_vol / _avg_vol * 100 if _avg_vol > 0 else 100],
+                mode="markers+text", name="你的组合",
+                marker=dict(size=20, color="#534AB7", symbol="star",
+                            line=dict(color="white", width=2)),
+                text=[f" 你在这里（{_n}个资产，ρ={_rho_bar:.2f}）"], textposition="middle right",
+                textfont=dict(size=12, color="#534AB7"),
+            ))
+            fig_pos.update_layout(
+                height=400, xaxis=dict(title="资产个数", dtick=1, showgrid=True, gridcolor="#eeeeee"),
+                yaxis=dict(title="组合风险（相对单一资产 %）", showgrid=True, gridcolor="#eeeeee"),
+                legend=dict(orientation="h", y=1.1, x=0), margin=dict(t=60, b=50, l=60, r=140),
+            )
+            glass_chart(fig_pos)
+            _room = _pf_vol / _avg_vol * 100 - np.sqrt(1 / max(_n, 1)) * 100
+            why(f"紫色星星就是你现在的位置：{_n} 个资产、平均相关性 {_rho_bar:.2f}，"
+                f"组合风险是单一资产的 {_pf_vol/_avg_vol*100:.0f}%。"
+                f"如果这 {_n} 个资产完全不相关（ρ=0），风险本可以降到 {np.sqrt(1/max(_n,1))*100:.0f}%，"
+                f"**中间这 {_room:.0f} 个百分点的差距就是相关性吃掉的分散收益**。"
+                f"想往绿线靠，靠的不是继续加同类资产，而是加入定价逻辑完全不同的资产类别。",
+                "good" if _room < 15 else "warn", title="怎么读这张图")
+
+            st.divider()
+
+            # ── 5. Alpha / Beta 分解 ──
+            st.markdown(f"#### ⚖️ Alpha / Beta 分解（基准：{_hg_bench}）")
+            why("达里欧把收益拆成两部分：**Beta 是你承担市场风险自动拿到的收益**（买指数就有，几乎免费）；"
+                "**Alpha 是与市场无关的超额收益**（真正稀缺、需要能力）。"
+                "分散化的意义在于：Beta 之间往往高度相关，而不同来源的 Alpha 天然不相关——"
+                "所以圣杯的真正含义是「收集多个互不相关的 Alpha」。下面对每个资产做回归："
+                "β 是它对大盘的敏感度，α 是剔除大盘影响后的年化超额收益，R² 是波动中由大盘解释的比例。",
+                "neutral", calc="资产日收益 = α + β × 基准日收益 + ε　（最小二乘回归）",
+                title="Alpha 和 Beta 有什么区别")
+
+            if _bench_r is None:
+                st.warning(f"无法取得基准 {_hg_bench} 的数据，跳过 Alpha/Beta 分解。")
+            else:
+                _bvar = float(_bench_r.var())
+                _ab_rows = []
+                for _tk in _rets.columns:
+                    _a = _rets[_tk]
+                    _beta = float(np.cov(_a, _bench_r)[0, 1] / _bvar) if _bvar > 0 else 0.0
+                    _alpha = float((_a.mean() - _beta * _bench_r.mean()) * 252 * 100)
+                    _r2 = float(np.corrcoef(_a, _bench_r)[0, 1] ** 2)
+                    _ab_rows.append((_tk, _beta, _alpha, _r2))
+
+                _ab_cards = []
+                for _tk, _beta, _alpha, _r2 in _ab_rows:
+                    _ac = "#0F6E56" if _alpha > 0 else "#A32D2D"
+                    _ab_cards.append(
+                        '<div class="ac">' + logo_watermark_html(_tk) +
+                        '<div class="ac-glass">'
+                        f'<div class="ac-top">{logo_chip_html(_tk)}'
+                        f'<div><div class="ac-name">{_tk}</div>'
+                        f'<div class="ac-sub">β={_beta:.2f} · R²={_r2*100:.0f}%</div></div></div>'
+                        f'<div><div class="ac-val" style="color:{_ac}">α {_alpha:+.1f}%</div>'
+                        f'<div class="ac-note">年化超额收益（剔除大盘影响后）</div></div>'
+                        '</div></div>'
+                    )
+                render_asset_grid(_ab_cards, min_width=215)
+
+                with st.expander("📖 每个资产的 Alpha/Beta 怎么读？", expanded=False):
+                    for _tk, _beta, _alpha, _r2 in sorted(_ab_rows, key=lambda x: -x[3]):
+                        _beta_txt = ("走势几乎与大盘无关，是组合里真正的分散来源" if abs(_beta) < 0.3 else
+                                     "与大盘反向，是天然的对冲工具" if _beta < 0 else
+                                     f"大盘涨1%它平均涨{_beta:.2f}%，属于放大版大盘" if _beta > 1.2 else
+                                     f"大盘涨1%它平均涨{_beta:.2f}%，波动小于大盘，偏防御")
+                        _r2_txt = (f"**{_r2*100:.0f}% 的波动由大盘解释**——这部分收益买指数就能拿到"
+                                   if _r2 > 0.5 else
+                                   f"只有 {_r2*100:.0f}% 的波动由大盘解释，**剩下 {(1-_r2)*100:.0f}% 是它自己的独立行情**，"
+                                   f"这正是圣杯需要的那种不相关收益流")
+                        _a_txt = (f"剔除大盘影响后年化 **{_alpha:+.1f}%** 的超额收益" if _alpha > 0 else
+                                  f"剔除大盘影响后年化 **{_alpha:+.1f}%**，承担了额外风险却没换来相应回报")
+                        why(f"β={_beta:.2f}，{_beta_txt}。{_r2_txt}。α：{_a_txt}。",
+                            "good" if (_alpha > 0 and _r2 < 0.5) else "warn" if _alpha > 0 else "bad",
+                            title=_tk)
+
+                _w = 1.0 / _n
+                _pf_beta = sum(b for _, b, _, _ in _ab_rows) * _w
+                _pf_alpha = sum(a for _, _, a, _ in _ab_rows) * _w
+                why(f"等权组合的加权 β = **{_pf_beta:.2f}**，加权 α = **{_pf_alpha:+.1f}%/年**。"
+                    + (f"β 接近1说明你的组合本质上还是在赌大盘方向，" if 0.8 <= _pf_beta <= 1.2 else
+                       f"β 只有 {_pf_beta:.2f}，组合对大盘的依赖度较低，这是好现象，" if _pf_beta < 0.8 else
+                       f"β 高达 {_pf_beta:.2f}，组合是放大版的大盘，牛市爽、熊市痛，")
+                    + "而真正决定你能否长期跑赢的是那部分 α。",
+                    "good" if _pf_beta < 0.8 else "warn", title="组合整体的 Alpha 与 Beta")
+
+            st.divider()
+
+            # ── 6. 圣杯评分与改进建议 ──
+            st.markdown("#### 🏅 圣杯评分")
+            _sc_n   = 40 if _n >= 15 else 32 if _n >= 10 else 24 if _n >= 5 else 12 if _n >= 3 else 5
+            _sc_rho = 40 if _rho_bar < 0.1 else 32 if _rho_bar < 0.3 else 20 if _rho_bar < 0.5 else 8 if _rho_bar < 0.7 else 2
+            _sc_eff = 20 if _n_eff >= 8 else 14 if _n_eff >= 5 else 8 if _n_eff >= 3 else 3
+            _hg_score = _sc_n + _sc_rho + _sc_eff
+            _hg_color = ("#0F6E56" if _hg_score >= 75 else "#1D9E75" if _hg_score >= 60
+                         else "#BA7517" if _hg_score >= 40 else "#A32D2D")
+            _hg_verdict = ("接近圣杯：资产数量足够、彼此独立性强，风险被有效摊薄" if _hg_score >= 75 else
+                           "分散良好：已经拿到大部分免费午餐，但仍有优化空间" if _hg_score >= 60 else
+                           "分散不足：看起来持有多个标的，实际押注高度重合" if _hg_score >= 40 else
+                           "几乎没有分散：这些资产本质上是同一个赌注")
+            st.markdown(
+                f'<div style="background:{_hg_color};color:white;padding:16px 20px;border-radius:12px;font-size:14px">'
+                f'<span style="font-size:24px;font-weight:750">{_hg_score}/100</span>'
+                f'　<span style="font-size:15px;font-weight:600">{_hg_verdict}</span><br>'
+                f'<span style="font-size:12.5px;opacity:.92">资产数量 {_sc_n}/40　·　'
+                f'相关性 {_sc_rho}/40　·　有效分散数 {_sc_eff}/20</span></div>',
+                unsafe_allow_html=True)
+            why(f"评分由三部分构成：**资产个数 {_n} 个（{_sc_n}/40）**——达里欧建议15个以上；"
+                f"**平均相关性 {_rho_bar:.2f}（{_sc_rho}/40）**——这一项权重最重，因为它决定曲线的形状；"
+                f"**有效分散数 {_n_eff:.1f}（{_sc_eff}/20）**——名义资产数打完相关性折扣后的真实赌注数。"
+                f"{'你已满足「5个以上资产」的门槛，' if _n >= 5 else '你还没达到5个资产的基本门槛，'}"
+                f"但圣杯的关键从来不是数量，而是相关性。",
+                "good" if _hg_score >= 60 else "warn" if _hg_score >= 40 else "bad",
+                calc=f"{_sc_n} + {_sc_rho} + {_sc_eff} = {_hg_score}/100", title="这个分数怎么来的")
+
+            # 资产类别诊断
+            def _classify(tk):
+                t = tk.upper()
+                if t.endswith("-USD"):
+                    return "加密货币"
+                if t in ("TLT","IEF","SHY","BND","AGG","TIP","LQD","HYG","ZROZ","EDV","GOVT"):
+                    return "债券"
+                if t in ("GLD","IAU","SLV","GC=F","SI=F","PPLT","GDX","NEM"):
+                    return "贵金属"
+                if t in ("DBC","DJP","USO","UNG","CL=F","HG=F","CORN","WEAT","PDBC","FCX"):
+                    return "大宗商品"
+                if t in ("VNQ","IYR","SCHH","O","XLRE"):
+                    return "房地产"
+                if t in ("EFA","VEA","VWO","EEM","FXI","MCHI","IEFA","IEMG","EWJ","BABA","JD","PDD","BIDU","NIO"):
+                    return "非美股票"
+                if t in ("UUP","FXE","FXY","USDU"):
+                    return "汇率"
+                return "美股"
+            _classes = {}
+            for _tk in _rets.columns:
+                _classes.setdefault(_classify(_tk), []).append(_tk)
+            _missing_cls = {
+                "债券": ("长久期国债（TLT / IEF）", "经济衰退、避险时上涨，是股票最经典的负相关对冲；利率下行周期收益尤其明显"),
+                "贵金属": ("黄金（GLD / IAU）", "定价锚是实际利率和地缘风险，与企业盈利无关，常在股债双杀时逆势走强"),
+                "大宗商品": ("大宗商品（DBC / PDBC）", "通胀上行期股债往往同跌，而商品同涨，是对抗通胀情景的关键一块"),
+                "非美股票": ("非美股票（EFA / VWO）", "不同经济周期和货币体系，能摊薄单一国家的政策与汇率风险"),
+                "房地产": ("REITs（VNQ）", "租金现金流与股票盈利周期不完全同步，提供另一条收益来源"),
+                "加密货币": ("加密资产（BTC-USD）", "定价逻辑独立于企业盈利，但近年与纳指相关性上升，权重不宜过高"),
+            }
+            _have = set(_classes.keys())
+            _sugg = [(v[0], v[1]) for k, v in _missing_cls.items() if k not in _have]
+            st.markdown("**当前组合的资产类别构成**")
+            st.markdown(
+                " ".join(f'<span style="display:inline-block;background:rgba(83,74,183,.12);color:#534AB7;'
+                         f'border-radius:99px;padding:3px 12px;font-size:12px;font-weight:600;margin:2px">'
+                         f'{k}：{", ".join(v)}</span>' for k, v in _classes.items()),
+                unsafe_allow_html=True)
+            if _sugg:
+                why("你的组合目前缺少以下资产类别，它们与股票的定价逻辑不同，是把平均相关性压下来最有效的方式："
+                    + "；".join(f"**{name}** — {rsn}" for name, rsn in _sugg[:4]) + "。",
+                    "warn", title="想往绿线靠，可以补什么")
+            else:
+                why("你的组合已经覆盖了主要的低相关资产类别（股、债、金、商品等），"
+                    "接下来的优化方向不是继续加类别，而是调整各类别的**风险权重**——"
+                    "达里欧的全天候策略就是按风险平价（risk parity）而非金额平均来配置的。",
+                    "good", title="类别覆盖情况")
+
+            st.warning("⚠️ 相关性会随市场环境变化——危机时各类资产的相关性往往同时飙升（所谓「危机时刻相关性趋近于1」），"
+                       "历史相关性只能作为参考，不构成投资建议。")
