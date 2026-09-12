@@ -307,6 +307,45 @@ div[data-testid="stProgress"] > div > div > div {
 </style>
 """, unsafe_allow_html=True)
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚡ 自动刷新：开启后整个页面按设定间隔重跑，行情缓存到期即重新抓取
+# ══════════════════════════════════════════════════════════════════════════════
+def setup_auto_refresh():
+    from datetime import datetime as _dtn
+    with st.sidebar:
+        st.markdown("### ⚡ 实时更新")
+        on = st.toggle("自动刷新数据", value=False, key="auto_refresh",
+                       help="开启后页面会按下方间隔自动重新抓取行情，无需手动点刷新")
+        interval = st.selectbox(
+            "刷新间隔", [30, 60, 120, 300], index=1, key="auto_refresh_interval",
+            format_func=lambda s: f"{s} 秒" if s < 60 else f"{s // 60} 分钟",
+            disabled=not on)
+        st.caption(f"本次数据更新于 **{_dtn.now().strftime('%H:%M:%S')}**")
+        if on:
+            st.success(f"🟢 每 {interval} 秒自动刷新中")
+        else:
+            st.caption("⚪ 当前为手动模式，点页面内的「🔄 刷新」按钮更新")
+        st.caption("行情来自雅虎财经，美股约延迟15分钟；加密货币 24 小时连续报价。")
+        if st.button("🔄 立即强制刷新全部数据", use_container_width=True, key="force_refresh_all"):
+            st.cache_data.clear()
+            st.rerun()
+    return on, interval
+
+_auto_on, _auto_interval = setup_auto_refresh()
+
+if _auto_on and hasattr(st, "fragment"):
+    try:
+        @st.fragment(run_every=_auto_interval)
+        def _auto_refresh_ticker():
+            if st.session_state.get("auto_refresh"):
+                try:
+                    st.rerun(scope="app")
+                except TypeError:      # 老版本 st.rerun 不支持 scope
+                    st.rerun()
+        _auto_refresh_ticker()
+    except Exception:
+        st.sidebar.caption("⚠️ 当前 Streamlit 版本不支持自动刷新，请使用手动刷新按钮。")
+
 # ── Logo 资源（指数/交易所用官方标识，个股与加密货币走公开 Logo CDN）──
 LOGO_OVERRIDES = {
     "^IXIC": "https://upload.wikimedia.org/wikipedia/commons/8/87/NASDAQ_Logo.svg",
@@ -619,6 +658,193 @@ def explain_simulate(sentiment, rate, ai_speed, retail, sim):
                  f"低利率红利 (100-{rate}×8)×0.1　=　{sim['temp']}/100"),
     }
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔍 标的搜索库（输入首字母即可联想，如输入 T 会列出所有 T 开头的标的）
+# ══════════════════════════════════════════════════════════════════════════════
+TICKER_UNIVERSE = {
+    # 科技巨头
+    "AAPL":"苹果 Apple", "MSFT":"微软 Microsoft", "NVDA":"英伟达 NVIDIA", "GOOGL":"谷歌 Alphabet",
+    "GOOG":"谷歌 Alphabet C", "AMZN":"亚马逊 Amazon", "META":"Meta 脸书", "TSLA":"特斯拉 Tesla",
+    "AVGO":"博通 Broadcom", "ORCL":"甲骨文 Oracle", "CRM":"Salesforce", "ADBE":"Adobe",
+    "AMD":"超微半导体 AMD", "INTC":"英特尔 Intel", "QCOM":"高通 Qualcomm", "TXN":"德州仪器",
+    "MU":"美光科技 Micron", "AMAT":"应用材料", "LRCX":"泛林集团", "KLAC":"科磊",
+    "TSM":"台积电 TSMC", "ASML":"阿斯麦 ASML", "ARM":"ARM控股", "SMCI":"超微电脑",
+    "PLTR":"Palantir", "SNOW":"Snowflake", "NOW":"ServiceNow", "PANW":"Palo Alto",
+    "CRWD":"CrowdStrike", "DDOG":"Datadog", "NET":"Cloudflare", "MDB":"MongoDB",
+    "SHOP":"Shopify", "SQ":"Block", "PYPL":"PayPal", "UBER":"优步 Uber", "ABNB":"爱彼迎 Airbnb",
+    "COIN":"Coinbase", "HOOD":"Robinhood", "MSTR":"MicroStrategy", "RBLX":"Roblox",
+    "SPOT":"Spotify", "NFLX":"奈飞 Netflix", "DIS":"迪士尼 Disney", "TTD":"The Trade Desk",
+    "TEAM":"Atlassian", "TWLO":"Twilio", "TOST":"Toast", "ZM":"Zoom", "DOCU":"DocuSign",
+    "SOUN":"SoundHound AI", "BBAI":"BigBear.ai", "AI":"C3.ai", "KULR":"KULR Technology",
+    "IONQ":"IonQ 量子计算", "RGTI":"Rigetti 量子计算", "QBTS":"D-Wave 量子计算",
+    # 金融
+    "JPM":"摩根大通", "BAC":"美国银行", "WFC":"富国银行", "GS":"高盛", "MS":"摩根士丹利",
+    "C":"花旗集团", "SCHW":"嘉信理财", "BLK":"贝莱德", "V":"Visa", "MA":"万事达 Mastercard",
+    "AXP":"美国运通", "BRK-B":"伯克希尔 B", "TFC":"Truist Financial", "TRV":"旅行者保险",
+    # 医疗消费工业
+    "UNH":"联合健康", "JNJ":"强生", "LLY":"礼来", "PFE":"辉瑞", "MRK":"默沙东",
+    "ABBV":"艾伯维", "TMO":"赛默飞世尔", "ABT":"雅培", "DHR":"丹纳赫", "AMGN":"安进",
+    "TDOC":"Teladoc 远程医疗", "MRNA":"Moderna", "NVO":"诺和诺德",
+    "WMT":"沃尔玛", "COST":"好市多 Costco", "PG":"宝洁", "KO":"可口可乐", "PEP":"百事",
+    "MCD":"麦当劳", "NKE":"耐克", "SBUX":"星巴克", "TGT":"塔吉特 Target", "TJX":"TJX公司",
+    "HD":"家得宝", "LOW":"劳氏", "BA":"波音", "CAT":"卡特彼勒", "GE":"通用电气",
+    "LMT":"洛克希德马丁", "RTX":"雷神技术", "HON":"霍尼韦尔", "UPS":"联合包裹", "FDX":"联邦快递",
+    "T":"AT&T 电信", "TMUS":"T-Mobile", "VZ":"威瑞森 Verizon", "CMCSA":"康卡斯特",
+    "XOM":"埃克森美孚", "CVX":"雪佛龙", "COP":"康菲石油", "OXY":"西方石油",
+    "F":"福特汽车", "GM":"通用汽车", "RIVN":"Rivian", "LCID":"Lucid",
+    # 中概股
+    "BABA":"阿里巴巴", "JD":"京东", "PDD":"拼多多", "BIDU":"百度", "NTES":"网易",
+    "TCOM":"携程 Trip.com", "NIO":"蔚来", "XPEV":"小鹏汽车", "LI":"理想汽车", "BEKE":"贝壳",
+    "TME":"腾讯音乐", "YUMC":"百胜中国", "ZTO":"中通快递",
+    # 宽基与行业ETF
+    "SPY":"标普500 ETF", "QQQ":"纳斯达克100 ETF", "DIA":"道指 ETF", "IWM":"罗素2000 ETF",
+    "VTI":"全美股市 ETF", "VOO":"先锋标普500", "VUG":"成长股 ETF", "VTV":"价值股 ETF",
+    "ARKK":"ARK创新 ETF", "SOXX":"半导体 ETF", "SMH":"半导体 ETF", "XLK":"科技板块 ETF",
+    "XLF":"金融板块 ETF", "XLE":"能源板块 ETF", "XLV":"医疗板块 ETF", "XLI":"工业板块 ETF",
+    "XLP":"必需消费 ETF", "XLY":"可选消费 ETF", "XLU":"公用事业 ETF", "XLRE":"房地产 ETF",
+    "VGT":"信息科技 ETF", "VNQ":"REITs房地产 ETF", "TQQQ":"纳指三倍做多", "SQQQ":"纳指三倍做空",
+    # 海外与新兴市场
+    "EFA":"发达市场(除美) ETF", "VEA":"发达市场 ETF", "VWO":"新兴市场 ETF", "EEM":"新兴市场 ETF",
+    "FXI":"中国大盘 ETF", "MCHI":"MSCI中国 ETF", "KWEB":"中概互联 ETF", "EWJ":"日本 ETF",
+    "INDA":"印度 ETF", "EWZ":"巴西 ETF", "IEFA":"核心发达市场", "IEMG":"核心新兴市场",
+    # 债券
+    "TLT":"20年+长期美债 ETF", "IEF":"7-10年美债 ETF", "SHY":"1-3年短债 ETF",
+    "BND":"综合债券 ETF", "AGG":"综合债券 ETF", "TIP":"抗通胀债券 ETF", "LQD":"投资级公司债",
+    "HYG":"高收益债 ETF", "EDV":"超长久期美债", "ZROZ":"零息长债",
+    # 黄金/有色/大宗
+    "GLD":"黄金 ETF", "IAU":"黄金 ETF(低费率)", "SLV":"白银 ETF", "GDX":"金矿股 ETF",
+    "GDXJ":"初级金矿股 ETF", "PPLT":"铂金 ETF", "DBC":"大宗商品 ETF", "PDBC":"免K1大宗商品",
+    "USO":"原油 ETF", "UNG":"天然气 ETF", "NEM":"纽蒙特矿业", "FCX":"自由港麦克莫兰",
+    "SCCO":"南方铜业", "AA":"美国铝业", "X":"美国钢铁", "CLF":"克利夫兰克里夫斯",
+    "GC=F":"黄金期货", "SI=F":"白银期货", "HG=F":"铜期货", "CL=F":"原油期货", "NG=F":"天然气期货",
+    # 加密货币
+    "BTC-USD":"比特币 Bitcoin", "ETH-USD":"以太坊 Ethereum", "SOL-USD":"Solana",
+    "BNB-USD":"币安币 BNB", "XRP-USD":"瑞波币 XRP", "DOGE-USD":"狗狗币 Dogecoin",
+    "ADA-USD":"艾达币 Cardano", "AVAX-USD":"雪崩 Avalanche", "LINK-USD":"Chainlink",
+    "DOT-USD":"波卡 Polkadot", "MATIC-USD":"Polygon", "LTC-USD":"莱特币 Litecoin",
+    # 指数
+    "^IXIC":"纳斯达克综合指数", "^GSPC":"标普500指数", "^DJI":"道琼斯指数",
+    "^VIX":"VIX恐慌指数", "^TNX":"10年期美债收益率", "^RUT":"罗素2000指数",
+    "^HSI":"恒生指数", "^N225":"日经225", "^FTSE":"英国富时100",
+    # 2026 IPO
+    "SPCX":"SpaceX 太空探索",
+}
+
+def search_tickers(query, limit=12):
+    """代码前缀优先，其次匹配代码包含或公司名包含"""
+    q = (query or "").strip()
+    if not q:
+        return []
+    qu = q.upper()
+    starts, contains = [], []
+    for tk, nm in TICKER_UNIVERSE.items():
+        if tk.startswith(qu):
+            starts.append((tk, nm))
+        elif qu in tk or q.lower() in nm.lower():
+            contains.append((tk, nm))
+    starts.sort(key=lambda x: (len(x[0]), x[0]))
+    return (starts + contains)[:limit]
+
+def ticker_search_box(key, label="🔍 搜索股票 / ETF / 加密货币",
+                      placeholder="输入代码或名称，如 T、TS、特斯拉、比特币", cols=4, limit=12):
+    """带 Logo 的联想搜索框；用户点选后返回代码，否则返回 None"""
+    q = st.text_input(label, key=f"{key}_query", placeholder=placeholder)
+    if not q.strip():
+        return None
+    results = search_tickers(q, limit)
+    if not results:
+        st.caption(f"没有匹配「{q}」的标的 —— 你也可以在下面的输入框直接填完整代码（如 0700.HK）")
+        return None
+    st.caption(f"匹配到 {len(results)} 个标的，点击即可选择：")
+    picked = None
+    rc = st.columns(cols)
+    for i, (tk, nm) in enumerate(results):
+        with rc[i % cols]:
+            st.markdown(
+                f'<div class="arow" style="margin-bottom:4px">{logo_chip_html(tk, cls="arow-chip")}'
+                f'<span style="font-size:12.5px;color:#0f172a"><b>{tk}</b><br>'
+                f'<span style="font-size:10.5px;color:#64748b">{nm}</span></span></div>',
+                unsafe_allow_html=True)
+            if st.button("选择", key=f"{key}_pick_{tk}", use_container_width=True):
+                picked = tk
+    return picked
+
+def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label="📊 查看分析与走势"):
+    """items: [(ticker, card_html)]；每张卡下方带一个跳转按钮"""
+    for start in range(0, len(items), cols):
+        chunk = items[start:start + cols]
+        cc = st.columns(cols)
+        for i, (tk, html) in enumerate(chunk):
+            with cc[i]:
+                st.markdown(f'<div class="ac-grid" style="--acmin:100%;margin-bottom:6px">{html}</div>',
+                            unsafe_allow_html=True)
+                if st.button(btn_label, key=f"{key_prefix}_{tk}", use_container_width=True):
+                    st.session_state["quick_view_ticker"] = tk
+                    st.session_state["selected_ticker"] = tk      # 同步给「股票分析器」
+                    st.session_state["analysis_result"] = None
+                    st.rerun()
+
+def render_quick_analysis(ticker):
+    """点击标的后就地展开：评级横幅 + 关键指标 + K线走势图"""
+    r = fetch_stock_analysis(ticker)
+    if not r or "error" in r:
+        st.error(f"无法获取 {ticker} 的分析数据：{(r or {}).get('error', '数据不足')}")
+        return
+    _rc = r["rating_color"]
+    st.markdown(
+        f'<div class="ahero" style="min-height:110px;'
+        f'background:linear-gradient(120deg,{_rc} 0%,{_rc}cc 55%,{_rc}99 100%)">'
+        f'{logo_watermark_html(r["ticker"], hero=True)}'
+        f'<div class="ahero-glass" style="padding:16px 20px">'
+        f'{logo_chip_html(r["ticker"], cls="ahero-chip")}'
+        f'<span style="font-size:34px;line-height:1">{r["rating_emoji"]}</span>'
+        f'<div><div style="font-size:23px;font-weight:750">{r["rating"]}</div>'
+        f'<div style="font-size:13px;opacity:.92">{r["name"]} · {r["sector"]}</div></div>'
+        f'<div style="margin-left:auto;text-align:right">'
+        f'<div style="font-size:28px;font-weight:750">${r["price_now"]:.2f}</div>'
+        f'<div style="font-size:12.5px;opacity:.92">综合评分：{r["score"]}/100</div>'
+        f'</div></div></div>', unsafe_allow_html=True)
+
+    q1, q2, q3, q4, q5 = st.columns(5)
+    q1.metric("现价", f"${r['price_now']:.2f}")
+    q2.metric("1个月动量", f"{r['mom_1m']:+.1f}%", delta_color="normal" if r['mom_1m'] >= 0 else "inverse")
+    q3.metric("RSI(14)", f"{r['rsi']:.1f}",
+              "超卖" if r['rsi'] < 30 else "超买" if r['rsi'] > 70 else "正常")
+    q4.metric("52周区间", f"${r['price_52w_low']:.0f}–${r['price_52w_high']:.0f}",
+              f"距高点{r['price_from_high']:.1f}%", delta_color="inverse")
+    q5.metric("长期评分", f"{r['lt_score']}/100", r["lt_rating"], delta_color="off")
+
+    hist = r.get("hist")
+    if hist is None or len(hist) < 5:
+        st.info("该标的暂无足够的历史数据绘制走势图。")
+    else:
+        close = hist["Close"]
+        fig_q = go.Figure()
+        fig_q.add_trace(go.Candlestick(
+            x=hist.index, open=hist["Open"], high=hist["High"],
+            low=hist["Low"], close=hist["Close"], name="K线",
+            increasing_line_color="#1D9E75", decreasing_line_color="#E24B4A", showlegend=False))
+        fig_q.add_trace(go.Scatter(x=hist.index, y=close.rolling(20).mean(), mode="lines",
+                                   line=dict(color="#F5A623", width=1.6), name="MA20"))
+        fig_q.add_trace(go.Scatter(x=hist.index, y=close.rolling(min(50, len(close))).mean(),
+                                   mode="lines", line=dict(color="#534AB7", width=1.6), name="MA50"))
+        fig_q.add_hline(y=r["price_now"], line_color="#0F6E56", line_width=1.8,
+                        annotation_text=f" 现价 ${r['price_now']:.2f}",
+                        annotation_position="right", annotation_font=dict(color="#0F6E56", size=11))
+        fig_q.update_layout(
+            height=420, title=dict(text=f"{r['ticker']} · 价格走势", font=dict(size=14)),
+            xaxis=dict(title="日期", showgrid=True, gridcolor="#eeeeee",
+                       rangeslider=dict(visible=True, thickness=0.05)),
+            yaxis=dict(title="价格 ($)", showgrid=True, gridcolor="#eeeeee"),
+            legend=dict(orientation="h", y=1.1, x=0), margin=dict(t=60, b=40, l=60, r=110))
+        glass_chart(fig_q)
+
+    st.markdown("**📋 关键技术信号**")
+    sc1, sc2 = st.columns(2)
+    for i, (icon, title, desc) in enumerate(r.get("signals", [])[:6]):
+        (sc1 if i % 2 == 0 else sc2).markdown(f"**{icon} {title}** — {desc}")
+    st.caption("想看完整分析（财报、斐波那契、量化面板、宏观联动）请前往「🔬 股票分析器」，代码已自动填好。")
+
 def add_range_tools(fig, range_buttons=True, slider=True, height_add=0):
     """给任意Plotly图表加上时间轴范围按钮和可拖动滑条"""
     rb = []
@@ -868,7 +1094,7 @@ def simulate(sentiment, rate, ai_speed, retail):
     return {"pop": pop, "six_m": six_m, "burst": burst, "temp": temp,
             "label": labels[idx], "desc": descs[idx]}
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def fetch_market_data():
     try:
         import yfinance as yf, math
@@ -970,7 +1196,7 @@ STATIC_STOCK_DATA = {
     }
 }
 
-@st.cache_data(ttl=180)
+@st.cache_data(ttl=120)
 def fetch_stock_analysis(ticker: str):
     # 检查是否有静态备用数据
     if ticker.upper() in STATIC_STOCK_DATA:
@@ -1379,11 +1605,24 @@ with tabs[0]:
                 val = f"${info['price']:,.2f}"
             sub = {"^IXIC": "NASDAQ 综合指数", "^GSPC": "S&P 500 指数",
                    "^VIX": "CBOE 波动率指数", "^TNX": "US 10Y Treasury"}.get(ticker, ticker)
-            cards_t1.append(asset_card_html(
+            cards_t1.append((ticker, asset_card_html(
                 ticker, info["name"], sub, val, info["change_pct"],
                 invert_color=(ticker == "^VIX"),
-            ))
-        render_asset_grid(cards_t1, min_width=235)
+            )))
+        render_asset_grid_clickable(cards_t1, key_prefix="t1card", cols=4)
+
+        # ── 点击任意标的后就地展开分析与走势 ──
+        _qv = st.session_state.get("quick_view_ticker")
+        if _qv:
+            st.divider()
+            _qc1, _qc2 = st.columns([5, 1])
+            _qc1.markdown(f"#### 🔎 {_qv} 快速分析")
+            if _qc2.button("✕ 关闭", key="qv_close", use_container_width=True):
+                st.session_state["quick_view_ticker"] = None
+                st.rerun()
+            with st.spinner(f"正在分析 {_qv}..."):
+                render_quick_analysis(_qv)
+            st.divider()
 
         with st.expander("📖 每个指标怎么读？（点开看每个数字为什么是这样）", expanded=True):
             for ticker, info in live_data_t1.items():
@@ -1418,7 +1657,7 @@ with tabs[0]:
     st.divider()
     st.subheader("💎 加密货币 & 有色金属/矿业")
 
-    @st.cache_data(ttl=180)
+    @st.cache_data(ttl=60)
     def fetch_crypto_metals_data(tickers_dict):
         try:
             import yfinance as yf, math
@@ -1450,12 +1689,12 @@ with tabs[0]:
     with cm_tab1:
         crypto_data = fetch_crypto_metals_data(CRYPTO_TICKERS)
         if crypto_data:
-            render_asset_grid([
-                asset_card_html(tk, info["name"], tk.replace("-USD", " / USD"),
-                                f"${info['price']:,.2f}", info["change_pct"],
-                                note=get_track_info(tk)[0])
+            render_asset_grid_clickable([
+                (tk, asset_card_html(tk, info["name"], tk.replace("-USD", " / USD"),
+                                     f"${info['price']:,.2f}", info["change_pct"],
+                                     note=get_track_info(tk)[0]))
                 for tk, info in crypto_data.items()
-            ], min_width=215)
+            ], key_prefix="cryptocard", cols=3)
             fig_crypto = go.Figure(go.Bar(
                 x=[v["name"] for v in crypto_data.values()],
                 y=[v["change_pct"] for v in crypto_data.values()],
@@ -1484,13 +1723,13 @@ with tabs[0]:
     with cm_tab2:
         metals_data = fetch_crypto_metals_data(METALS_TICKERS)
         if metals_data:
-            render_asset_grid([
-                asset_card_html(tk, info["name"],
-                                "期货合约" if "=" in tk else tk,
-                                f"${info['price']:,.2f}", info["change_pct"],
-                                note=get_track_info(tk)[0])
+            render_asset_grid_clickable([
+                (tk, asset_card_html(tk, info["name"],
+                                     "期货合约" if "=" in tk else tk,
+                                     f"${info['price']:,.2f}", info["change_pct"],
+                                     note=get_track_info(tk)[0]))
                 for tk, info in metals_data.items()
-            ], min_width=215)
+            ], key_prefix="metalcard", cols=3)
             fig_metals = go.Figure(go.Bar(
                 x=[v["name"] for v in metals_data.values()],
                 y=[v["change_pct"] for v in metals_data.values()],
@@ -1556,7 +1795,7 @@ with tabs[0]:
 with tabs[1]:
 
     # 自动抓取已上市IPO的实时价格
-    @st.cache_data(ttl=300)
+    @st.cache_data(ttl=120)
     def fetch_ipo_live_prices():
         """抓取已上市IPO的实时股价"""
         try:
@@ -1668,6 +1907,32 @@ with tabs[1]:
         m6.metric("泡沫风险", f"{company['bubble_risk']}%",
                   delta_color="inverse" if company["bubble_risk"]>60 else "normal")
 
+    # ── 点进公司看真实走势与技术分析（已上市的才有行情）──
+    _co_ticker = company.get("ticker")
+    if _co_ticker:
+        if st.button(f"📈 查看 {company['name']}（{_co_ticker}）的走势图与完整技术分析",
+                     key=f"ipo_analyze_{_co_ticker}", use_container_width=True, type="primary"):
+            st.session_state["ipo_quick_view"] = _co_ticker
+            st.session_state["selected_ticker"] = _co_ticker
+            st.session_state["analysis_result"] = None
+            st.rerun()
+    else:
+        st.info(f"🔒 {company['name']} 尚未上市（预计 {company['date']}），还没有可交易的股票代码，"
+                f"因此无法显示K线走势。上市后这里会自动出现走势图入口。"
+                f"你可以先在「📈 趋势预测」里用同板块的已上市标的做情景推演。")
+
+    if st.session_state.get("ipo_quick_view"):
+        _iv = st.session_state["ipo_quick_view"]
+        st.divider()
+        _ic1, _ic2 = st.columns([5, 1])
+        _ic1.markdown(f"#### 🔎 {_iv} 走势与技术分析")
+        if _ic2.button("✕ 关闭", key="ipo_qv_close", use_container_width=True):
+            st.session_state["ipo_quick_view"] = None
+            st.rerun()
+        with st.spinner(f"正在分析 {_iv}..."):
+            render_quick_analysis(_iv)
+        st.divider()
+
     st.subheader("所有公司对比")
     fig_bubble = go.Figure(go.Scatter(
         x=[c["bubble_risk"] for c in IPOS], y=[c["exp_pop"] for c in IPOS],
@@ -1766,6 +2031,13 @@ with tabs[3]:
                         st.session_state["sc_ticker"] = tk
                         sc_picked = tk
         
+            _sc_picked2 = ticker_search_box("sim",
+                                            label="🔍 或搜索其它标的（输入代码或名称，如 T、GO、黄金）",
+                                            cols=4, limit=8)
+            if _sc_picked2:
+                st.session_state["sc_ticker"] = _sc_picked2
+                st.rerun()
+
             custom_col, _ = st.columns([2,3])
             with custom_col:
                 custom_tk = st.text_input("或输入自定义代码", value="",
@@ -1773,9 +2045,14 @@ with tabs[3]:
                                            key="sc_custom_input").strip().upper()
                 if custom_tk:
                     st.session_state["sc_ticker"] = custom_tk
-        
+
             sc_ticker = st.session_state.get("sc_ticker", "SPY")
-            st.caption(f"当前分析标的：**{sc_ticker}**")
+            st.markdown(
+                f'<div class="arow">{logo_chip_html(sc_ticker, cls="arow-chip")}'
+                f'<span style="font-size:13px;color:#0f172a">当前分析标的：<b>{sc_ticker}</b>'
+                f'　<span style="font-size:11px;color:#64748b">'
+                f'{TICKER_UNIVERSE.get(sc_ticker, "自定义代码")}</span></span></div>',
+                unsafe_allow_html=True)
         
             # ── 抓取该股实时数据 ──────────────────────────────────────────────
             @st.cache_data(ttl=300)
@@ -2335,23 +2612,48 @@ with tabs[3]:
     st.divider()
 
     if auto_trend:
-        # ── 股票选择 ──
+        # ── 标的选择：联想搜索 + 快捷预设 ──
+        if "t5_ticker" not in st.session_state:
+            st.session_state["t5_ticker"] = "QQQ"
+
+        _t5_picked = ticker_search_box("trend",
+                                       label="🔍 搜索要预测的标的（输入代码或名称，如 T、NVD、英伟达、比特币）",
+                                       cols=4, limit=12)
+        if _t5_picked:
+            st.session_state["t5_ticker"] = _t5_picked
+            st.rerun()
+
         t5_ticker_presets = {
             "纳斯达克ETF": "QQQ", "标普500ETF": "SPY",
             "英伟达": "NVDA", "苹果": "AAPL", "微软": "MSFT",
             "特斯拉": "TSLA", "谷歌": "GOOGL", "亚马逊": "AMZN",
         }
+        _t5pc = st.columns(len(t5_ticker_presets))
+        for _i, (_pn, _pt) in enumerate(t5_ticker_presets.items()):
+            with _t5pc[_i]:
+                st.markdown(
+                    f'<div class="arow" style="margin-bottom:4px;justify-content:center">'
+                    f'{logo_chip_html(_pt, cls="arow-chip")}'
+                    f'<span style="font-size:11.5px;font-weight:700;color:#0f172a">{_pn}</span></div>',
+                    unsafe_allow_html=True)
+                if st.button("选择", key=f"t5_preset_{_pt}", use_container_width=True):
+                    st.session_state["t5_ticker"] = _pt
+                    st.rerun()
+
         t5c1, t5c2 = st.columns([2, 2])
         with t5c1:
-            preset_name = st.selectbox("快速选择热门资产",
-                                       ["自定义"] + list(t5_ticker_presets.keys()))
+            auto_ticker = st.text_input("当前预测标的（也可直接输入完整代码）",
+                                        value=st.session_state["t5_ticker"],
+                                        placeholder="AAPL / TSLA / 0700.HK",
+                                        key="t5_ticker_input").strip().upper()
+            st.session_state["t5_ticker"] = auto_ticker
         with t5c2:
-            if preset_name == "自定义":
-                auto_ticker = st.text_input("输入股票代码", value="QQQ",
-                                             placeholder="AAPL / TSLA / 0700.HK").upper()
-            else:
-                auto_ticker = t5_ticker_presets[preset_name]
-                st.markdown(f"**已选择：{auto_ticker}**")
+            st.markdown(
+                f'<div class="arow" style="margin-top:26px">{logo_chip_html(auto_ticker, cls="arow-chip")}'
+                f'<span style="font-size:13px;color:#0f172a">已选择 <b>{auto_ticker}</b>'
+                f'<br><span style="font-size:11px;color:#64748b">'
+                f'{TICKER_UNIVERSE.get(auto_ticker, "自定义代码")}</span></span></div>',
+                unsafe_allow_html=True)
 
         horizon_map  = {"1年": 12, "5年": 60, "10年": 120, "20年": 240}
         horizon_sel  = st.selectbox("预测周期", list(horizon_map.keys()), index=1)
@@ -3372,16 +3674,32 @@ with tabs[5]:
     if "chart_type" not in st.session_state:
         st.session_state["chart_type"] = "📈 K线 + 斐波那契"
 
-    # 快捷选股（点击后存入 session_state，不触发分析）
-    st.write("**快捷选择热门股票：**")
-    qcols = st.columns(len(POPULAR_STOCKS))
-    for i, (group, tickers) in enumerate(POPULAR_STOCKS.items()):
-        with qcols[i]:
-            st.caption(group)
-            for tk in tickers:
-                if st.button(tk, key=f"q_{group}_{tk}", use_container_width=True):
-                    st.session_state["selected_ticker"] = tk
-                    st.session_state["analysis_result"] = None  # 清空旧结果
+    # ── 联想搜索：输入首字母即可列出相关标的 ──
+    _picked = ticker_search_box("analyzer",
+                                label="🔍 搜索股票 / ETF / 加密货币（输入代码或名称，如 T、TSL、特斯拉、比特币）",
+                                cols=4, limit=12)
+    if _picked:
+        st.session_state["selected_ticker"] = _picked
+        st.session_state["analysis_result"] = None
+        st.rerun()
+
+    # 快捷选股（带 Logo，点击后存入 session_state）
+    st.write("**快捷选择热门标的：**")
+    _grp_tabs = st.tabs(list(POPULAR_STOCKS.keys()))
+    for _gt, (group, tickers) in zip(_grp_tabs, POPULAR_STOCKS.items()):
+        with _gt:
+            _qc = st.columns(min(len(tickers), 6))
+            for i, tk in enumerate(tickers):
+                with _qc[i % len(_qc)]:
+                    st.markdown(
+                        f'<div class="arow" style="margin-bottom:4px;justify-content:center">'
+                        f'{logo_chip_html(tk, cls="arow-chip")}'
+                        f'<span style="font-size:12.5px;font-weight:700;color:#0f172a">{tk}</span></div>',
+                        unsafe_allow_html=True)
+                    if st.button("分析", key=f"q_{group}_{tk}", use_container_width=True):
+                        st.session_state["selected_ticker"] = tk
+                        st.session_state["analysis_result"] = None
+                        st.rerun()
 
     st.divider()
 
