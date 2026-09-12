@@ -734,7 +734,7 @@ TICKER_UNIVERSE = {
     "TSM":"台积电 TSMC", "ASML":"阿斯麦 ASML", "ARM":"ARM控股", "SMCI":"超微电脑",
     "PLTR":"Palantir", "SNOW":"Snowflake", "NOW":"ServiceNow", "PANW":"Palo Alto",
     "CRWD":"CrowdStrike", "DDOG":"Datadog", "NET":"Cloudflare", "MDB":"MongoDB",
-    "SHOP":"Shopify", "SQ":"Block", "PYPL":"PayPal", "UBER":"优步 Uber", "ABNB":"爱彼迎 Airbnb",
+    "SHOP":"Shopify", "XYZ":"Block(原SQ)", "PYPL":"PayPal", "UBER":"优步 Uber", "ABNB":"爱彼迎 Airbnb",
     "COIN":"Coinbase", "HOOD":"Robinhood", "MSTR":"MicroStrategy", "RBLX":"Roblox",
     "SPOT":"Spotify", "NFLX":"奈飞 Netflix", "DIS":"迪士尼 Disney", "TTD":"The Trade Desk",
     "TEAM":"Atlassian", "TWLO":"Twilio", "TOST":"Toast", "ZM":"Zoom", "DOCU":"DocuSign",
@@ -766,6 +766,7 @@ TICKER_UNIVERSE = {
     "XLF":"金融板块 ETF", "XLE":"能源板块 ETF", "XLV":"医疗板块 ETF", "XLI":"工业板块 ETF",
     "XLP":"必需消费 ETF", "XLY":"可选消费 ETF", "XLU":"公用事业 ETF", "XLRE":"房地产 ETF",
     "VGT":"信息科技 ETF", "VNQ":"REITs房地产 ETF", "TQQQ":"纳指三倍做多", "SQQQ":"纳指三倍做空",
+    "XLC":"通讯服务 ETF", "XLB":"原材料 ETF", "XBI":"生物科技 ETF", "XHB":"住宅建筑 ETF",
     # 海外与新兴市场
     "EFA":"发达市场(除美) ETF", "VEA":"发达市场 ETF", "VWO":"新兴市场 ETF", "EEM":"新兴市场 ETF",
     "FXI":"中国大盘 ETF", "MCHI":"MSCI中国 ETF", "KWEB":"中概互联 ETF", "EWJ":"日本 ETF",
@@ -778,13 +779,13 @@ TICKER_UNIVERSE = {
     "GLD":"黄金 ETF", "IAU":"黄金 ETF(低费率)", "SLV":"白银 ETF", "GDX":"金矿股 ETF",
     "GDXJ":"初级金矿股 ETF", "PPLT":"铂金 ETF", "DBC":"大宗商品 ETF", "PDBC":"免K1大宗商品",
     "USO":"原油 ETF", "UNG":"天然气 ETF", "NEM":"纽蒙特矿业", "FCX":"自由港麦克莫兰",
-    "SCCO":"南方铜业", "AA":"美国铝业", "X":"美国钢铁", "CLF":"克利夫兰克里夫斯",
+    "SCCO":"南方铜业", "AA":"美国铝业", "CLF":"克利夫兰克里夫斯", "XME":"金属采矿 ETF",
     "GC=F":"黄金期货", "SI=F":"白银期货", "HG=F":"铜期货", "CL=F":"原油期货", "NG=F":"天然气期货",
     # 加密货币
     "BTC-USD":"比特币 Bitcoin", "ETH-USD":"以太坊 Ethereum", "SOL-USD":"Solana",
     "BNB-USD":"币安币 BNB", "XRP-USD":"瑞波币 XRP", "DOGE-USD":"狗狗币 Dogecoin",
     "ADA-USD":"艾达币 Cardano", "AVAX-USD":"雪崩 Avalanche", "LINK-USD":"Chainlink",
-    "DOT-USD":"波卡 Polkadot", "MATIC-USD":"Polygon", "LTC-USD":"莱特币 Litecoin",
+    "DOT-USD":"波卡 Polkadot", "LTC-USD":"莱特币 Litecoin",
     # 指数
     "^IXIC":"纳斯达克综合指数", "^GSPC":"标普500指数", "^DJI":"道琼斯指数",
     "^VIX":"VIX恐慌指数", "^TNX":"10年期美债收益率", "^RUT":"罗素2000指数",
@@ -808,29 +809,34 @@ def search_tickers(query, limit=12):
     starts.sort(key=lambda x: (len(x[0]), x[0]))
     return (starts + contains)[:limit]
 
-def ticker_search_box(key, label="🔍 搜索股票 / ETF / 加密货币",
-                      placeholder="输入代码或名称，如 T、TS、特斯拉、比特币", cols=4, limit=12):
-    """带 Logo 的联想搜索框；用户点选后返回代码，否则返回 None"""
-    q = st.text_input(label, key=f"{key}_query", placeholder=placeholder)
-    if not q.strip():
-        return None
-    results = search_tickers(q, limit)
-    if not results:
-        st.caption(f"没有匹配「{q}」的标的 —— 你也可以在下面的输入框直接填完整代码（如 0700.HK）")
-        return None
-    st.caption(f"匹配到 {len(results)} 个标的，点击即可选择：")
-    picked = None
-    rc = st.columns(cols)
-    for i, (tk, nm) in enumerate(results):
-        with rc[i % cols]:
-            st.markdown(
-                f'<div class="arow" style="margin-bottom:4px">{logo_chip_html(tk, cls="arow-chip")}'
-                f'<span style="font-size:12.5px;color:#0f172a"><b>{tk}</b><br>'
-                f'<span style="font-size:10.5px;color:#64748b">{nm}</span></span></div>',
-                unsafe_allow_html=True)
-            if st.button("选择", key=f"{key}_pick_{tk}", use_container_width=True):
-                picked = tk
-    return picked
+def _uni_label(tk):
+    nm = TICKER_UNIVERSE.get(tk)
+    return f"{tk} — {nm}" if nm else tk
+
+def ticker_autocomplete(key, default=None, label="股票代码（边打边出提示）", label_visibility="visible",
+                        help_text="输入首字母即可联想，如 X → XOM / XLK / XRP-USD；库里没有的代码也可以直接输入，如 0700.HK"):
+    """可搜索下拉框：输入即过滤候选，同时允许输入库里没有的任意代码"""
+    opts = list(TICKER_UNIVERSE.keys())
+    default = (default or "").strip().upper()
+    if default and default not in opts:
+        opts = [default] + opts
+    idx = opts.index(default) if default in opts else None
+    try:
+        val = st.selectbox(label, opts, index=idx, key=key, format_func=_uni_label,
+                           placeholder="输入代码或名称搜索，如 X、TSLA、特斯拉、比特币",
+                           accept_new_options=True, help=help_text,
+                           label_visibility=label_visibility)
+    except TypeError:
+        # 老版本 Streamlit 不支持 accept_new_options：退回「下拉 + 手填」双通道
+        val = st.selectbox(label, ["（手动输入其它代码）"] + opts,
+                           index=(opts.index(default) + 1) if default in opts else 0,
+                           key=key, label_visibility=label_visibility,
+                           format_func=lambda x: x if x.startswith("（") else _uni_label(x),
+                           help=help_text)
+        if val.startswith("（"):
+            val = st.text_input("手动输入代码", value=default, key=f"{key}_manual",
+                                label_visibility="collapsed")
+    return (val or "").strip().upper()
 
 def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label="📊 查看分析与走势"):
     """items: [(ticker, card_html)]；每张卡下方带一个跳转按钮"""
@@ -2116,18 +2122,11 @@ with tabs[3]:
                         st.session_state["sc_ticker"] = tk
                         sc_picked = tk
         
-            _sc_picked2 = ticker_search_box("sim",
-                                            label="🔍 或搜索其它标的（输入代码或名称，如 T、GO、黄金）",
-                                            cols=4, limit=8)
-            if _sc_picked2:
-                st.session_state["sc_ticker"] = _sc_picked2
-                st.rerun()
-
             custom_col, _ = st.columns([2,3])
             with custom_col:
-                custom_tk = st.text_input("或输入自定义代码", value="",
-                                           placeholder="AAPL / TSLA / SPCX",
-                                           key="sc_custom_input").strip().upper()
+                custom_tk = ticker_autocomplete(
+                    "sc_custom_input", default=st.session_state.get("sc_ticker", "SPY"),
+                    label="🔍 或搜索其它标的（边打边出提示，如 X、GO、黄金）")
                 if custom_tk:
                     st.session_state["sc_ticker"] = custom_tk
 
@@ -2701,13 +2700,6 @@ with tabs[3]:
         if "t5_ticker" not in st.session_state:
             st.session_state["t5_ticker"] = "QQQ"
 
-        _t5_picked = ticker_search_box("trend",
-                                       label="🔍 搜索要预测的标的（输入代码或名称，如 T、NVD、英伟达、比特币）",
-                                       cols=4, limit=12)
-        if _t5_picked:
-            st.session_state["t5_ticker"] = _t5_picked
-            st.rerun()
-
         t5_ticker_presets = {
             "纳斯达克ETF": "QQQ", "标普500ETF": "SPY",
             "英伟达": "NVDA", "苹果": "AAPL", "微软": "MSFT",
@@ -2727,10 +2719,9 @@ with tabs[3]:
 
         t5c1, t5c2 = st.columns([2, 2])
         with t5c1:
-            auto_ticker = st.text_input("当前预测标的（也可直接输入完整代码）",
-                                        value=st.session_state["t5_ticker"],
-                                        placeholder="AAPL / TSLA / 0700.HK",
-                                        key="t5_ticker_input").strip().upper()
+            auto_ticker = ticker_autocomplete(
+                "t5_ticker_input", default=st.session_state["t5_ticker"],
+                label="🔍 要预测的标的（边打边出提示，如 X、NVD、英伟达、比特币）")
             st.session_state["t5_ticker"] = auto_ticker
         with t5c2:
             st.markdown(
@@ -3759,15 +3750,6 @@ with tabs[5]:
     if "chart_type" not in st.session_state:
         st.session_state["chart_type"] = "📈 K线 + 斐波那契"
 
-    # ── 联想搜索：输入首字母即可列出相关标的 ──
-    _picked = ticker_search_box("analyzer",
-                                label="🔍 搜索股票 / ETF / 加密货币（输入代码或名称，如 T、TSL、特斯拉、比特币）",
-                                cols=4, limit=12)
-    if _picked:
-        st.session_state["selected_ticker"] = _picked
-        st.session_state["analysis_result"] = None
-        st.rerun()
-
     # 快捷选股（带 Logo，点击后存入 session_state）
     st.write("**快捷选择热门标的：**")
     _grp_tabs = st.tabs(list(POPULAR_STOCKS.keys()))
@@ -3788,15 +3770,13 @@ with tabs[5]:
 
     st.divider()
 
-    # 股票代码输入框（从 session_state 读取默认值）
+    # 股票代码输入框：边打边联想（输入 X 会列出 XOM / XLK / XRP-USD 等）
     col_input, col_btn = st.columns([3, 1])
     with col_input:
-        ticker_input = st.text_input(
-            "输入股票代码（如 AAPL、TSLA、0700.HK）",
-            value=st.session_state["selected_ticker"],
-            placeholder="AAPL",
-            key="ticker_text_input",
-        ).strip().upper()
+        ticker_input = ticker_autocomplete(
+            "analyzer_pick",
+            default=st.session_state.get("selected_ticker") or "",
+            label="🔍 输入股票代码或名称（边打边出提示，如 X、TSLA、特斯拉、比特币）")
     with col_btn:
         st.write("")
         st.write("")
@@ -5306,8 +5286,9 @@ with tabs[6]:
     h_to_remove = []
     for idx, pos in enumerate(holdings):
         rc = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
-        new_tk = rc[0].text_input("", value=pos["ticker"], key=f"h_t_{idx}",
-                                   label_visibility="collapsed").strip().upper()
+        with rc[0]:
+            new_tk = ticker_autocomplete(f"h_t_{idx}", default=pos["ticker"],
+                                         label="代码", label_visibility="collapsed")
         new_qty = rc[1].number_input("", value=float(pos["qty"]), min_value=0.0,
                                       step=1.0, key=f"h_q_{idx}", label_visibility="collapsed")
         new_cost = rc[2].number_input("", value=float(pos["cost"]), min_value=0.0,
@@ -5328,8 +5309,9 @@ with tabs[6]:
         st.rerun()
 
     ac = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
-    add_tk = ac[0].text_input("", placeholder="如 AAPL / BTC-USD / GDX", key="h_ntk",
-                               label_visibility="collapsed").strip().upper()
+    with ac[0]:
+        add_tk = ticker_autocomplete("h_ntk", default="",
+                                     label="新增代码", label_visibility="collapsed")
     add_qty = ac[1].number_input("", value=1.0, min_value=0.0, step=1.0,
                                   key="h_nqty", label_visibility="collapsed")
     add_cost = ac[2].number_input("", value=100.0, min_value=0.0, step=1.0,
@@ -5619,11 +5601,22 @@ with tabs[7]:
         st.rerun()
 
     _hg_c1, _hg_c2, _hg_c3 = st.columns([3, 1, 1])
-    _hg_raw = _hg_c1.text_input("资产代码（逗号分隔，建议 5 个以上）",
-                                value=", ".join(st.session_state["hg_tickers"]), key="hg_input")
+    with _hg_c1:
+        _hg_opts = list(dict.fromkeys(list(st.session_state["hg_tickers"]) + list(TICKER_UNIVERSE.keys())))
+        try:
+            _hg_tickers = st.multiselect(
+                "🔍 选择资产（边打边出提示，建议 5 个以上且分属不同类别）",
+                _hg_opts, default=st.session_state["hg_tickers"], key="hg_pick",
+                format_func=_uni_label, accept_new_options=True,
+                help="输入首字母即可联想，如 X → XOM / XLK；库里没有的代码也能直接输入")
+        except TypeError:
+            _hg_tickers = st.multiselect(
+                "🔍 选择资产（建议 5 个以上且分属不同类别）",
+                _hg_opts, default=st.session_state["hg_tickers"], key="hg_pick",
+                format_func=_uni_label)
+        _hg_tickers = [t.strip().upper() for t in _hg_tickers if t and t.strip()]
     _hg_period = _hg_c2.selectbox("回看区间", ["1y", "2y", "3y", "5y"], index=1, key="hg_period")
     _hg_bench = _hg_c3.selectbox("Beta基准", ["SPY", "QQQ", "VTI"], index=0, key="hg_bench")
-    _hg_tickers = [t.strip().upper() for t in _hg_raw.replace("，", ",").split(",") if t.strip()]
     st.session_state["hg_tickers"] = _hg_tickers
 
     @st.cache_data(ttl=900, show_spinner=False)
