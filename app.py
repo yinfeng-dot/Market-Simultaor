@@ -19,13 +19,27 @@ st.set_page_config(
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-/* ── 页面底色：柔和渐变光晕 ── */
+/* ── 页面底色：网格 + 噪点 + 多层光晕（为毛玻璃提供可虚化的底纹）── */
 .stApp {
-    background:
-        radial-gradient(1100px 620px at 6% -8%,   rgba(110,150,255,0.20), transparent 60%),
-        radial-gradient(950px  520px at 97% -2%,  rgba(255,130,175,0.15), transparent 58%),
-        radial-gradient(900px  640px at 50% 112%, rgba(105,225,195,0.17), transparent 60%),
-        linear-gradient(180deg, #F6F8FC 0%, #EBF0F7 100%);
+    background-color: #EAF0F8;
+    background-image:
+        /* 1. 极细噪点，消除渐变色带、增加质感 */
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+        /* 2. 淡淡的行情网格（透过毛玻璃会被柔化，正是玻璃质感的来源）*/
+        repeating-linear-gradient(0deg,  rgba(15,23,42,0.035) 0 1px, transparent 1px 44px),
+        repeating-linear-gradient(90deg, rgba(15,23,42,0.035) 0 1px, transparent 1px 44px),
+        /* 3. 四周暗角，把视线收拢到内容区 */
+        radial-gradient(115% 95% at 50% 45%, transparent 52%, rgba(15,23,42,0.07) 100%),
+        /* 4. 顶部高光，让标题区域更透亮 */
+        radial-gradient(1250px 560px at 50% -12%, rgba(255,255,255,0.92), transparent 72%),
+        /* 5. 四角柔光晕 */
+        radial-gradient(860px 600px at 2% -4%,   rgba(96,132,255,0.26), transparent 62%),
+        radial-gradient(780px 540px at 99% 2%,   rgba(255,122,170,0.20), transparent 60%),
+        radial-gradient(940px 640px at 8% 102%,  rgba(72,214,186,0.22), transparent 62%),
+        radial-gradient(840px 580px at 96% 98%,  rgba(158,124,255,0.19), transparent 60%),
+        /* 6. 基础渐变 */
+        linear-gradient(172deg, #F8FAFD 0%, #EDF2F9 48%, #E5ECF7 100%);
+    background-size: 220px 220px, auto, auto, auto, auto, auto, auto, auto, auto, auto;
     background-attachment: fixed;
 }
 [data-testid="stHeader"] { background: transparent; }
