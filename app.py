@@ -14,6 +14,396 @@ st.set_page_config(
     layout="wide",
 )
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 🎨 苹果风毛玻璃主题（Glassmorphism）
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown("""
+<style>
+/* ── 页面底色：柔和渐变光晕 ── */
+.stApp {
+    background:
+        radial-gradient(1100px 620px at 6% -8%,   rgba(110,150,255,0.20), transparent 60%),
+        radial-gradient(950px  520px at 97% -2%,  rgba(255,130,175,0.15), transparent 58%),
+        radial-gradient(900px  640px at 50% 112%, rgba(105,225,195,0.17), transparent 60%),
+        linear-gradient(180deg, #F6F8FC 0%, #EBF0F7 100%);
+    background-attachment: fixed;
+}
+[data-testid="stHeader"] { background: transparent; }
+
+/* ── 强制浅色外观：本应用整体为浅色设计，避免系统深色模式下文字看不清 ── */
+html, body, .stApp { color-scheme: light; }
+.stApp, .stApp p, .stApp li, .stApp label, .stApp span, .stApp div,
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+.stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stMetricValue"],
+.stApp [data-testid="stMetricLabel"],
+.stApp [data-testid="stWidgetLabel"] { color: #0f172a; }
+.stApp [data-testid="stCaptionContainer"], .stApp small { color: #5b6678 !important; }
+/* 输入控件在深色模式下也保持浅色 */
+.stApp input, .stApp textarea,
+.stApp [data-baseweb="input"] > div, .stApp [data-baseweb="base-input"],
+.stApp [data-baseweb="select"] > div, .stApp [data-baseweb="popover"] li {
+    background: rgba(255,255,255,0.80) !important;
+    color: #0f172a !important;
+}
+.stApp [data-baseweb="popover"] ul { background: #ffffff !important; }
+.stApp [data-testid="stNumberInputStepUp"],
+.stApp [data-testid="stNumberInputStepDown"] {
+    background: rgba(255,255,255,0.88) !important;
+    color: #0f172a !important;
+    border-left: 1px solid rgba(15,23,42,0.07) !important;
+}
+.stApp [data-testid="stNumberInputStepUp"] svg,
+.stApp [data-testid="stNumberInputStepDown"] svg { fill: #0f172a !important; }
+.stApp [data-testid="stExpander"] details,
+.stApp [data-testid="stExpander"] summary { background: transparent !important; }
+
+/* ── 指标卡：毛玻璃 ── */
+div[data-testid="stMetric"], div[data-testid="metric-container"] {
+    background: rgba(255,255,255,0.55);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.75);
+    border-radius: 18px;
+    padding: 14px 16px !important;
+    box-shadow: 0 6px 22px rgba(15,23,42,0.07);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(15,23,42,0.13);
+}
+
+/* ── 图表容器：毛玻璃相框 ── */
+div[data-testid="stPlotlyChart"] {
+    background: rgba(255,255,255,0.48);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    backdrop-filter: blur(20px) saturate(170%);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 22px;
+    padding: 12px 10px 14px;
+    box-shadow: 0 8px 28px rgba(15,23,42,0.07);
+}
+
+/* ── 折叠面板 / 提示框 ── */
+div[data-testid="stExpander"] {
+    background: rgba(255,255,255,0.52);
+    -webkit-backdrop-filter: blur(20px) saturate(175%);
+    backdrop-filter: blur(20px) saturate(175%);
+    border: 1px solid rgba(255,255,255,0.72) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 6px 22px rgba(15,23,42,0.06);
+    overflow: hidden;
+}
+div[data-testid="stAlert"] {
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    border-radius: 14px;
+}
+
+/* ── 顶部页签：苹果分段控件 ── */
+div[data-testid="stTabs"] div[role="tablist"] {
+    gap: 4px;
+    background: rgba(255,255,255,0.45);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 16px;
+    padding: 5px;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+}
+div[data-testid="stTabs"] button[role="tab"] {
+    border-radius: 12px;
+    padding: 6px 14px;
+    transition: background .18s ease, box-shadow .18s ease;
+}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.10);
+}
+div[data-testid="stTabs"] div[role="tablist"] + div [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"] { display: none; }
+
+/* ── 按钮 / 输入框 ── */
+div[data-testid="stButton"] > button {
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.62);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 2px 10px rgba(15,23,42,0.06);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+div[data-testid="stButton"] > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15,23,42,0.12);
+}
+div[data-testid="stProgress"] > div > div {
+    border-radius: 99px;
+    background: rgba(15,23,42,0.10) !important;
+}
+div[data-testid="stProgress"] > div > div > div {
+    border-radius: 99px;
+    background: linear-gradient(90deg, #6C8BFF 0%, #534AB7 100%) !important;
+}
+
+/* ══ 资产卡片（Logo 水印 + 毛玻璃） ══ */
+.ac-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--acmin, 220px), 1fr));
+    gap: 14px;
+    margin: 8px 0 10px;
+}
+.ac {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    min-height: 132px;
+    background: linear-gradient(135deg, #ffffff 0%, #eef2f8 100%);
+    box-shadow: 0 8px 26px rgba(15,23,42,0.10);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.ac:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(15,23,42,0.16); }
+/* 背景大 Logo 水印——被上层毛玻璃虚化 */
+.ac-wm {
+    position: absolute; right: -6%; top: 50%;
+    transform: translateY(-50%);
+    width: 70%; height: 104%;
+    object-fit: contain; object-position: right center;
+    opacity: .30; pointer-events: none;
+}
+.ac-wm-txt {
+    position: absolute; right: -6px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 84px; font-weight: 800; letter-spacing: -3px;
+    opacity: .18; pointer-events: none; line-height: 1;
+}
+.ac-glass {
+    position: relative; height: 100%;
+    padding: 13px 15px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background: rgba(255,255,255,0.52);
+    -webkit-backdrop-filter: blur(13px) saturate(185%);
+    backdrop-filter: blur(13px) saturate(185%);
+    border: 1px solid rgba(255,255,255,0.72);
+    border-radius: 20px;
+}
+.ac-top { display: flex; align-items: center; gap: 9px; }
+.ac-chip {
+    width: 34px; height: 34px; border-radius: 11px; flex: 0 0 34px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.13);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.ac-chip img { width: 26px; height: 26px; object-fit: contain; }
+.ac-chip span { font-size: 13px; font-weight: 800; letter-spacing: -.5px; }
+.ac-name { font-size: 13.5px; font-weight: 700; color: #0f172a; line-height: 1.25; }
+.ac-sub  { font-size: 10.5px; color: #64748b; margin-top: 1px; letter-spacing: .3px; }
+.ac-val  { font-size: 25px; font-weight: 750; color: #0f172a; letter-spacing: -.6px; margin-top: 6px; }
+.ac-chg  { font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center;
+           gap: 4px; padding: 2px 9px; border-radius: 99px; width: fit-content; margin-top: 4px; }
+.ac-up   { color: #0F6E56; background: rgba(29,158,117,0.14); }
+.ac-down { color: #A32D2D; background: rgba(226,75,74,0.14); }
+.ac-flat { color: #64748b; background: rgba(100,116,139,0.13); }
+.ac-note { font-size: 10.5px; color: #64748b; margin-top: 4px; }
+
+/* ══ 资产主视觉横幅（分析页顶部） ══ */
+.ahero {
+    position: relative; border-radius: 24px; overflow: hidden;
+    margin: 12px 0 16px; min-height: 132px;
+    box-shadow: 0 14px 40px rgba(15,23,42,0.16);
+}
+.ahero-wm {
+    position: absolute; right: 1.5%; top: 50%; transform: translateY(-50%);
+    width: 34%; height: 165%;
+    object-fit: contain; object-position: right center;
+    opacity: .40; pointer-events: none;
+}
+.ahero-wm-txt {
+    position: absolute; right: 3%; top: 50%; transform: translateY(-50%);
+    font-size: 120px; font-weight: 800; color: #fff; opacity: .16; line-height: 1;
+    letter-spacing: -4px; pointer-events: none;
+}
+.ahero-glass {
+    position: relative; padding: 20px 24px;
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,0.16);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 24px; color: #fff;
+}
+.ahero-chip {
+    width: 58px; height: 58px; border-radius: 17px; flex: 0 0 58px;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.ahero-chip img { width: 44px; height: 44px; object-fit: contain; }
+.ahero-chip span { font-size: 19px; font-weight: 800; color: #0f172a; letter-spacing: -.6px; }
+
+/* ══ 持仓紧凑行 ══ */
+.arow {
+    position: relative; display: flex; align-items: center; gap: 11px;
+    border-radius: 15px; overflow: hidden; margin-bottom: 8px;
+    padding: 9px 14px;
+    background: rgba(255,255,255,0.55);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.72);
+    box-shadow: 0 4px 16px rgba(15,23,42,0.07);
+    transition: transform .16s ease, box-shadow .16s ease;
+}
+.arow:hover { transform: translateX(2px); box-shadow: 0 8px 22px rgba(15,23,42,0.12); }
+.arow-chip {
+    width: 30px; height: 30px; border-radius: 10px; flex: 0 0 30px;
+    background: rgba(255,255,255,0.95); box-shadow: 0 2px 7px rgba(15,23,42,0.13);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.arow-chip img { width: 23px; height: 23px; object-fit: contain; }
+.arow-chip span { font-size: 11px; font-weight: 800; letter-spacing: -.4px; }
+
+/* ── 组件配色复位（优先级高于上面的"强制浅色"规则）── */
+.stApp .ac-name { color: #0f172a; }
+.stApp .ac-sub, .stApp .ac-note { color: #64748b; }
+.stApp .ac-val { color: #0f172a; }
+.stApp .ac-chg.ac-up   { color: #0F6E56; }
+.stApp .ac-chg.ac-down { color: #A32D2D; }
+.stApp .ac-chg.ac-flat { color: #64748b; }
+/* 深色横幅内：未自带颜色的文字保持白色，自带颜色的（涨跌标签）不动 */
+.stApp .ahero-glass,
+.stApp .ahero-glass div:not([style*="color"]),
+.stApp .ahero-glass span:not([style*="color"]) { color: #ffffff; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Logo 资源（指数/交易所用官方标识，个股与加密货币走公开 Logo CDN）──
+LOGO_OVERRIDES = {
+    "^IXIC": "https://upload.wikimedia.org/wikipedia/commons/8/87/NASDAQ_Logo.svg",
+    "^GSPC": "https://upload.wikimedia.org/wikipedia/commons/e/ee/S%26P_Global_logo.svg",
+    "^VIX":  "https://upload.wikimedia.org/wikipedia/commons/8/8a/Cboe_Global_Markets_Logo.svg",
+    "^DJI":  "https://upload.wikimedia.org/wikipedia/commons/9/99/NYSE_logo.svg",
+}
+# 没有 Logo 的标的用 emoji / 文字徽标兜底
+LOGO_EMOJI = {
+    "^TNX": "🏛️", "GC=F": "🥇", "SI=F": "🥈", "HG=F": "🟠",
+    "CL=F": "🛢️", "SPCX": "🚀",
+    "^GSPC": "S&P", "^IXIC": "NDQ", "^VIX": "VIX", "^DJI": "DJI",
+}
+ACCENT_PALETTE = ["#185FA5", "#534AB7", "#1D9E75", "#D85A30", "#0F6E56", "#BA7517", "#7F77DD"]
+
+@st.cache_data(ttl=21600, show_spinner=False)
+def fetch_logo_data_uri(ticker: str):
+    """抓取标的 Logo 并内联为 data URI（失败返回 None，由字母/emoji 徽标兜底）"""
+    import base64, urllib.request
+    t = (ticker or "").upper().strip()
+    if not t:
+        return None
+    cands = []
+    if t in LOGO_OVERRIDES:
+        cands.append(LOGO_OVERRIDES[t])
+    elif t.endswith("-USD"):                      # 加密货币
+        sym = t[:-4].lower()
+        cands.append(f"https://assets.coincap.io/assets/icons/{sym}@2x.png")
+    elif not t.startswith("^") and "=" not in t:  # 个股 / ETF
+        cands.append(f"https://images.financialmodelingprep.com/symbol/{t}.png")
+        cands.append(f"https://assets.parqet.com/logos/symbol/{t}?format=png&size=200")
+    for url in cands:
+        for _attempt in range(2):                 # 单次超时会重试一次，避免偶发抖动
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    data = resp.read()
+                    if len(data) < 200:           # 过小多半是占位图
+                        break
+                    ctype = (resp.headers.get("Content-Type") or "image/png").split(";")[0]
+                    if "svg" in ctype:
+                        ctype = "image/svg+xml"
+                    elif "image" not in ctype:
+                        ctype = "image/png"
+                    return f"data:{ctype};base64," + base64.b64encode(data).decode("ascii")
+            except Exception:
+                continue
+    return None
+
+def _accent_for(ticker: str) -> str:
+    return ACCENT_PALETTE[sum(ord(c) for c in (ticker or "X")) % len(ACCENT_PALETTE)]
+
+def _mono(ticker: str) -> str:
+    """字母/emoji 徽标文本"""
+    t = (ticker or "").upper()
+    if t in LOGO_EMOJI:
+        return LOGO_EMOJI[t]
+    t = t.split("-")[0].split("=")[0].lstrip("^")
+    return (t[:2] or "?")
+
+def logo_chip_html(ticker: str, cls: str = "ac-chip") -> str:
+    """小尺寸清晰 Logo 徽标"""
+    uri = fetch_logo_data_uri(ticker)
+    inner = (f'<img src="{uri}" alt="">' if uri
+             else f'<span style="color:{_accent_for(ticker)} !important">{_mono(ticker)}</span>')
+    return f'<div class="{cls}">{inner}</div>'
+
+def logo_watermark_html(ticker: str, hero: bool = False) -> str:
+    """背景大 Logo 水印（会被上层毛玻璃虚化）"""
+    uri = fetch_logo_data_uri(ticker)
+    if uri:
+        return f'<img class="{"ahero-wm" if hero else "ac-wm"}" src="{uri}" alt="">'
+    cls = "ahero-wm-txt" if hero else "ac-wm-txt"
+    style = "" if hero else f' style="color:{_accent_for(ticker)}"'
+    return f'<div class="{cls}"{style}>{_mono(ticker)}</div>'
+
+def asset_card_html(ticker, name, subtitle="", value="", change_pct=None,
+                    invert_color=False, note=""):
+    """单个资产毛玻璃卡片 HTML（Logo 水印打底）"""
+    if change_pct is None:
+        chg_html = ""
+    else:
+        good = (change_pct < 0) if invert_color else (change_pct > 0)
+        bad  = (change_pct > 0) if invert_color else (change_pct < 0)
+        cls  = "ac-up" if good else "ac-down" if bad else "ac-flat"
+        arrow = "▲" if change_pct > 0 else "▼" if change_pct < 0 else "＝"
+        chg_html = f'<div class="ac-chg {cls}">{arrow} {change_pct:+.2f}%</div>'
+    note_html = f'<div class="ac-note">{note}</div>' if note else ""
+    return (
+        '<div class="ac">'
+        f'{logo_watermark_html(ticker)}'
+        '<div class="ac-glass">'
+        f'<div class="ac-top">{logo_chip_html(ticker)}'
+        f'<div><div class="ac-name">{name}</div>'
+        f'<div class="ac-sub">{subtitle or ticker}</div></div></div>'
+        f'<div><div class="ac-val">{value}</div>{chg_html}{note_html}</div>'
+        '</div></div>'
+    )
+
+def render_asset_grid(cards, min_width=220):
+    """把若干资产卡片排成自适应网格"""
+    st.markdown(
+        f'<div class="ac-grid" style="--acmin:{min_width}px">{"".join(cards)}</div>',
+        unsafe_allow_html=True,
+    )
+
+def glass_chart(fig, **kwargs):
+    """统一图表风格：透明背景 + 浅色文字，融入毛玻璃相框"""
+    try:
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(255,255,255,0.30)",
+            font=dict(color="#334155"),
+            legend=dict(font=dict(color="#334155")),
+        )
+        fig.update_xaxes(tickfont=dict(color="#475569"), title_font=dict(color="#475569"))
+        fig.update_yaxes(tickfont=dict(color="#475569"), title_font=dict(color="#475569"))
+        for ann in (fig.layout.annotations or ()):      # 子图标题等
+            if ann.font is None or ann.font.color is None:
+                ann.font.color = "#334155"
+    except Exception:
+        pass
+    kwargs.setdefault("use_container_width", True)
+    kwargs.setdefault("theme", None)   # 不套用 Streamlit 深色图表模板
+    return st.plotly_chart(fig, **kwargs)
+
 def add_range_tools(fig, range_buttons=True, slider=True, height_add=0):
     """给任意Plotly图表加上时间轴范围按钮和可拖动滑条"""
     rb = []
@@ -197,6 +587,53 @@ def get_track_info(ticker, sector=None):
         name, desc = SECTOR_TRACK_MAP[sector]
         return (name, "#534AB7", desc)
     return ("综合板块", "#666666", "暂无该行业的专项赛道分析，建议结合公司基本面和所处行业竞争格局自行评估长期成长空间。")
+
+# 多币种支持（成本价可用非美元货币录入，自动换算为美元用于盈亏计算）
+CURRENCY_LIST = [
+    "USD 🇺🇸", "EUR 🇪🇺", "GBP 🇬🇧", "CNY 🇨🇳",
+    "JPY 🇯🇵", "HKD 🇭🇰", "SGD 🇸🇬", "KRW 🇰🇷",
+    "AUD 🇦🇺", "CAD 🇨🇦", "CHF 🇨🇭", "INR 🇮🇳",
+    "MXN 🇲🇽", "BRL 🇧🇷", "SEK 🇸🇪", "NOK 🇳🇴",
+]
+CURRENCY_SYMBOLS = {
+    "USD":"$","EUR":"€","GBP":"£","CNY":"¥","JPY":"¥",
+    "HKD":"HK$","SGD":"S$","KRW":"₩","AUD":"A$",
+    "CAD":"C$","CHF":"Fr","INR":"₹","MXN":"MX$",
+    "BRL":"R$","SEK":"kr","NOK":"kr",
+}
+
+@st.cache_data(ttl=3600)
+def get_fx_rate(currency_code: str) -> float:
+    """返回 1单位该货币 = 多少美元"""
+    if currency_code == "USD":
+        return 1.0
+    try:
+        import yfinance as yf
+        ticker_map = {
+            "EUR":"EURUSD=X","GBP":"GBPUSD=X","CNY":"CNY=X",
+            "JPY":"JPY=X","HKD":"HKD=X","SGD":"SGD=X",
+            "KRW":"KRW=X","AUD":"AUDUSD=X","CAD":"CAD=X",
+            "CHF":"CHF=X","INR":"INR=X","MXN":"MXN=X",
+            "BRL":"BRL=X","SEK":"SEK=X","NOK":"NOK=X",
+        }
+        sym = ticker_map.get(currency_code)
+        if not sym:
+            return 1.0
+        hist = yf.Ticker(sym).history(period="2d")
+        if hist.empty:
+            return 1.0
+        rate = float(hist["Close"].iloc[-1])
+        # EUR/GBP/AUD 是"1单位=X美元"的直接报价，其余是"1美元=X单位"的间接报价需取倒数
+        direct = ["EUR", "GBP", "AUD"]
+        return rate if currency_code in direct else 1.0 / rate
+    except Exception:
+        fallback = {
+            "EUR":1.08,"GBP":1.27,"CNY":0.138,"JPY":0.0067,
+            "HKD":0.128,"SGD":0.74,"KRW":0.00072,"AUD":0.65,
+            "CAD":0.73,"CHF":1.10,"INR":0.012,"MXN":0.052,
+            "BRL":0.18,"SEK":0.093,"NOK":0.092,
+        }
+        return fallback.get(currency_code, 1.0)
 
 # ── 工具函数 ──────────────────────────────────────────────────────────────────
 def simulate(sentiment, rate, ai_speed, retail):
@@ -717,14 +1154,21 @@ with tabs[0]:
         if st.button("🔄 刷新实时数据", key="refresh_t1"):
             st.cache_data.clear(); st.rerun()
 
-        cols_t1 = st.columns(4)
-        for i, (ticker, info) in enumerate(live_data_t1.items()):
-            cols_t1[i % 4].metric(
-                label=info["name"],
-                value=f"{info['price']:,.2f}",
-                delta=f"{info['change_pct']:+.2f}%",
-                delta_color="inverse" if ticker == "^VIX" else "normal",
-            )
+        cards_t1 = []
+        for ticker, info in live_data_t1.items():
+            if ticker == "^TNX":
+                val = f"{info['price']:.2f}%"
+            elif ticker.startswith("^"):
+                val = f"{info['price']:,.2f}"
+            else:
+                val = f"${info['price']:,.2f}"
+            sub = {"^IXIC": "NASDAQ 综合指数", "^GSPC": "S&P 500 指数",
+                   "^VIX": "CBOE 波动率指数", "^TNX": "US 10Y Treasury"}.get(ticker, ticker)
+            cards_t1.append(asset_card_html(
+                ticker, info["name"], sub, val, info["change_pct"],
+                invert_color=(ticker == "^VIX"),
+            ))
+        render_asset_grid(cards_t1, min_width=235)
 
         st.subheader("今日涨跌幅")
         tl_t1 = [v["name"] for v in live_data_t1.values()]
@@ -739,7 +1183,7 @@ with tabs[0]:
             showlegend=False, margin=dict(t=20, b=20),
             yaxis=dict(zeroline=True, zerolinecolor="#cccccc"),
         )
-        st.plotly_chart(fig_live_t1, use_container_width=True)
+        glass_chart(fig_live_t1, use_container_width=True)
 
         sentiment_t1 = market_to_sentiment(live_data_t1)
         label_t1 = ("极度恐慌" if sentiment_t1 < 20 else "恐慌" if sentiment_t1 < 40
@@ -785,9 +1229,12 @@ with tabs[0]:
     with cm_tab1:
         crypto_data = fetch_crypto_metals_data(CRYPTO_TICKERS)
         if crypto_data:
-            ccols = st.columns(len(crypto_data))
-            for i, (tk, info) in enumerate(crypto_data.items()):
-                ccols[i].metric(info["name"], f"${info['price']:,.2f}", f"{info['change_pct']:+.2f}%")
+            render_asset_grid([
+                asset_card_html(tk, info["name"], tk.replace("-USD", " / USD"),
+                                f"${info['price']:,.2f}", info["change_pct"],
+                                note=get_track_info(tk)[0])
+                for tk, info in crypto_data.items()
+            ], min_width=215)
             fig_crypto = go.Figure(go.Bar(
                 x=[v["name"] for v in crypto_data.values()],
                 y=[v["change_pct"] for v in crypto_data.values()],
@@ -797,7 +1244,7 @@ with tabs[0]:
             fig_crypto.update_layout(height=280, yaxis_title="24h涨跌幅 (%)", plot_bgcolor="#fafafa",
                                      showlegend=False, margin=dict(t=20, b=20),
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
-            st.plotly_chart(fig_crypto, use_container_width=True)
+            glass_chart(fig_crypto, use_container_width=True)
             avg_chg = sum(v["change_pct"] for v in crypto_data.values()) / len(crypto_data)
             crypto_mood = ("🔥 普遍上涨，风险偏好回升" if avg_chg > 2 else
                            "📉 普遍下跌，避险情绪升温" if avg_chg < -2 else "⚖️ 涨跌互现，方向不明")
@@ -808,9 +1255,13 @@ with tabs[0]:
     with cm_tab2:
         metals_data = fetch_crypto_metals_data(METALS_TICKERS)
         if metals_data:
-            mcols2 = st.columns(len(metals_data))
-            for i, (tk, info) in enumerate(metals_data.items()):
-                mcols2[i].metric(info["name"], f"${info['price']:,.2f}", f"{info['change_pct']:+.2f}%")
+            render_asset_grid([
+                asset_card_html(tk, info["name"],
+                                "期货合约" if "=" in tk else tk,
+                                f"${info['price']:,.2f}", info["change_pct"],
+                                note=get_track_info(tk)[0])
+                for tk, info in metals_data.items()
+            ], min_width=215)
             fig_metals = go.Figure(go.Bar(
                 x=[v["name"] for v in metals_data.values()],
                 y=[v["change_pct"] for v in metals_data.values()],
@@ -820,7 +1271,7 @@ with tabs[0]:
             fig_metals.update_layout(height=280, yaxis_title="今日涨跌幅 (%)", plot_bgcolor="#fafafa",
                                      showlegend=False, margin=dict(t=20, b=20),
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
-            st.plotly_chart(fig_metals, use_container_width=True)
+            glass_chart(fig_metals, use_container_width=True)
             st.caption("有色金属/矿业股走势通常与美元指数、实际利率和新能源基建需求相关，铜价常被视为全球经济增长的领先指标（\"铜博士\"）")
         else:
             st.warning("无法获取有色金属数据。")
@@ -895,21 +1346,22 @@ with tabs[1]:
             clr = "#0F6E56" if d["change_pct"] >= 0 else "#A32D2D"
             from_ipo_clr = "#0F6E56" if d["from_ipo"] >= 0 else "#A32D2D"
             st.markdown(
-                f'<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);'
-                f'color:white;padding:16px 20px;border-radius:12px;margin-bottom:16px;'
-                f'display:flex;align-items:center;gap:24px">'
-                f'<div style="font-size:28px">🚀</div>'
+                f'<div class="ahero" style="background:linear-gradient(120deg,#1a1a2e 0%,#16213e 60%,#243b6b 100%)">'
+                f'{logo_watermark_html("^IXIC", hero=True)}'
+                f'<div class="ahero-glass">'
+                f'{logo_chip_html(ticker, cls="ahero-chip")}'
                 f'<div style="flex:1">'
-                f'<div style="font-size:18px;font-weight:700">{d["name"]} ({ticker})</div>'
-                f'<div style="font-size:12px;opacity:0.7;margin-top:2px">纳斯达克 · 发行价 $135.00</div>'
+                f'<div style="font-size:19px;font-weight:750">{d["name"]} ({ticker})</div>'
+                f'<div style="font-size:12px;opacity:.8;margin-top:2px">🚀 纳斯达克上市 · 发行价 $135.00</div>'
                 f'</div>'
                 f'<div style="text-align:right">'
-                f'<div style="font-size:32px;font-weight:700">${d["price"]:.2f}</div>'
-                f'<div style="font-size:14px;color:{clr};font-weight:600">'
+                f'<div style="font-size:31px;font-weight:750;letter-spacing:-.5px">${d["price"]:.2f}</div>'
+                f'<div style="font-size:13.5px;color:{clr};font-weight:700;'
+                f'background:rgba(255,255,255,.9);border-radius:99px;padding:1px 10px;display:inline-block;margin-top:3px">'
                 f'{"+"+str(round(d["change_pct"],2))+"%" if d["change_pct"]>=0 else str(round(d["change_pct"],2))+"%"} 今日</div>'
-                f'<div style="font-size:12px;color:{from_ipo_clr}">'
+                f'<div style="font-size:11.5px;opacity:.9;margin-top:4px">'
                 f'较发行价 {"+"+str(round(d["from_ipo"],1))+"%" if d["from_ipo"]>=0 else str(round(d["from_ipo"],1))+"%"}</div>'
-                f'</div></div>',
+                f'</div></div></div>',
                 unsafe_allow_html=True
             )
         if st.button("🔄 刷新实时价格", key="refresh_ipo_live"):
@@ -928,7 +1380,7 @@ with tabs[1]:
     fig_bar.update_layout(height=320, margin=dict(t=30,b=20),
                           yaxis_title="估值 ($B)", showlegend=False,
                           plot_bgcolor="#fafafa")
-    st.plotly_chart(fig_bar, use_container_width=True)
+    glass_chart(fig_bar, use_container_width=True)
 
     st.divider()
     st.subheader("公司深度分析")
@@ -964,7 +1416,7 @@ with tabs[1]:
     ))
     fig_bubble.update_layout(height=380, xaxis_title="泡沫风险 (%)",
                              yaxis_title="首日预期涨幅 (%)", plot_bgcolor="#fafafa", margin=dict(t=10))
-    st.plotly_chart(fig_bubble, use_container_width=True)
+    glass_chart(fig_bubble, use_container_width=True)
 
 # ── Tab 3: 历史对比 ─────────────────────────────────────────────────────────────
 with tabs[2]:
@@ -978,7 +1430,7 @@ with tabs[2]:
         line=dict(color="#534AB7",width=3),mode="lines+markers"))
     fig_hist.update_layout(height=420,yaxis_title="指数 (基准=100)",
                            plot_bgcolor="#fafafa",legend=dict(orientation="h",y=-0.2))
-    st.plotly_chart(fig_hist, use_container_width=True)
+    glass_chart(fig_hist, use_container_width=True)
     col1,col2,col3=st.columns(3)
     col1.error("**2000 互联网泡沫**\n\n纳斯达克峰值5,048点，随后暴跌78%。1500+科技公司破产，市值蒸发约$5万亿。")
     col2.warning("**2021 SPAC狂热**\n\n600+ SPAC上市，多数较峰值下跌70%+。利率上升刺破泡沫，散户损失惨重。")
@@ -1108,11 +1560,14 @@ with tabs[3]:
                 chg_clr = "#0F6E56" if sc_data["chg_pct"] >= 0 else "#A32D2D"
                 cap_str = f"${sc_data['mktcap']/1e12:.2f}T" if sc_data.get("mktcap") and sc_data["mktcap"]>1e12 else                       f"${sc_data['mktcap']/1e9:.1f}B" if sc_data.get("mktcap") else "N/A"
                 st.markdown(
-                    f'<div style="background:#1a1a2e;color:white;border-radius:12px;'
-                    f'padding:14px 20px;display:flex;align-items:center;gap:20px;margin-bottom:16px">'
+                    f'<div class="ahero" style="min-height:96px;'
+                    f'background:linear-gradient(120deg,#1a1a2e 0%,#243b6b 100%)">'
+                    f'{logo_watermark_html(sc_ticker, hero=True)}'
+                    f'<div class="ahero-glass" style="padding:14px 20px;gap:14px">'
+                    f'{logo_chip_html(sc_ticker, cls="ahero-chip")}'
                     f'<div style="flex:1">'
-                    f'<div style="font-size:16px;font-weight:700">{sc_data["name"]} ({sc_ticker})</div>'
-                    f'<div style="font-size:12px;opacity:0.6">{sc_data["sector"]}</div>'
+                    f'<div style="font-size:16px;font-weight:750">{sc_data["name"]} ({sc_ticker})</div>'
+                    f'<div style="font-size:12px;opacity:0.75">{sc_data["sector"]}</div>'
                     f'</div>'
                     f'<div style="text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,0.2)">'
                     f'<div style="font-size:26px;font-weight:700">${sc_data["price"]:.2f}</div>'
@@ -1130,7 +1585,7 @@ with tabs[3]:
                     f'<div style="font-size:12px;opacity:0.6">年化波动</div>'
                     f'<div style="font-size:20px;font-weight:700">{sc_data["sigma"]*100:.1f}%</div>'
                     f'</div>'
-                    f'</div>',
+                    f'</div></div>',
                     unsafe_allow_html=True
                 )
         
@@ -1325,7 +1780,7 @@ with tabs[3]:
                 },
             ))
             fig_gauge.update_layout(height=280, margin=dict(t=40,b=10))
-            st.plotly_chart(fig_gauge, use_container_width=True)
+            glass_chart(fig_gauge, use_container_width=True)
 
 
     # ══════════════════════════════════════════════════════════════════════
@@ -1461,7 +1916,7 @@ with tabs[3]:
                                           showlegend=False,
                                           annotations=[dict(text=f"${valid_total:,.0f}",
                                                             x=0.5, y=0.5, font_size=13, showarrow=False)])
-                    st.plotly_chart(fig_pie, use_container_width=True)
+                    glass_chart(fig_pie, use_container_width=True)
 
                 with pc2:
                     pf_mu    = sum(w*pf_data[p["ticker"]]["mu"]    for w,p in zip(weights,valid_pf))
@@ -1544,7 +1999,7 @@ with tabs[3]:
                     legend=dict(orientation="h", y=1.08, x=0),
                     margin=dict(t=60,b=50,l=70,r=110),
                 )
-                st.plotly_chart(fig_pf, use_container_width=True)
+                glass_chart(fig_pf, use_container_width=True)
 
                 # 期末结果
                 final_vals = pf_paths[-1]
@@ -1833,7 +2288,7 @@ with tabs[3]:
             from datetime import datetime as _dt_tr
             _sy_tr = _dt_tr.now().year
             fig_trend = add_year_range_tools(fig_trend, _sy_tr, _sy_tr + time_horizon//12)
-            st.plotly_chart(fig_trend, use_container_width=True)
+            glass_chart(fig_trend, use_container_width=True)
 
             # ── 期末汇总：股价 + 投资组合价值 ──
             bull_end_p = np.mean(paths_bull[-1])
@@ -1995,7 +2450,7 @@ with tabs[3]:
             from datetime import datetime as _dt_mc
             _sy_mc = _dt_mc.now().year
             fig_mc = add_year_range_tools(fig_mc, _sy_mc, _sy_mc + time_horizon//12)
-            st.plotly_chart(fig_mc, use_container_width=True)
+            glass_chart(fig_mc, use_container_width=True)
 
             # ── 期末概率分布直方图 ──
             st.subheader("📊 期末价格概率分布")
@@ -2025,7 +2480,7 @@ with tabs[3]:
                     plot_bgcolor="#fafafa", showlegend=False,
                     margin=dict(t=50,b=40,l=50,r=20),
                 )
-                st.plotly_chart(fig_hist_mc, use_container_width=True)
+                glass_chart(fig_hist_mc, use_container_width=True)
 
             with mc_c2:
                 # 概率统计表
@@ -2158,7 +2613,7 @@ with tabs[3]:
         from datetime import datetime as _dt_tr2
         _sy_tr2 = _dt_tr2.now().year
         fig_trend = add_year_range_tools(fig_trend, _sy_tr2, _sy_tr2 + time_horizon//12)
-        st.plotly_chart(fig_trend, use_container_width=True)
+        glass_chart(fig_trend, use_container_width=True)
 
         c1, c2, c3 = st.columns(3)
         c1.metric("🚀 乐观情景均值", f"${np.mean(paths_bull[-1]):.2f}",
@@ -2475,7 +2930,7 @@ with tabs[4]:
                     margin=dict(t=20, b=40, l=60, r=40),
                     showlegend=False,
                 )
-                st.plotly_chart(fig_m, use_container_width=True)
+                glass_chart(fig_m, use_container_width=True)
 
                 # 数据解读
                 latest = d["values"][-1]
@@ -2535,7 +2990,7 @@ with tabs[4]:
         margin=dict(t=20, b=40, l=120, r=60),
         showlegend=False,
     )
-    st.plotly_chart(fig_sec, use_container_width=True)
+    glass_chart(fig_sec, use_container_width=True)
     st.caption(f"基于当前：{'高利率' if rate_env=='high_rate' else '低利率'} + {'高通胀' if cpi_env=='high_cpi' else '低通胀'} + {'强就业' if job_env=='strong_job' else '弱就业'} 环境自动计算")
 
     st.divider()
@@ -2688,21 +3143,24 @@ with tabs[5]:
         if "error" in result:
             st.error(f"获取数据失败：{result['error']}")
         else:
-            # ── 评级横幅 ──
-            st.markdown(f"""
-            <div style="background:{result['rating_color']};color:white;padding:20px 24px;
-                        border-radius:12px;margin:12px 0;display:flex;align-items:center;gap:16px">
-                <span style="font-size:48px">{result['rating_emoji']}</span>
-                <div>
-                    <div style="font-size:28px;font-weight:700">{result['rating']}</div>
-                    <div style="font-size:14px;opacity:0.9">{result['name']} · {result['sector']}</div>
-                </div>
-                <div style="margin-left:auto;text-align:right">
-                    <div style="font-size:32px;font-weight:700">${result['price_now']:.2f}</div>
-                    <div style="font-size:13px;opacity:0.9">综合评分：{result['score']}/100</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            # ── 评级横幅（Logo 水印 + 毛玻璃）──
+            _rc = result["rating_color"]
+            st.markdown(
+                f'<div class="ahero" style="background:linear-gradient(120deg,{_rc} 0%,{_rc}cc 55%,{_rc}99 100%)">'
+                f'{logo_watermark_html(result["ticker"], hero=True)}'
+                f'<div class="ahero-glass">'
+                f'{logo_chip_html(result["ticker"], cls="ahero-chip")}'
+                f'<span style="font-size:40px;line-height:1">{result["rating_emoji"]}</span>'
+                f'<div>'
+                f'<div style="font-size:27px;font-weight:750;letter-spacing:-.5px">{result["rating"]}</div>'
+                f'<div style="font-size:13.5px;opacity:.92">{result["name"]} · {result["sector"]}</div>'
+                f'</div>'
+                f'<div style="margin-left:auto;text-align:right">'
+                f'<div style="font-size:31px;font-weight:750;letter-spacing:-.5px">${result["price_now"]:.2f}</div>'
+                f'<div style="font-size:12.5px;opacity:.92">综合评分：{result["score"]}/100</div>'
+                f'</div></div></div>',
+                unsafe_allow_html=True
+            )
 
             # ── 核心指标 ──
             m1,m2,m3,m4,m5 = st.columns(5)
@@ -3141,7 +3599,7 @@ with tabs[5]:
 
             if hist_c is not None:
                 try:
-                    st.plotly_chart(fig_c, use_container_width=True)
+                    glass_chart(fig_c, use_container_width=True)
                 except Exception:
                     pass
 
@@ -3313,7 +3771,7 @@ with tabs[5]:
                     _fp.update_layout(height=620,plot_bgcolor="#fafafa",
                         xaxis_rangeslider_visible=False,showlegend=True,
                         legend=dict(orientation="h",y=-0.08))
-                    st.plotly_chart(_fp, use_container_width=True)
+                    glass_chart(_fp, use_container_width=True)
                 except Exception as _e:
                     st.warning(f"图表加载失败：{_e}")
 
@@ -3509,7 +3967,7 @@ with tabs[5]:
                                     yaxis_title="营收 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
-                                st.plotly_chart(fig_rev, use_container_width=True)
+                                glass_chart(fig_rev, use_container_width=True)
 
                                 # 自动解读
                                 t_color = "#0F6E56" if trend_pct >= 0 else "#A32D2D"
@@ -3562,7 +4020,7 @@ with tabs[5]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
-                                st.plotly_chart(fig_profit, use_container_width=True)
+                                glass_chart(fig_profit, use_container_width=True)
 
                                 # 毛利率解读
                                 for k in ["Gross Profit"]:
@@ -3627,7 +4085,7 @@ with tabs[5]:
                                         legend=dict(orientation="h", y=1.1),
                                         margin=dict(t=60,b=40,l=60,r=40),
                                     )
-                                    st.plotly_chart(fig_bal, use_container_width=True)
+                                    glass_chart(fig_bal, use_container_width=True)
 
                                     latest_net = net_cash[-1]
                                     nc_color = "#0F6E56" if latest_net > 0 else "#A32D2D"
@@ -3672,7 +4130,7 @@ with tabs[5]:
                                     yaxis_title="现金流 ($M)",
                                     margin=dict(t=50,b=40,l=60,r=40),
                                 )
-                                st.plotly_chart(fig_cf, use_container_width=True)
+                                glass_chart(fig_cf, use_container_width=True)
 
                                 pos_count = sum(1 for v in ocf_v if v > 0)
                                 cf_color = "#0F6E56" if pos_count >= len(ocf_v)*0.75 else "#A32D2D"
@@ -3743,7 +4201,7 @@ with tabs[5]:
                                     legend=dict(orientation="h", y=1.1),
                                     margin=dict(t=60,b=40,l=60,r=40),
                                 )
-                                st.plotly_chart(fig_ann, use_container_width=True)
+                                glass_chart(fig_ann, use_container_width=True)
 
                                 # 年报自动解读
                                 if len(rev_vals) >= 2:
@@ -3903,7 +4361,7 @@ with tabs[5]:
                                     margin=dict(t=70, b=50, l=60, r=40),
                                     hovermode="x unified",
                                 )
-                                st.plotly_chart(fig_fwd, use_container_width=True)
+                                glass_chart(fig_fwd, use_container_width=True)
 
                                 # 预测解读
                                 bull_total = sum(bull_fwd); base_total = sum(base_fwd); bear_total = sum(bear_fwd)
@@ -4076,51 +4534,62 @@ with tabs[6]:
 
     if "holdings" not in st.session_state:
         st.session_state["holdings"] = [
-            {"ticker": "NVDA",    "qty": 10.0,  "cost": 120.0},
-            {"ticker": "BTC-USD", "qty": 0.05,  "cost": 60000.0},
+            {"ticker": "NVDA",    "qty": 10.0,  "cost": 120.0,   "ccy": "USD 🇺🇸"},
+            {"ticker": "BTC-USD", "qty": 0.05,  "cost": 60000.0, "ccy": "USD 🇺🇸"},
         ]
+    # 兼容旧版没有货币字段的持仓数据
+    for _pos in st.session_state["holdings"]:
+        _pos.setdefault("ccy", "USD 🇺🇸")
 
     st.markdown("**添加/编辑持仓**")
-    hh = st.columns([2, 2, 2, 1])
+    hh = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
     hh[0].markdown("**代码**")
     hh[1].markdown("**数量**")
-    hh[2].markdown("**平均成本价 ($)**")
-    hh[3].markdown("**删除**")
+    hh[2].markdown("**平均成本价**")
+    hh[3].markdown("**成本价货币**")
+    hh[4].markdown("**删除**")
 
     holdings = st.session_state["holdings"]
     h_to_remove = []
     for idx, pos in enumerate(holdings):
-        rc = st.columns([2, 2, 2, 1])
+        rc = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
         new_tk = rc[0].text_input("", value=pos["ticker"], key=f"h_t_{idx}",
                                    label_visibility="collapsed").strip().upper()
         new_qty = rc[1].number_input("", value=float(pos["qty"]), min_value=0.0,
                                       step=1.0, key=f"h_q_{idx}", label_visibility="collapsed")
         new_cost = rc[2].number_input("", value=float(pos["cost"]), min_value=0.0,
                                        step=1.0, key=f"h_c_{idx}", label_visibility="collapsed")
-        if rc[3].button("🗑️", key=f"h_d_{idx}"):
+        ccy_idx = CURRENCY_LIST.index(pos["ccy"]) if pos["ccy"] in CURRENCY_LIST else 0
+        new_ccy = rc[3].selectbox("", CURRENCY_LIST, index=ccy_idx, key=f"h_ccy_{idx}",
+                                   label_visibility="collapsed")
+        if rc[4].button("🗑️", key=f"h_d_{idx}"):
             h_to_remove.append(idx)
         holdings[idx]["ticker"] = new_tk
         holdings[idx]["qty"]    = new_qty
         holdings[idx]["cost"]   = new_cost
+        holdings[idx]["ccy"]    = new_ccy
 
     for i in sorted(h_to_remove, reverse=True):
         holdings.pop(i)
     if h_to_remove:
         st.rerun()
 
-    ac = st.columns([2, 2, 2, 1])
+    ac = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
     add_tk = ac[0].text_input("", placeholder="如 AAPL / BTC-USD / GDX", key="h_ntk",
                                label_visibility="collapsed").strip().upper()
     add_qty = ac[1].number_input("", value=1.0, min_value=0.0, step=1.0,
                                   key="h_nqty", label_visibility="collapsed")
     add_cost = ac[2].number_input("", value=100.0, min_value=0.0, step=1.0,
                                    key="h_ncost", label_visibility="collapsed")
-    if ac[3].button("➕", key="h_add", use_container_width=True):
+    add_ccy = ac[3].selectbox("", CURRENCY_LIST, index=0, key="h_nccy",
+                               label_visibility="collapsed")
+    if ac[4].button("➕", key="h_add", use_container_width=True):
         if add_tk:
-            holdings.append({"ticker": add_tk, "qty": add_qty, "cost": add_cost})
+            holdings.append({"ticker": add_tk, "qty": add_qty, "cost": add_cost, "ccy": add_ccy})
             st.rerun()
 
     st.session_state["holdings"] = holdings
+    st.caption("💡 成本价货币可切换为人民币/欧元/日元等，系统会用实时汇率自动换算为美元计算盈亏。")
     st.divider()
 
     valid_holdings = [h for h in holdings if h["ticker"] and h["qty"] > 0 and h["cost"] > 0]
@@ -4140,12 +4609,16 @@ with tabs[6]:
             r = pos_results.get(h["ticker"])
             if r is None or "error" in r:
                 continue
+            ccy_code  = h["ccy"].split()[0]
+            fx        = get_fx_rate(ccy_code)
+            cost_usd  = h["cost"] * fx  # 统一换算为美元成本价用于盈亏计算
             cur_price = r["price_now"]
             mv      = h["qty"] * cur_price
-            cost_v  = h["qty"] * h["cost"]
+            cost_v  = h["qty"] * cost_usd
             pnl     = mv - cost_v
-            pnl_pct = (cur_price - h["cost"]) / h["cost"] * 100
-            rows.append({"h": h, "r": r, "mv": mv, "cost_v": cost_v, "pnl": pnl, "pnl_pct": pnl_pct})
+            pnl_pct = (cur_price - cost_usd) / cost_usd * 100 if cost_usd > 0 else 0
+            rows.append({"h": h, "r": r, "mv": mv, "cost_v": cost_v, "pnl": pnl, "pnl_pct": pnl_pct,
+                        "ccy_code": ccy_code, "cost_usd": cost_usd})
 
         bad_tickers = [h["ticker"] for h in valid_holdings
                        if pos_results.get(h["ticker"]) is None or "error" in pos_results.get(h["ticker"], {})]
@@ -4180,18 +4653,23 @@ with tabs[6]:
                 fig_hp.update_layout(height=280, margin=dict(t=10, b=10, l=10, r=10), showlegend=False,
                                      annotations=[dict(text=f"${total_mv:,.0f}", x=0.5, y=0.5,
                                                        font_size=13, showarrow=False)])
-                st.plotly_chart(fig_hp, use_container_width=True)
+                glass_chart(fig_hp, use_container_width=True)
 
             with list_c:
                 for x in rows:
                     h, r = x["h"], x["r"]
                     clr = "#0F6E56" if x["pnl"] >= 0 else "#A32D2D"
+                    ccy_sym = CURRENCY_SYMBOLS.get(x["ccy_code"], "$")
+                    cost_label = f'{ccy_sym}{h["cost"]:.2f} {x["ccy_code"]}'
+                    if x["ccy_code"] != "USD":
+                        cost_label += f'（≈${x["cost_usd"]:.2f}）'
                     st.markdown(
-                        f'<div style="display:flex;justify-content:space-between;align-items:center;'
-                        f'background:#F8F9FA;border-left:4px solid {clr};border-radius:6px;'
-                        f'padding:8px 14px;margin-bottom:6px;font-size:13px">'
-                        f'<span><b>{h["ticker"]}</b> · {h["qty"]:g} @ ${h["cost"]:.2f}</span>'
-                        f'<span style="color:{clr};font-weight:700">${x["pnl"]:+,.2f}（{x["pnl_pct"]:+.1f}%）</span>'
+                        f'<div class="arow" style="border-left:4px solid {clr}">'
+                        f'{logo_chip_html(h["ticker"], cls="arow-chip")}'
+                        f'<span style="font-size:13px;color:#0f172a">'
+                        f'<b>{h["ticker"]}</b> · {h["qty"]:g} @ {cost_label}</span>'
+                        f'<span style="margin-left:auto;color:{clr};font-weight:700;font-size:13px">'
+                        f'${x["pnl"]:+,.2f}（{x["pnl_pct"]:+.1f}%）</span>'
                         f'</div>', unsafe_allow_html=True
                     )
 
@@ -4217,12 +4695,16 @@ with tabs[6]:
             st.markdown("#### 🔍 逐个持仓深度分析")
             st.caption("展开每个持仓查看：盈亏归因（为什么涨/跌）· 长期投资前景 · 所属赛道的市场潜力")
 
-            def analyze_position_pnl(h, r, pnl_pct):
+            def analyze_position_pnl(h, r, pnl_pct, cost_usd, ccy_code):
                 """分析单个持仓的盈亏原因"""
                 lines = []
-                cur, cost = r["price_now"], h["cost"]
+                cur = r["price_now"]
                 direction = "盈利" if pnl_pct >= 0 else "亏损"
-                lines.append(f"**成本价 ${cost:.2f} → 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
+                if ccy_code != "USD":
+                    ccy_sym = CURRENCY_SYMBOLS.get(ccy_code, "$")
+                    lines.append(f"**成本价 {ccy_sym}{h['cost']:.2f} {ccy_code}（≈${cost_usd:.2f}）→ 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
+                else:
+                    lines.append(f"**成本价 ${cost_usd:.2f} → 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
 
                 if r["mom_1m"] > 5:
                     lines.append(f"📈 近1个月上涨 {r['mom_1m']:+.1f}%，短期动能是近期表现的主要驱动力。")
@@ -4266,15 +4748,19 @@ with tabs[6]:
                 icon = "🟢" if x["pnl"] >= 0 else "🔴"
                 with st.expander(f"{icon} {h['ticker']} · {r.get('name', h['ticker'])} — 盈亏 {x['pnl_pct']:+.1f}%",
                                  expanded=False):
+                    ccy_sym = CURRENCY_SYMBOLS.get(x["ccy_code"], "$")
+                    cost_disp = (f"{ccy_sym}{h['cost']:.2f} {x['ccy_code']}"
+                                if x["ccy_code"] != "USD" else f"${h['cost']:.2f}")
+
                     pc1, pc2, pc3, pc4 = st.columns(4)
                     pc1.metric("持仓数量", f"{h['qty']:g}")
-                    pc2.metric("成本 / 现价", f"${h['cost']:.2f} / ${r['price_now']:.2f}")
+                    pc2.metric("成本 / 现价", f"{cost_disp} / ${r['price_now']:.2f}")
                     pc3.metric("盈亏金额", f"${x['pnl']:+,.2f}")
                     pc4.metric("盈亏比例", f"{x['pnl_pct']:+.1f}%",
                                delta_color="normal" if x["pnl_pct"] >= 0 else "inverse")
 
                     st.markdown("**🧠 盈亏归因分析（为什么涨/跌）**")
-                    for line in analyze_position_pnl(h, r, x["pnl_pct"]):
+                    for line in analyze_position_pnl(h, r, x["pnl_pct"], x["cost_usd"], x["ccy_code"]):
                         st.markdown(f"- {line}")
 
                     st.markdown("**🏦 长期投资前景**")
