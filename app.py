@@ -157,6 +157,237 @@ I18N = {
    "de":"ℹ️ Die Oberfläche ist übersetzt; die ausführlichen Analysetexte sind vorerst auf Chinesisch.",
    "ja":"ℹ️ UIは翻訳済みですが、詳細な自動生成コメントは現時点では中国語のままです。",
    "ko":"ℹ️ 인터페이스는 번역되었지만 상세 자동 생성 해설은 아직 중국어입니다."},
+ # ── Tab2 IPO详情 ──
+ "sub_ipo_live":{"zh":"📡 已上市IPO实时行情","en":"📡 Live quotes: already-listed IPOs","es":"📡 Cotizaciones de IPO ya listadas","fr":"📡 Cours des IPO déjà cotées","de":"📡 Live-Kurse gelisteter IPOs","ja":"📡 上場済みIPOのリアルタイム相場","ko":"📡 상장된 IPO 실시간 시세"},
+ "ipo_listed_on":{"zh":"🚀 纳斯达克上市 · 发行价 $135.00","en":"🚀 Listed on NASDAQ · IPO price $135.00","es":"🚀 Cotiza en NASDAQ · precio de salida $135.00","fr":"🚀 Coté au NASDAQ · prix d'introduction 135,00 $","de":"🚀 An der NASDAQ gelistet · Ausgabepreis 135,00 $","ja":"🚀 ナスダック上場 · 公開価格 $135.00","ko":"🚀 나스닥 상장 · 공모가 $135.00"},
+ "btn_refresh_price":{"zh":"🔄 刷新实时价格","en":"🔄 Refresh prices","es":"🔄 Actualizar precios","fr":"🔄 Actualiser les cours","de":"🔄 Kurse aktualisieren","ja":"🔄 価格を更新","ko":"🔄 가격 새로고침"},
+ "sub_val_dist":{"zh":"核心IPO估值分布","en":"Valuations of Key IPOs","es":"Valoraciones de las IPO clave","fr":"Valorisations des IPO clés","de":"Bewertungen der wichtigsten IPOs","ja":"主要IPOのバリュエーション","ko":"주요 IPO 밸류에이션"},
+ "sub_company_deep":{"zh":"公司深度分析","en":"Company Deep Dive","es":"Análisis de la empresa","fr":"Analyse approfondie","de":"Unternehmensanalyse","ja":"企業の詳細分析","ko":"기업 심층 분석"},
+ "sub_compare_all":{"zh":"所有公司对比","en":"All Companies Compared","es":"Comparativa de empresas","fr":"Comparaison des sociétés","de":"Alle Unternehmen im Vergleich","ja":"全社比較","ko":"전체 기업 비교"},
+ "sel_company":{"zh":"选择公司","en":"Select a company","es":"Seleccionar empresa","fr":"Choisir une société","de":"Unternehmen wählen","ja":"企業を選択","ko":"기업 선택"},
+ "m_exp_val":{"zh":"预期估值","en":"Expected valuation","es":"Valoración prevista","fr":"Valorisation attendue","de":"Erwartete Bewertung","ja":"想定バリュエーション","ko":"예상 밸류에이션"},
+ "m_revenue":{"zh":"年收入","en":"Annual revenue","es":"Ingresos anuales","fr":"Chiffre d'affaires annuel","de":"Jahresumsatz","ja":"年間売上","ko":"연간 매출"},
+ "m_ps":{"zh":"P/S倍数","en":"P/S multiple","es":"Múltiplo P/S","fr":"Multiple P/S","de":"P/S-Multiple","ja":"PSR","ko":"P/S 배수"},
+ "m_profitable":{"zh":"盈利状态","en":"Profitability","es":"Rentabilidad","fr":"Rentabilité","de":"Profitabilität","ja":"収益状況","ko":"흑자 여부"},
+ "yes_profit":{"zh":"✓ 盈利","en":"✓ Profitable","es":"✓ Rentable","fr":"✓ Rentable","de":"✓ Profitabel","ja":"✓ 黒字","ko":"✓ 흑자"},
+ "no_profit":{"zh":"✗ 亏损","en":"✗ Loss-making","es":"✗ En pérdidas","fr":"✗ Déficitaire","de":"✗ Verlustreich","ja":"✗ 赤字","ko":"✗ 적자"},
+ "m_day1_pop":{"zh":"首日预期涨幅","en":"Expected day-1 pop","es":"Subida esperada día 1","fr":"Hausse attendue jour 1","de":"Erwarteter Tag-1-Sprung","ja":"初日予想上昇率","ko":"상장 첫날 예상 상승률"},
+ "m_bubble_risk":{"zh":"泡沫风险","en":"Bubble risk","es":"Riesgo de burbuja","fr":"Risque de bulle","de":"Blasenrisiko","ja":"バブルリスク","ko":"버블 리스크"},
+ "btn_view_company":{"zh":"📈 查看 {name}（{tk}）的走势图与完整技术分析","en":"📈 View {name} ({tk}) chart and full technical analysis","es":"📈 Ver gráfico y análisis de {name} ({tk})","fr":"📈 Voir le graphique et l'analyse de {name} ({tk})","de":"📈 Chart und Analyse zu {name} ({tk})","ja":"📈 {name}（{tk}）のチャートと詳細分析","ko":"📈 {name}({tk}) 차트 및 전체 분석 보기"},
+ "ipo_not_listed":{"zh":"🔒 {name} 尚未上市（预计 {date}），还没有可交易的股票代码，因此无法显示K线走势。上市后这里会自动出现走势图入口。你可以先在「📈 趋势预测」里用同板块的已上市标的做情景推演。",
+   "en":"🔒 {name} has not listed yet (expected {date}), so there is no tradable ticker and no price chart to show. A chart link will appear here automatically once it lists. In the meantime you can run scenarios on a listed peer in the Forecast tab."},
+ "quick_chart_title":{"zh":"#### 🔎 {tk} 走势与技术分析","en":"#### 🔎 {tk} chart & technical analysis","es":"#### 🔎 Gráfico y análisis de {tk}","fr":"#### 🔎 Graphique et analyse de {tk}","de":"#### 🔎 {tk} Chart & Analyse","ja":"#### 🔎 {tk} チャートと分析","ko":"#### 🔎 {tk} 차트·기술 분석"},
+ "ax_valuation":{"zh":"估值 ($B)","en":"Valuation ($B)","es":"Valoración ($B)","fr":"Valorisation (Md$)","de":"Bewertung ($ Mrd.)","ja":"評価額（十億ドル）","ko":"밸류에이션($B)"},
+ "ax_bubble_risk":{"zh":"泡沫风险 (%)","en":"Bubble risk (%)","es":"Riesgo de burbuja (%)","fr":"Risque de bulle (%)","de":"Blasenrisiko (%)","ja":"バブルリスク (%)","ko":"버블 리스크 (%)"},
+ "ax_day1":{"zh":"首日预期涨幅 (%)","en":"Expected day-1 pop (%)","es":"Subida esperada día 1 (%)","fr":"Hausse attendue jour 1 (%)","de":"Erwarteter Tag-1-Sprung (%)","ja":"初日予想上昇率 (%)","ko":"첫날 예상 상승률 (%)"},
+ "hover_val":{"zh":"估值","en":"Valuation"},
+ # ── Tab3 历史对比 ──
+ "sub_history":{"zh":"历史泡沫周期对比","en":"Historical Bubble Cycles Compared","es":"Comparación de burbujas históricas","fr":"Comparaison des bulles historiques","de":"Historische Blasenzyklen im Vergleich","ja":"過去のバブル局面との比較","ko":"과거 버블 사이클 비교"},
+ "hist_dotcom":{"zh":"2000互联网","en":"2000 Dot-com"},
+ "hist_spac":{"zh":"2021 SPAC","en":"2021 SPAC"},
+ "hist_ai":{"zh":"2026 AI IPO(预测)","en":"2026 AI IPO (projected)"},
+ "ax_index_base":{"zh":"指数 (基准=100)","en":"Index (base = 100)","es":"Índice (base = 100)","fr":"Indice (base = 100)","de":"Index (Basis = 100)","ja":"指数（基準=100）","ko":"지수 (기준=100)"},
+ "hist_c1":{"zh":"**2000 互联网泡沫**\n\n纳斯达克峰值5,048点，随后暴跌78%。1500+科技公司破产，市值蒸发约$5万亿。",
+   "en":"**The 2000 Dot-com Bubble**\n\nThe Nasdaq peaked at 5,048 and then fell 78%. More than 1,500 tech companies went bankrupt and roughly $5 trillion of market value evaporated."},
+ "hist_c2":{"zh":"**2021 SPAC狂热**\n\n600+ SPAC上市，多数较峰值下跌70%+。利率上升刺破泡沫，散户损失惨重。",
+   "en":"**The 2021 SPAC Mania**\n\nOver 600 SPACs listed; most fell more than 70% from their highs. Rising rates punctured the bubble and retail investors took the brunt of the losses."},
+ "hist_c3":{"zh":"**2026 AI IPO浪潮**\n\n三巨头合计估值$3T，AI占风投80%。部分公司确有营收，但P/S倍数同样极端。",
+   "en":"**The 2026 AI IPO Wave**\n\nThe top three are valued at $3T combined and AI takes 80% of venture funding. Some of these companies do have real revenue — but their P/S multiples are just as extreme."},
+ # ── Tab7 我的持仓 ──
+ "holdings_caption":{"zh":"记录你的真实持仓（含成本价），自动分析盈亏原因、长期投资前景与赛道潜力 · 支持股票/ETF/加密货币/大宗商品期货",
+   "en":"Track your actual positions (with cost basis) and get automatic attribution of gains/losses, long-term outlook and sector potential · stocks, ETFs, crypto and commodity futures"},
+ "add_edit_holdings":{"zh":"**添加/编辑持仓**","en":"**Add / edit positions**","es":"**Añadir / editar posiciones**","fr":"**Ajouter / modifier des positions**","de":"**Positionen hinzufügen / bearbeiten**","ja":"**保有銘柄の追加・編集**","ko":"**보유 종목 추가/편집**"},
+ "ccy_hint":{"zh":"💡 成本价货币可切换为人民币/欧元/日元等，系统会用实时汇率自动换算为美元计算盈亏。",
+   "en":"💡 Cost basis can be entered in CNY, EUR, JPY and more — it is converted to USD at live FX rates for the P&L math."},
+ "holdings_empty":{"zh":"👆 请添加至少一个持仓（代码、数量、成本价均需大于0）。股票用 AAPL 这类代码，加密货币用 BTC-USD 这类代码，大宗商品期货用 GC=F（黄金）/ HG=F（铜）这类代码。",
+   "en":"👆 Add at least one position (ticker, quantity and cost must all be greater than zero). Use tickers like AAPL for stocks, BTC-USD for crypto, and GC=F (gold) or HG=F (copper) for commodity futures."},
+ "holdings_fetching":{"zh":"正在获取持仓实时数据并分析...","en":"Fetching live data and analysing your positions...","es":"Obteniendo datos y analizando posiciones...","fr":"Récupération des données et analyse des positions...","de":"Daten werden geladen und Positionen analysiert...","ja":"保有銘柄のデータを取得・分析中...","ko":"보유 종목 데이터를 가져와 분석 중..."},
+ "holdings_none_ok":{"zh":"无法获取任何持仓的数据，请检查代码是否正确。","en":"Could not load data for any position — please check the tickers.","es":"No se pudieron cargar datos de ninguna posición.","fr":"Aucune position n'a pu être chargée.","de":"Für keine Position konnten Daten geladen werden.","ja":"いずれの保有銘柄もデータを取得できませんでした。","ko":"어떤 보유 종목도 데이터를 불러오지 못했습니다."},
+ "sec_holdings_lt":{"zh":"#### 🎯 整体持仓长期评估","en":"#### 🎯 Long-term quality of the whole portfolio","es":"#### 🎯 Calidad a largo plazo de la cartera","fr":"#### 🎯 Qualité long terme du portefeuille","de":"#### 🎯 Langfrist-Qualität des Depots","ja":"#### 🎯 ポートフォリオ全体の長期評価","ko":"#### 🎯 포트폴리오 전체 장기 평가"},
+ "sec_holdings_each":{"zh":"#### 🔍 逐个持仓深度分析","en":"#### 🔍 Position-by-position deep dive","es":"#### 🔍 Análisis posición por posición","fr":"#### 🔍 Analyse position par position","de":"#### 🔍 Analyse je Position","ja":"#### 🔍 保有銘柄ごとの詳細分析","ko":"#### 🔍 보유 종목별 심층 분석"},
+ "holdings_each_cap":{"zh":"展开每个持仓查看：盈亏归因（为什么涨/跌）· 长期投资前景 · 所属赛道的市场潜力",
+   "en":"Expand any position to see: P&L attribution (why it moved), long-term outlook, and the market potential of its sector"},
+ "lt_weighted":{"zh":"<b>持仓加权长期评分：{score:.0f}/100</b>　|　长期看好 {bull} 个持仓　·　长期偏弱 {bear} 个持仓",
+   "en":"<b>Value-weighted long-term score: {score:.0f}/100</b>　|　{bull} position(s) look strong long term　·　{bear} look weak"},
+ "lt_verdict_hi":{"zh":"整体持仓长期质量偏高，多数标的具备可持续的成长逻辑，适合继续持有并定期复核。",
+   "en":"Overall long-term quality is high: most holdings have a durable growth case. Keep holding and review periodically."},
+ "lt_verdict_mid":{"zh":"整体持仓长期质量中性，建议定期跟踪基本面变化，逢高适度调整配置结构。",
+   "en":"Overall long-term quality is neutral. Track fundamentals regularly and trim into strength where the case weakens."},
+ "lt_verdict_lo":{"zh":"整体持仓长期质量偏弱，建议重新评估配置结构，逐步向长期评分更高的标的倾斜。",
+   "en":"Overall long-term quality is weak. Reassess the structure and gradually rotate toward holdings with better long-term scores."},
+ "pos_qty":{"zh":"持仓数量","en":"Quantity","es":"Cantidad","fr":"Quantité","de":"Stückzahl","ja":"保有数量","ko":"보유 수량"},
+ "pos_cost_price":{"zh":"成本 / 现价","en":"Cost / price","es":"Coste / precio","fr":"Coût / cours","de":"Kosten / Kurs","ja":"取得単価 / 現在値","ko":"매입가 / 현재가"},
+ "pos_pnl_amt":{"zh":"盈亏金额","en":"P&L","es":"P&L","fr":"P&L","de":"G/V","ja":"損益額","ko":"손익 금액"},
+ "pos_pnl_pct":{"zh":"盈亏比例","en":"P&L %","es":"P&L %","fr":"P&L %","de":"G/V %","ja":"損益率","ko":"손익률"},
+ "pos_attr":{"zh":"**🧠 盈亏归因分析（为什么涨/跌）**","en":"**🧠 Why it moved (P&L attribution)**","es":"**🧠 Por qué se movió**","fr":"**🧠 Pourquoi ça a bougé**","de":"**🧠 Warum es sich bewegt hat**","ja":"**🧠 損益の要因分析**","ko":"**🧠 손익 요인 분석**"},
+ "pos_lt":{"zh":"**🏦 长期投资前景**","en":"**🏦 Long-term outlook**","es":"**🏦 Perspectiva a largo plazo**","fr":"**🏦 Perspective long terme**","de":"**🏦 Langfristausblick**","ja":"**🏦 長期の見通し**","ko":"**🏦 장기 전망**"},
+ "pos_track":{"zh":"**🚀 赛道 / 市场潜力分析**","en":"**🚀 Sector & market potential**","es":"**🚀 Potencial del sector**","fr":"**🚀 Potentiel du secteur**","de":"**🚀 Sektor- & Marktpotenzial**","ja":"**🚀 セクターと市場のポテンシャル**","ko":"**🚀 섹터·시장 잠재력**"},
+ "lt_score_line":{"zh":"（长期评分 {score}/100）&nbsp;·&nbsp;夏普比率 {sharpe:.2f}&nbsp;·&nbsp;20日趋势斜率 {slope:+.2f}%/日&nbsp;·&nbsp;价格{ma}MA200",
+   "en":"(long-term score {score}/100)&nbsp;·&nbsp;Sharpe {sharpe:.2f}&nbsp;·&nbsp;20-day slope {slope:+.2f}%/day&nbsp;·&nbsp;price {ma} MA200"},
+ "above":{"zh":"高于","en":"above"}, "below":{"zh":"低于","en":"below"},
+ # ── Tab7 持仓归因 ──
+ "w_total_cost":{"zh":"= 每个持仓的「数量 × 成本价」之和（非美元成本已按实时汇率折算）。这是你实际投进去的本金，也是所有收益率的分母。",
+   "en":"= the sum of \u201cquantity × cost\u201d for each position (non-USD costs converted at live FX rates). This is the capital you actually put in, and the denominator of every return figure."},
+ "w_mkt_value":{"zh":"= 每个持仓的「数量 × 最新价」之和。价格取自雅虎财经的最近收盘价，所以盘中看到的是上一个交易日收盘的口径，不是实时逐笔。",
+   "en":"= the sum of \u201cquantity × latest price\u201d. Prices come from Yahoo Finance's most recent close, so during the session you are looking at the previous close, not tick-by-tick data."},
+ "w_total_pnl":{"zh":"= 当前市值 − 总成本 = ${mv:,.2f} − ${cost:,.2f}。这轮盈亏主要由 **{best}（{bestv:+,.0f}）** 贡献，**{worst}（{worstv:+,.0f}）** 拖累最多。下方「逐个持仓深度分析」里会逐一解释每只为什么涨/跌。",
+   "en":"= market value − total cost = ${mv:,.2f} − ${cost:,.2f}. **{best} ({bestv:+,.0f})** contributed most to this result, while **{worst} ({worstv:+,.0f})** was the biggest drag. The position-by-position section below explains why each one moved."},
+ "w_win_ratio":{"zh":"{n} 个持仓中有 {win} 个当前处于盈利。这个比例反映的是**选股胜率**，但它和总盈亏不是一回事——一个重仓的大亏损可以盖过好几个小盈利，所以要和上面的总盈亏一起看。",
+   "en":"{win} of {n} positions are currently in profit. This is your **hit rate**, which is not the same thing as total P&L — one large losing position can outweigh several small winners, so read it together with the total above."},
+ "pnl_head":{"zh":"**成本价 {cost_disp} → 现价 ${cur:.2f}，当前{direction} {pct:.1f}%**",
+   "en":"**Cost {cost_disp} → current ${cur:.2f}; currently {direction} {pct:.1f}%**"},
+ "dir_profit":{"zh":"盈利","en":"up"}, "dir_loss":{"zh":"亏损","en":"down"},
+ "pnl_mom_up":{"zh":"📈 近1个月上涨 {m:+.1f}%，短期动能是近期表现的主要驱动力。",
+   "en":"📈 Up {m:+.1f}% over the past month — short-term momentum is the main driver of recent performance."},
+ "pnl_mom_dn":{"zh":"📉 近1个月下跌 {m:.1f}%，短期抛压是近期走弱的主因。",
+   "en":"📉 Down {m:.1f}% over the past month — short-term selling pressure is the main reason for the weakness."},
+ "pnl_mom_flat":{"zh":"➡️ 近1个月走势平淡（{m:+.1f}%），短期没有明显单边驱动。",
+   "en":"➡️ Little movement over the past month ({m:+.1f}%) — no clear one-way driver in the short run."},
+ "pnl_rsi_hi":{"zh":"RSI={v:.1f} 处于超买区间，若持仓正在盈利，需警惕短线获利回吐风险。",
+   "en":"RSI={v:.1f} is in overbought territory — if you are sitting on a gain, watch for short-term profit-taking."},
+ "pnl_rsi_lo":{"zh":"RSI={v:.1f} 处于超卖区间，若持仓正在亏损，历史上此位置出现反弹的概率较高。",
+   "en":"RSI={v:.1f} is in oversold territory — if you are underwater, history says a bounce from here is more likely than not."},
+ "pnl_macd_pos":{"zh":"MACD柱为正，多头动能仍在，短期趋势偏向支撑价格。",
+   "en":"The MACD histogram is positive: bullish momentum is intact and the short-term trend is supporting the price."},
+ "pnl_macd_neg":{"zh":"MACD柱为负，空头动能主导，短期趋势仍偏弱，是压制价格的因素之一。",
+   "en":"The MACD histogram is negative: bearish momentum dominates and the short-term trend is one of the forces holding the price down."},
+ "pnl_obv_in":{"zh":"OBV资金面显示净流入（高于均线{v:.1f}%），资金仍在积极参与，对价格形成支撑。",
+   "en":"On-balance volume shows net inflows ({v:.1f}% above its average) — money is still engaged and supporting the price."},
+ "pnl_obv_out":{"zh":"OBV资金面显示净流出（低于均线{v:.1f}%），资金持续撤离是价格承压的重要原因之一。",
+   "en":"On-balance volume shows net outflows ({v:.1f}% below its average) — persistent withdrawal of money is a key reason the price is under pressure."},
+ "pnl_macro_bad":{"zh":"当前宏观环境评分为 {sc:+d}（{out}），高利率/通胀等逆风因素叠加该标的Beta={beta:.2f}，放大了下跌压力——部分亏损可归因于系统性宏观风险，而非仅仅是标的自身问题。",
+   "en":"The macro backdrop scores {sc:+d} ({out}). Headwinds like high rates and inflation, amplified by this asset's beta of {beta:.2f}, magnify the downside — so part of the loss is systematic macro risk rather than something specific to this holding."},
+ "pnl_macro_good":{"zh":"当前宏观环境评分为 {sc:+d}（{out}），顺风环境叠加该标的Beta={beta:.2f}放大了涨幅——部分盈利受益于系统性宏观利好，而非仅仅是个股alpha。",
+   "en":"The macro backdrop scores {sc:+d} ({out}). A supportive environment, amplified by this asset's beta of {beta:.2f}, magnified the gain — so part of the profit came from systematic macro tailwinds rather than stock-specific alpha."},
+ "pnl_macro_mixed":{"zh":"当前宏观环境评分为 {sc:+d}（{out}），与该持仓当前走势方向不完全一致，说明个股/资产自身的基本面或资金面因素目前占主导。",
+   "en":"The macro backdrop scores {sc:+d} ({out}), which does not line up with this position's direction — meaning asset-specific fundamentals or flows are currently in the driver's seat."},
+ "pnl_macro_none":{"zh":"💡 前往「🌐 宏观分析」Tab 加载宏观数据后，此处会补充宏观环境对该持仓盈亏的归因分析。",
+   "en":"💡 Open the Macro tab to load macro data, and this section will add a macro attribution for this position."},
+ "pos_expander":{"zh":"{icon} {tk} · {name} — 盈亏 {pct:+.1f}%","en":"{icon} {tk} · {name} — P&L {pct:+.1f}%"},
+ "disc_tab_note":{"zh":"⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。",
+   "en":"⚠️ The analysis above is based on technical indicators and public filings. It is for reference only and is not investment advice — investing carries risk."},
+ "where_holdings":{"zh":"持仓统计","en":"the portfolio totals"},
+ # ── Tab8 投资圣杯 ──
+ "hg_caption":{"zh":"Ray Dalio：「把 15 个以上互不相关的收益流组合起来，能在不牺牲收益的前提下把风险降低约 80%」—— 这是投资里唯一的免费午餐",
+   "en":"Ray Dalio: \u201cCombine 15 or more uncorrelated return streams and you can cut risk by roughly 80% without giving up return\u201d — the only free lunch in investing"},
+ "hg_intro":{"zh":"达里欧发现：决定组合风险的不是你持有多少个标的，而是这些标的**彼此有多不相关**。持有 10 只都在 AI 赛道上的股票，看起来很分散，实际只是同一个赌注下了 10 次；而股票 + 长久期国债 + 黄金 + 大宗商品这种组合，即使只有 4 个，风险下降幅度也远大于前者。下面这条曲线就是圣杯的核心：**相关性越低，曲线掉得越快**。",
+   "en":"Dalio's insight: what determines portfolio risk is not how many positions you hold, but **how uncorrelated they are**. Ten AI stocks look diversified but are really the same bet placed ten times, whereas equities + long-duration Treasuries + gold + commodities cuts risk far more with just four holdings. The curve below is the heart of the Holy Grail: **the lower the correlation, the faster it falls**."},
+ "hg_intro_calc":{"zh":"组合风险 σₚ = σ × √( 1/n + (n−1)/n × ρ )　　n=资产个数，ρ=平均相关性",
+   "en":"Portfolio risk σₚ = σ × √( 1/n + (n−1)/n × ρ )　　n = number of assets, ρ = average correlation"},
+ "hg_intro_title":{"zh":"什么是投资圣杯","en":"What the Holy Grail means"},
+ "hg_curve_title":{"zh":"圣杯曲线：资产越多、相关性越低，风险下降越快","en":"The Holy Grail curve: more assets and lower correlation cut risk faster"},
+ "hg_legend":{"zh":"平均相关性 ρ={r:.1f}","en":"avg correlation ρ={r:.1f}"},
+ "hg_hover":{"zh":"个资产<br>风险为单一资产的","en":"assets<br>risk vs a single asset:"},
+ "hg_ann_5":{"zh":" 5个资产","en":" 5 assets"},
+ "hg_ann_15":{"zh":" 达里欧建议的15个","en":" Dalio's suggested 15"},
+ "hg_ax_n":{"zh":"互不相关的资产个数","en":"Number of uncorrelated assets"},
+ "hg_ax_n2":{"zh":"资产个数","en":"Number of assets"},
+ "hg_ax_risk":{"zh":"组合风险（相对单一资产 %）","en":"Portfolio risk (% of a single asset)"},
+ "hg_curve_read":{"zh":"看 ρ=0（绿线）：1个资产风险是100%，5个降到45%，15个只剩26%——**风险砍掉约四分之三，而预期收益一分没少**。再看 ρ=0.6（红线）：从1个加到15个，风险只从100%降到约80%，加再多也降不下去了，因为 n→∞ 时曲线收敛于 √ρ（=77%）。这就是为什么达里欧强调「**不相关**」比「多」重要得多。",
+   "en":"Look at ρ=0 (green): one asset carries 100% risk, five drops it to 45%, fifteen leaves only 26% — **about three quarters of the risk is gone while expected return is untouched**. Now look at ρ=0.6 (red): going from one asset to fifteen only takes risk from 100% to roughly 80%, and adding more barely helps, because as n→∞ the curve converges to √ρ (=77%). That is why Dalio insists **uncorrelated** matters far more than *many*."},
+ "hg_curve_read_t":{"zh":"这条曲线在说什么","en":"What this curve is telling you"},
+ "hg_your_pf":{"zh":"#### 🎯 分析你自己的组合","en":"#### 🎯 Analyse your own portfolio"},
+ "hg_preset_aw":{"zh":"🌦️ 全天候(达里欧)","en":"🌦️ All Weather (Dalio)"},
+ "hg_preset_sbg":{"zh":"📊 股债黄金","en":"📊 Stocks + Bonds + Gold"},
+ "hg_preset_div":{"zh":"🌍 多元分散","en":"🌍 Broadly diversified"},
+ "hg_preset_ai":{"zh":"🤖 AI集中(反面教材)","en":"🤖 AI-concentrated (what not to do)"},
+ "hg_use_holdings":{"zh":"💰 用我的持仓","en":"💰 Use my holdings"},
+ "hg_pick_assets":{"zh":"🔍 选择资产（边打边出提示，建议 5 个以上且分属不同类别）","en":"🔍 Pick assets (type to search; aim for 5+ across different classes)"},
+ "hg_pick_help":{"zh":"输入首字母即可联想，如 X → XOM / XLK；库里没有的代码也能直接输入","en":"Type the first letters to search, e.g. X → XOM / XLK; tickers outside the list can be entered directly"},
+ "hg_lookback":{"zh":"回看区间","en":"Lookback"},
+ "hg_bench":{"zh":"Beta基准","en":"Beta benchmark"},
+ "hg_need2":{"zh":"👆 请至少输入 2 个资产代码（要看出圣杯效应，建议 5 个以上且分属不同资产类别）","en":"👆 Add at least 2 tickers (to see the Holy Grail effect properly, use 5+ from different asset classes)"},
+ "hg_computing":{"zh":"正在计算相关性矩阵与 Alpha/Beta...","en":"Computing the correlation matrix and Alpha/Beta..."},
+ "hg_nodata":{"zh":"有效数据不足，请检查代码是否正确（至少需要 2 个能取到数据的资产）。","en":"Not enough usable data — check the tickers (at least 2 must return data)."},
+ "hg_where":{"zh":"相关性与Alpha/Beta计算","en":"the correlation and Alpha/Beta calculation"},
+ "hg_m_n":{"zh":"资产个数","en":"Assets"},
+ "hg_m_n_ok":{"zh":"达标 ✓","en":"target met ✓"}, "hg_m_n_bad":{"zh":"少于5个","en":"fewer than 5"},
+ "hg_m_rho":{"zh":"平均相关性 ρ","en":"Avg correlation ρ"},
+ "hg_m_rho_d":{"zh":"越低越好","en":"lower is better"},
+ "hg_m_eff":{"zh":"有效分散数","en":"Effective bets"},
+ "hg_m_eff_d":{"zh":"名义{n}个","en":"{n} nominal"},
+ "hg_m_cut":{"zh":"风险下降幅度","en":"Risk reduction"},
+ "hg_w_rho":{"zh":"你选了 {n} 个资产，它们两两之间的平均相关性是 **{rho:.2f}**。{verdict}",
+   "en":"You selected {n} assets whose average pairwise correlation is **{rho:.2f}**. {verdict}"},
+ "hg_rho_lo":{"zh":"相关性很低，接近达里欧说的「互不相关的收益流」。","en":"That is genuinely low — close to what Dalio means by uncorrelated return streams."},
+ "hg_rho_mid":{"zh":"相关性偏高，说明它们很大程度上在赌同一件事。","en":"That is on the high side: these holdings are largely betting on the same thing."},
+ "hg_rho_hi":{"zh":"相关性非常高，这些资产基本是同涨同跌，分散效果有限。","en":"That is very high — these assets rise and fall together, so diversification is doing little."},
+ "hg_w_eff":{"zh":"名义上你有 {n} 个资产，但因为它们彼此相关，实际只相当于 **{eff:.1f} 个独立赌注**。相关性越高，这个数字缩水得越厉害——这才是衡量「真分散」的指标。",
+   "en":"Nominally you hold {n} assets, but because they move together they amount to only **{eff:.1f} independent bets**. The higher the correlation, the more this number shrinks — it is the real measure of diversification."},
+ "hg_w_cut":{"zh":"单个资产的平均年化波动率是 {avg:.1f}%，而等权组合的实际波动率只有 {pf:.1f}%，**风险被抹掉了 {cut:.1f}%**。这部分降低完全来自资产之间的不相关性，不需要你放弃任何预期收益——这就是达里欧说的免费午餐。",
+   "en":"The average single-asset volatility is {avg:.1f}% a year, yet the equal-weighted portfolio realises only {pf:.1f}% — **{cut:.1f}% of the risk has been erased**. That reduction comes purely from the assets not moving together, and costs you nothing in expected return. This is Dalio's free lunch."},
+ "hg_t_rho":{"zh":"平均相关性 {rho:.2f}","en":"Average correlation {rho:.2f}"},
+ "hg_t_eff":{"zh":"有效分散数 {eff:.1f}","en":"Effective bets {eff:.1f}"},
+ "hg_t_cut":{"zh":"风险下降 {cut:.1f}%","en":"Risk cut {cut:.1f}%"},
+ "hg_corr_matrix":{"zh":"#### 🔥 相关性矩阵","en":"#### 🔥 Correlation matrix"},
+ "hg_corr":{"zh":"相关性","en":"Correlation"},
+ "hg_corr_read":{"zh":"绿色=不相关（好），红色=同涨同跌（分散无效）。当前**最理想的一对是 {lo1} 与 {lo2}（{lov:.2f}）**，它们几乎独立，是组合里真正起分散作用的部分；而 **{hi1} 与 {hi2} 的相关性高达 {hiv:.2f}**，{tail}",
+   "en":"Green = uncorrelated (good), red = moving together (diversification failing). The best pair right now is **{lo1} and {lo2} ({lov:.2f})** — nearly independent, and the part of the portfolio actually doing the diversifying. Meanwhile **{hi1} and {hi2} are correlated at {hiv:.2f}**, {tail}"},
+ "hg_corr_tail_hi":{"zh":"这两个基本可以看作同一个资产，同时持有并不会带来额外的分散效果。","en":"which makes them effectively the same asset — holding both adds no diversification."},
+ "hg_corr_tail_mid":{"zh":"相关性偏高，分散作用有限。","en":"which is high enough that the diversification benefit is limited."},
+ "hg_pos_title":{"zh":"#### 📍 你的组合在圣杯曲线上的位置","en":"#### 📍 Where your portfolio sits on the curve"},
+ "hg_your_pf_marker":{"zh":"你的组合","en":"Your portfolio"},
+ "hg_you_here":{"zh":" 你在这里（{n}个资产，ρ={rho:.2f}）","en":" You are here ({n} assets, ρ={rho:.2f})"},
+ "hg_pos_read":{"zh":"紫色星星就是你现在的位置：{n} 个资产、平均相关性 {rho:.2f}，组合风险是单一资产的 {cur:.0f}%。如果这 {n} 个资产完全不相关（ρ=0），风险本可以降到 {ideal:.0f}%，**中间这 {room:.0f} 个百分点的差距就是相关性吃掉的分散收益**。想往绿线靠，靠的不是继续加同类资产，而是加入定价逻辑完全不同的资产类别。",
+   "en":"The purple star is you: {n} assets, average correlation {rho:.2f}, portfolio risk at {cur:.0f}% of a single asset. Were these {n} assets perfectly uncorrelated (ρ=0), risk could fall to {ideal:.0f}% — **the {room:.0f} percentage points in between is exactly what correlation is costing you**. Getting closer to the green line is not about adding more of the same, but about adding asset classes priced by different forces."},
+ "hg_ab_title":{"zh":"#### ⚖️ Alpha / Beta 分解（基准：{b}）","en":"#### ⚖️ Alpha / Beta decomposition (benchmark: {b})"},
+ "hg_ab_intro":{"zh":"达里欧把收益拆成两部分：**Beta 是你承担市场风险自动拿到的收益**（买指数就有，几乎免费）；**Alpha 是与市场无关的超额收益**（真正稀缺、需要能力）。分散化的意义在于：Beta 之间往往高度相关，而不同来源的 Alpha 天然不相关——所以圣杯的真正含义是「收集多个互不相关的 Alpha」。下面对每个资产做回归：β 是它对大盘的敏感度，α 是剔除大盘影响后的年化超额收益，R² 是波动中由大盘解释的比例。",
+   "en":"Dalio splits returns in two: **beta is what you get simply for carrying market risk** (buy an index and you have it — essentially free), while **alpha is the excess return unrelated to the market** (genuinely scarce and hard to produce). Diversification matters because betas are highly correlated with each other, whereas alphas from different sources are naturally uncorrelated — so the Holy Grail really means *collecting many uncorrelated alphas*. Below, each asset is regressed on the benchmark: β is its market sensitivity, α is the annualised excess return after stripping out the market, and R² is the share of its movement the market explains."},
+ "hg_ab_calc":{"zh":"资产日收益 = α + β × 基准日收益 + ε　（最小二乘回归）","en":"asset daily return = α + β × benchmark daily return + ε　(OLS regression)"},
+ "hg_ab_title2":{"zh":"Alpha 和 Beta 有什么区别","en":"How alpha differs from beta"},
+ "hg_ab_nobench":{"zh":"无法取得基准 {b} 的数据，跳过 Alpha/Beta 分解。","en":"Could not load benchmark {b}; skipping the Alpha/Beta decomposition."},
+ "hg_ab_note":{"zh":"年化超额收益（剔除大盘影响后）","en":"annualised excess return (market effect removed)"},
+ "hg_ab_expander":{"zh":"📖 每个资产的 Alpha/Beta 怎么读？","en":"📖 How to read each asset's Alpha/Beta"},
+ "hg_beta_indep":{"zh":"走势几乎与大盘无关，是组合里真正的分散来源","en":"it barely tracks the market — a genuine source of diversification"},
+ "hg_beta_neg":{"zh":"与大盘反向，是天然的对冲工具","en":"it moves opposite the market — a natural hedge"},
+ "hg_beta_hi":{"zh":"大盘涨1%它平均涨{b:.2f}%，属于放大版大盘","en":"when the market rises 1% it rises {b:.2f}% on average — a leveraged version of the market"},
+ "hg_beta_lo":{"zh":"大盘涨1%它平均涨{b:.2f}%，波动小于大盘，偏防御","en":"when the market rises 1% it rises {b:.2f}% on average — less volatile than the market, defensive"},
+ "hg_r2_hi":{"zh":"**{r:.0f}% 的波动由大盘解释**——这部分收益买指数就能拿到","en":"**{r:.0f}% of its movement is explained by the market** — that part you could get from an index fund"},
+ "hg_r2_lo":{"zh":"只有 {r:.0f}% 的波动由大盘解释，**剩下 {rest:.0f}% 是它自己的独立行情**，这正是圣杯需要的那种不相关收益流",
+   "en":"only {r:.0f}% of its movement is market-driven, **leaving {rest:.0f}% as its own independent path** — exactly the kind of uncorrelated return stream the Holy Grail needs"},
+ "hg_alpha_pos":{"zh":"剔除大盘影响后年化 **{a:+.1f}%** 的超额收益","en":"**{a:+.1f}%** annualised excess return once the market is stripped out"},
+ "hg_alpha_neg":{"zh":"剔除大盘影响后年化 **{a:+.1f}%**，承担了额外风险却没换来相应回报","en":"**{a:+.1f}%** annualised once the market is stripped out — extra risk taken without the reward to match"},
+ "hg_ab_line":{"zh":"β={b:.2f}，{btxt}。{r2txt}。α：{atxt}。","en":"β={b:.2f} — {btxt}. {r2txt}. Alpha: {atxt}."},
+ "hg_pf_ab":{"zh":"等权组合的加权 β = **{beta:.2f}**，加权 α = **{alpha:+.1f}%/年**。{tail}而真正决定你能否长期跑赢的是那部分 α。",
+   "en":"The equal-weighted portfolio has a weighted β of **{beta:.2f}** and a weighted α of **{alpha:+.1f}% a year**. {tail}What actually decides whether you outperform over time is that alpha."},
+ "hg_pf_b_mid":{"zh":"β 接近1说明你的组合本质上还是在赌大盘方向，","en":"A beta near 1 means the portfolio is essentially a bet on market direction. "},
+ "hg_pf_b_lo":{"zh":"β 只有 {b:.2f}，组合对大盘的依赖度较低，这是好现象，","en":"At just {b:.2f}, the portfolio depends relatively little on the market — a good sign. "},
+ "hg_pf_b_hi":{"zh":"β 高达 {b:.2f}，组合是放大版的大盘，牛市爽、熊市痛，","en":"At {b:.2f} the portfolio is a leveraged version of the market: great in bull runs, painful in drawdowns. "},
+ "hg_pf_ab_t":{"zh":"组合整体的 Alpha 与 Beta","en":"Portfolio-level alpha and beta"},
+ "hg_score_title":{"zh":"#### 🏅 圣杯评分","en":"#### 🏅 Holy Grail score"},
+ "hg_v_hi":{"zh":"接近圣杯：资产数量足够、彼此独立性强，风险被有效摊薄","en":"Close to the Grail: enough assets, genuinely independent, risk well spread"},
+ "hg_v_mid":{"zh":"分散良好：已经拿到大部分免费午餐，但仍有优化空间","en":"Well diversified: most of the free lunch captured, some room left"},
+ "hg_v_lo":{"zh":"分散不足：看起来持有多个标的，实际押注高度重合","en":"Under-diversified: many holdings, but the bets overlap heavily"},
+ "hg_v_none":{"zh":"几乎没有分散：这些资产本质上是同一个赌注","en":"Barely diversified: these assets are essentially one bet"},
+ "hg_score_break":{"zh":"资产数量 {n}/40　·　相关性 {r}/40　·　有效分散数 {e}/20","en":"assets {n}/40　·　correlation {r}/40　·　effective bets {e}/20"},
+ "hg_score_why":{"zh":"评分由三部分构成：**资产个数 {n} 个（{sn}/40）**——达里欧建议15个以上；**平均相关性 {rho:.2f}（{sr}/40）**——这一项权重最重，因为它决定曲线的形状；**有效分散数 {eff:.1f}（{se}/20）**——名义资产数打完相关性折扣后的真实赌注数。{gate}但圣杯的关键从来不是数量，而是相关性。",
+   "en":"The score has three parts: **{n} assets ({sn}/40)** — Dalio suggests 15 or more; **average correlation {rho:.2f} ({sr}/40)** — the heaviest weight, because it sets the shape of the curve; and **{eff:.1f} effective bets ({se}/20)** — your nominal asset count after the correlation haircut. {gate}But the Grail was never about quantity; it is about correlation."},
+ "hg_gate_ok":{"zh":"你已满足「5个以上资产」的门槛，","en":"You have cleared the \u201c5+ assets\u201d bar. "},
+ "hg_gate_no":{"zh":"你还没达到5个资产的基本门槛，","en":"You have not yet reached the basic bar of 5 assets. "},
+ "cls_crypto":{"zh":"加密货币","en":"Crypto"}, "cls_bond":{"zh":"债券","en":"Bonds"},
+ "cls_pm":{"zh":"贵金属","en":"Precious metals"}, "cls_comm":{"zh":"大宗商品","en":"Commodities"},
+ "cls_re":{"zh":"房地产","en":"Real estate"}, "cls_intl":{"zh":"非美股票","en":"Non-US equities"},
+ "cls_fx":{"zh":"汇率","en":"Currencies"}, "cls_us":{"zh":"美股","en":"US equities"},
+ "hg_cls_title":{"zh":"**当前组合的资产类别构成**","en":"**Asset classes currently represented**"},
+ "hg_sugg_bond":{"zh":"长久期国债（TLT / IEF）","en":"Long-duration Treasuries (TLT / IEF)"},
+ "hg_sugg_bond_r":{"zh":"经济衰退、避险时上涨，是股票最经典的负相关对冲；利率下行周期收益尤其明显","en":"they rally in recessions and risk-off episodes — the classic negative correlation to equities, and especially rewarding when rates fall"},
+ "hg_sugg_gold":{"zh":"黄金（GLD / IAU）","en":"Gold (GLD / IAU)"},
+ "hg_sugg_gold_r":{"zh":"定价锚是实际利率和地缘风险，与企业盈利无关，常在股债双杀时逆势走强","en":"priced off real rates and geopolitics rather than corporate earnings, it often rises when stocks and bonds fall together"},
+ "hg_sugg_comm":{"zh":"大宗商品（DBC / PDBC）","en":"Commodities (DBC / PDBC)"},
+ "hg_sugg_comm_r":{"zh":"通胀上行期股债往往同跌，而商品同涨，是对抗通胀情景的关键一块","en":"when inflation rises stocks and bonds tend to fall together while commodities rise — the key piece for that scenario"},
+ "hg_sugg_intl":{"zh":"非美股票（EFA / VWO）","en":"Non-US equities (EFA / VWO)"},
+ "hg_sugg_intl_r":{"zh":"不同经济周期和货币体系，能摊薄单一国家的政策与汇率风险","en":"different economic cycles and currency regimes dilute single-country policy and FX risk"},
+ "hg_sugg_re":{"zh":"REITs（VNQ）","en":"REITs (VNQ)"},
+ "hg_sugg_re_r":{"zh":"租金现金流与股票盈利周期不完全同步，提供另一条收益来源","en":"rental cash flows do not track the equity earnings cycle exactly, adding another return stream"},
+ "hg_sugg_crypto":{"zh":"加密资产（BTC-USD）","en":"Crypto (BTC-USD)"},
+ "hg_sugg_crypto_r":{"zh":"定价逻辑独立于企业盈利，但近年与纳指相关性上升，权重不宜过高","en":"priced independently of corporate earnings, though its correlation with the Nasdaq has risen — keep the weight modest"},
+ "hg_missing":{"zh":"你的组合目前缺少以下资产类别，它们与股票的定价逻辑不同，是把平均相关性压下来最有效的方式：","en":"Your portfolio is missing these asset classes. They are priced by different forces than equities, and adding them is the most effective way to pull the average correlation down: "},
+ "hg_missing_t":{"zh":"想往绿线靠，可以补什么","en":"What to add to move toward the green line"},
+ "hg_covered":{"zh":"你的组合已经覆盖了主要的低相关资产类别（股、债、金、商品等），接下来的优化方向不是继续加类别，而是调整各类别的**风险权重**——达里欧的全天候策略就是按风险平价（risk parity）而非金额平均来配置的。",
+   "en":"Your portfolio already covers the main low-correlation classes (equities, bonds, gold, commodities). The next step is not more classes but **risk weighting** between them — Dalio's All Weather allocates by risk parity rather than equal dollars."},
+ "hg_covered_t":{"zh":"类别覆盖情况","en":"Asset-class coverage"},
+ "hg_warn":{"zh":"⚠️ 相关性会随市场环境变化——危机时各类资产的相关性往往同时飙升（所谓「危机时刻相关性趋近于1」），历史相关性只能作为参考，不构成投资建议。",
+   "en":"⚠️ Correlations shift with the regime — in a crisis they tend to spike toward 1 across the board. Historical correlation is a reference only, not investment advice."},
  "sent_headline":{"zh":"当前市场情绪：{label}（{score}/100）","en":"Current market sentiment: {label} ({score}/100)",
    "es":"Sentimiento actual del mercado: {label} ({score}/100)","fr":"Sentiment de marché actuel : {label} ({score}/100)",
    "de":"Aktuelle Marktstimmung: {label} ({score}/100)","ja":"現在のマーケット心理：{label}（{score}/100）","ko":"현재 시장 심리: {label} ({score}/100)"},
@@ -2439,7 +2670,7 @@ with tabs[1]:
 
     # 已上市公司实时价格横幅
     if live_ipo:
-        st.subheader("📡 已上市IPO实时行情")
+        st.subheader(tr("sub_ipo_live"))
         for ticker, d in live_ipo.items():
             clr = "#0F6E56" if d["change_pct"] >= 0 else "#A32D2D"
             from_ipo_clr = "#0F6E56" if d["from_ipo"] >= 0 else "#A32D2D"
@@ -2450,7 +2681,7 @@ with tabs[1]:
                 f'{logo_chip_html(ticker, cls="ahero-chip")}'
                 f'<div style="flex:1">'
                 f'<div style="font-size:19px;font-weight:750">{d["name"]} ({ticker})</div>'
-                f'<div style="font-size:12px;opacity:.8;margin-top:2px">🚀 纳斯达克上市 · 发行价 $135.00</div>'
+                f'<div style="font-size:12px;opacity:.8;margin-top:2px">{tr("ipo_listed_on")}</div>'
                 f'</div>'
                 f'<div style="text-align:right">'
                 f'<div style="font-size:31px;font-weight:750;letter-spacing:-.5px">${d["price"]:.2f}</div>'
@@ -2462,27 +2693,27 @@ with tabs[1]:
                 f'</div></div></div>',
                 unsafe_allow_html=True
             )
-        if st.button("🔄 刷新实时价格", key="refresh_ipo_live"):
+        if st.button(tr("btn_refresh_price"), key="refresh_ipo_live"):
             st.cache_data.clear(); st.rerun()
 
     # 估值分布图（从原市场概览移过来）
-    st.subheader("核心IPO估值分布")
+    st.subheader(tr("sub_val_dist"))
     names = [c["name"] for c in IPOS]
     vals  = [c["val_b"] for c in IPOS]  # SpaceX已更新为上市后实际市值$1770B
     fig_bar = go.Figure(go.Bar(
         x=names, y=vals, marker_color=COLORS,
         text=[f"${v/1000:.2f}T" if v>=1000 else f"${v}B" for v in vals],
         textposition="outside",
-        hovertemplate="<b>%{x}</b><br>估值: $%{y}B<extra></extra>",
+        hovertemplate="<b>%{x}</b><br>" + tr("hover_val") + ": $%{y}B<extra></extra>",
     ))
     fig_bar.update_layout(height=320, margin=dict(t=30,b=20),
-                          yaxis_title="估值 ($B)", showlegend=False,
+                          yaxis_title=tr("ax_valuation"), showlegend=False,
                           plot_bgcolor="#fafafa")
     glass_chart(fig_bar, use_container_width=True)
 
     st.divider()
-    st.subheader("公司深度分析")
-    selected = st.selectbox("选择公司", [c["name"] for c in IPOS])
+    st.subheader(tr("sub_company_deep"))
+    selected = st.selectbox(tr("sel_company"), [c["name"] for c in IPOS])
     company  = next(c for c in IPOS if c["name"] == selected)
     col1, col2 = st.columns(2)
     with col1:
@@ -2493,72 +2724,70 @@ with tabs[1]:
         ps      = round(company["val_b"] / company["rev_b"])
         val_str = f"${company['val_b']/1000:.2f}T" if company["val_b"] >= 1000 else f"${company['val_b']}B"
         m1,m2,m3 = st.columns(3)
-        m1.metric("预期估值", val_str)
-        m2.metric("年收入", f"${company['rev_b']}B")
-        m3.metric("P/S倍数", f"{ps}x")
+        m1.metric(tr("m_exp_val"), val_str)
+        m2.metric(tr("m_revenue"), f"${company['rev_b']}B")
+        m3.metric(tr("m_ps"), f"{ps}x")
         m4,m5,m6 = st.columns(3)
-        m4.metric("盈利状态", "✓ 盈利" if company["profitable"] else "✗ 亏损")
-        m5.metric("首日预期涨幅", f"+{company['exp_pop']}%")
-        m6.metric("泡沫风险", f"{company['bubble_risk']}%",
+        m4.metric(tr("m_profitable"), tr("yes_profit") if company["profitable"] else tr("no_profit"))
+        m5.metric(tr("m_day1_pop"), f"+{company['exp_pop']}%")
+        m6.metric(tr("m_bubble_risk"), f"{company['bubble_risk']}%",
                   delta_color="inverse" if company["bubble_risk"]>60 else "normal")
 
     # ── 点进公司看真实走势与技术分析（已上市的才有行情）──
     _co_ticker = company.get("ticker")
     if _co_ticker:
-        if st.button(f"📈 查看 {company['name']}（{_co_ticker}）的走势图与完整技术分析",
+        if st.button(tr("btn_view_company", name=company["name"], tk=_co_ticker),
                      key=f"ipo_analyze_{_co_ticker}", use_container_width=True, type="primary"):
             st.session_state["ipo_quick_view"] = _co_ticker
             st.session_state["selected_ticker"] = _co_ticker
             st.session_state["analysis_result"] = None
             st.rerun()
     else:
-        st.info(f"🔒 {company['name']} 尚未上市（预计 {company['date']}），还没有可交易的股票代码，"
-                f"因此无法显示K线走势。上市后这里会自动出现走势图入口。"
-                f"你可以先在「📈 趋势预测」里用同板块的已上市标的做情景推演。")
+        st.info(tr("ipo_not_listed", name=company["name"], date=company["date"]))
 
     if st.session_state.get("ipo_quick_view"):
         _iv = st.session_state["ipo_quick_view"]
         st.divider()
         _ic1, _ic2 = st.columns([5, 1])
-        _ic1.markdown(f"#### 🔎 {_iv} 走势与技术分析")
+        _ic1.markdown(tr("quick_chart_title", tk=_iv))
         if _ic2.button(tr("btn_close"), key="ipo_qv_close", use_container_width=True):
             st.session_state["ipo_quick_view"] = None
             st.rerun()
-        with st.spinner(f"正在分析 {_iv}..."):
+        with st.spinner(tr("analyzing", tk=_iv)):
             render_quick_analysis(_iv)
         st.divider()
 
-    st.subheader("所有公司对比")
+    st.subheader(tr("sub_compare_all"))
     fig_bubble = go.Figure(go.Scatter(
         x=[c["bubble_risk"] for c in IPOS], y=[c["exp_pop"] for c in IPOS],
         mode="markers+text", text=[c["name"] for c in IPOS], textposition="top center",
         marker=dict(size=[max(14,math.log(c["val_b"]+1)*4) for c in IPOS],
                     color=[c["bubble_risk"] for c in IPOS], colorscale="RdYlGn_r",
-                    showscale=True, colorbar=dict(title="泡沫风险%"),
+                    showscale=True, colorbar=dict(title=tr("m_bubble_risk")),
                     line=dict(width=1, color="white")),
-        hovertemplate="<b>%{text}</b><br>泡沫风险: %{x}%<br>首日预期: +%{y}%<extra></extra>",
+        hovertemplate="<b>%{text}</b><br>" + tr("m_bubble_risk") + ": %{x}%<br>" + tr("m_day1_pop") + ": +%{y}%<extra></extra>",
     ))
-    fig_bubble.update_layout(height=380, xaxis_title="泡沫风险 (%)",
-                             yaxis_title="首日预期涨幅 (%)", plot_bgcolor="#fafafa", margin=dict(t=10))
+    fig_bubble.update_layout(height=380, xaxis_title=tr("ax_bubble_risk"),
+                             yaxis_title=tr("ax_day1"), plot_bgcolor="#fafafa", margin=dict(t=10))
     glass_chart(fig_bubble, use_container_width=True)
 
 # ── Tab 3: 历史对比 ─────────────────────────────────────────────────────────────
 with tabs[2]:
-    st.subheader("历史泡沫周期对比")
+    st.subheader(tr("sub_history"))
     nodes=HISTORICAL["节点"]; fig_hist=go.Figure()
-    fig_hist.add_trace(go.Scatter(x=nodes,y=HISTORICAL["2000互联网"],name="2000互联网",
+    fig_hist.add_trace(go.Scatter(x=nodes,y=HISTORICAL["2000互联网"],name=tr("hist_dotcom"),
         line=dict(color="#E24B4A",dash="dash",width=2),mode="lines+markers"))
-    fig_hist.add_trace(go.Scatter(x=nodes,y=HISTORICAL["2021 SPAC"],name="2021 SPAC",
+    fig_hist.add_trace(go.Scatter(x=nodes,y=HISTORICAL["2021 SPAC"],name=tr("hist_spac"),
         line=dict(color="#BA7517",dash="dot",width=2),mode="lines+markers"))
-    fig_hist.add_trace(go.Scatter(x=nodes[:4],y=[100,130,180,240],name="2026 AI IPO(预测)",
+    fig_hist.add_trace(go.Scatter(x=nodes[:4],y=[100,130,180,240],name=tr("hist_ai"),
         line=dict(color="#534AB7",width=3),mode="lines+markers"))
-    fig_hist.update_layout(height=420,yaxis_title="指数 (基准=100)",
+    fig_hist.update_layout(height=420,yaxis_title=tr("ax_index_base"),
                            plot_bgcolor="#fafafa",legend=dict(orientation="h",y=-0.2))
     glass_chart(fig_hist, use_container_width=True)
     col1,col2,col3=st.columns(3)
-    col1.error("**2000 互联网泡沫**\n\n纳斯达克峰值5,048点，随后暴跌78%。1500+科技公司破产，市值蒸发约$5万亿。")
-    col2.warning("**2021 SPAC狂热**\n\n600+ SPAC上市，多数较峰值下跌70%+。利率上升刺破泡沫，散户损失惨重。")
-    col3.info("**2026 AI IPO浪潮**\n\n三巨头合计估值$3T，AI占风投80%。部分公司确有营收，但P/S倍数同样极端。")
+    col1.error(nt("hist_c1"))
+    col2.warning(nt("hist_c2"))
+    col3.info(nt("hist_c3"))
 
 # ── (实时市场已合并到Tab1) ──────────────────────────────────────────────────────
 
@@ -5772,12 +6001,12 @@ with tabs[5]:
                     unsafe_allow_html=True
                 )
 
-            st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
+            st.warning(tr("disc_tab_note"))
 
 # ── Tab 7: 我的持仓 ──────────────────────────────────────────────────────────────
 with tabs[6]:
     st.subheader(tr("sec_holdings"))
-    st.caption("记录你的真实持仓（含成本价），自动分析盈亏原因、长期投资前景与赛道潜力 · 支持股票/ETF/加密货币/大宗商品期货")
+    st.caption(tr("holdings_caption"))
 
     if "holdings" not in st.session_state:
         st.session_state["holdings"] = [
@@ -5788,7 +6017,7 @@ with tabs[6]:
     for _pos in st.session_state["holdings"]:
         _pos.setdefault("ccy", "USD 🇺🇸")
 
-    st.markdown("**添加/编辑持仓**")
+    st.markdown(tr("add_edit_holdings"))
     hh = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
     hh[0].markdown(f"**{tr('col_code')}**")
     hh[1].markdown(f"**{tr('col_qty')}**")
@@ -5838,15 +6067,15 @@ with tabs[6]:
             st.rerun()
 
     st.session_state["holdings"] = holdings
-    st.caption("💡 成本价货币可切换为人民币/欧元/日元等，系统会用实时汇率自动换算为美元计算盈亏。")
+    st.caption(tr("ccy_hint"))
     st.divider()
 
     valid_holdings = [h for h in holdings if h["ticker"] and h["qty"] > 0 and h["cost"] > 0]
 
     if not valid_holdings:
-        st.info("👆 请添加至少一个持仓（代码、数量、成本价均需大于0）。股票用 AAPL 这类代码，加密货币用 BTC-USD 这类代码，大宗商品期货用 GC=F（黄金）/ HG=F（铜）这类代码。")
+        st.info(tr("holdings_empty"))
     else:
-        with st.spinner("正在获取持仓实时数据并分析..."):
+        with st.spinner(tr("holdings_fetching")):
             pos_results = {}
             for h in valid_holdings:
                 tk = h["ticker"]
@@ -5871,10 +6100,10 @@ with tabs[6]:
 
         _ok_tks = {h["ticker"] for h in valid_holdings
                    if pos_results.get(h["ticker"]) and "error" not in pos_results.get(h["ticker"], {})}
-        report_invalid_tickers([h["ticker"] for h in valid_holdings], _ok_tks, where="持仓统计")
+        report_invalid_tickers([h["ticker"] for h in valid_holdings], _ok_tks, where=tr("where_holdings"))
 
         if not rows:
-            st.error("无法获取任何持仓的数据，请检查代码是否正确。")
+            st.error(tr("holdings_none_ok"))
         else:
             total_cost    = sum(x["cost_v"] for x in rows)
             total_mv      = sum(x["mv"] for x in rows)
@@ -5892,18 +6121,14 @@ with tabs[6]:
 
             _best = max(rows, key=lambda x: x["pnl"])
             _worst = min(rows, key=lambda x: x["pnl"])
-            why(f"= 每个持仓的「数量 × 成本价」之和（非美元成本已按实时汇率折算）。"
-                f"这是你实际投进去的本金，也是所有收益率的分母。", "neutral", title="总成本", target=oc1)
-            why(f"= 每个持仓的「数量 × 最新价」之和。价格取自雅虎财经的最近收盘价，"
-                f"所以盘中看到的是上一个交易日收盘的口径，不是实时逐笔。", "neutral", title="当前市值", target=oc2)
-            why(f"= 当前市值 − 总成本 = ${total_mv:,.2f} − ${total_cost:,.2f}。"
-                f"这轮盈亏主要由 **{_best['h']['ticker']}（{_best['pnl']:+,.0f}）** 贡献，"
-                f"**{_worst['h']['ticker']}（{_worst['pnl']:+,.0f}）** 拖累最多。"
-                f"下方「逐个持仓深度分析」里会逐一解释每只为什么涨/跌。",
+            why(nt("w_total_cost"), "neutral", title=tr("m_total_cost"), target=oc1)
+            why(nt("w_mkt_value"), "neutral", title=tr("m_market_value"), target=oc2)
+            why(nt("w_total_pnl", mv=total_mv, cost=total_cost,
+                      best=_best["h"]["ticker"], bestv=_best["pnl"],
+                      worst=_worst["h"]["ticker"], worstv=_worst["pnl"]),
                 "good" if total_pnl >= 0 else "bad", calc=f"${total_mv:,.2f} − ${total_cost:,.2f} = ${total_pnl:+,.2f}"
                 f"　→　{total_pnl_pct:+.1f}%", title="总盈亏", target=oc3)
-            why(f"{len(rows)} 个持仓中有 {win_n} 个当前处于盈利。这个比例反映的是**选股胜率**，"
-                f"但它和总盈亏不是一回事——一个重仓的大亏损可以盖过好几个小盈利，所以要和上面的总盈亏一起看。",
+            why(nt("w_win_ratio", n=len(rows), win=win_n),
                 "good" if win_n * 2 >= len(rows) else "warn", title="盈利/持仓数", target=oc4)
 
             pie_c, list_c = st.columns([1, 2])
@@ -5940,105 +6165,107 @@ with tabs[6]:
             st.divider()
 
             # ── 整体持仓评估（长期怎么样）──
-            st.markdown("#### 🎯 整体持仓长期评估")
+            st.markdown(tr("sec_holdings_lt"))
             weighted_lt = sum(x["r"]["lt_score"] * max(x["mv"], 0.01) for x in rows) / total_mv if total_mv > 0 else 0
             n_bull = sum(1 for x in rows if x["r"]["lt_score"] >= 60)
             n_bear = sum(1 for x in rows if x["r"]["lt_score"] < 45)
             verdict_color = "#0F6E56" if weighted_lt >= 60 else "#BA7517" if weighted_lt >= 45 else "#A32D2D"
-            verdict_text = ("整体持仓长期质量偏高，多数标的具备可持续的成长逻辑，适合继续持有并定期复核。" if weighted_lt >= 60 else
-                            "整体持仓长期质量中性，建议定期跟踪基本面变化，逢高适度调整配置结构。" if weighted_lt >= 45 else
-                            "整体持仓长期质量偏弱，建议重新评估配置结构，逐步向长期评分更高的标的倾斜。")
+            verdict_text = (nt("lt_verdict_hi") if weighted_lt >= 60 else
+                            nt("lt_verdict_mid") if weighted_lt >= 45 else nt("lt_verdict_lo"))
             st.markdown(
                 f'<div style="background:{verdict_color};color:white;padding:14px 18px;border-radius:10px;font-size:14px">'
-                f'<b>持仓加权长期评分：{weighted_lt:.0f}/100</b>　|　长期看好 {n_bull} 个持仓　·　长期偏弱 {n_bear} 个持仓<br>'
+                + tr("lt_weighted", score=weighted_lt, bull=n_bull, bear=n_bear) + '<br>'
                 f'<span style="font-size:13px;opacity:0.9">{verdict_text}</span></div>',
                 unsafe_allow_html=True
             )
 
             st.divider()
-            st.markdown("#### 🔍 逐个持仓深度分析")
-            st.caption("展开每个持仓查看：盈亏归因（为什么涨/跌）· 长期投资前景 · 所属赛道的市场潜力")
+            st.markdown(tr("sec_holdings_each"))
+            st.caption(tr("holdings_each_cap"))
 
             def analyze_position_pnl(h, r, pnl_pct, cost_usd, ccy_code):
                 """分析单个持仓的盈亏原因"""
                 lines = []
                 cur = r["price_now"]
-                direction = "盈利" if pnl_pct >= 0 else "亏损"
+                direction = nt("dir_profit") if pnl_pct >= 0 else nt("dir_loss")
                 if ccy_code != "USD":
                     ccy_sym = CURRENCY_SYMBOLS.get(ccy_code, "$")
-                    lines.append(f"**成本价 {ccy_sym}{h['cost']:.2f} {ccy_code}（≈${cost_usd:.2f}）→ 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
+                    _cd = f"{ccy_sym}{h['cost']:.2f} {ccy_code} (\u2248${cost_usd:.2f})"
                 else:
-                    lines.append(f"**成本价 ${cost_usd:.2f} → 现价 ${cur:.2f}，当前{direction} {abs(pnl_pct):.1f}%**")
+                    _cd = f"${cost_usd:.2f}"
+                lines.append(nt("pnl_head", cost_disp=_cd, cur=cur,
+                                direction=direction, pct=abs(pnl_pct)))
 
                 if r["mom_1m"] > 5:
-                    lines.append(f"📈 近1个月上涨 {r['mom_1m']:+.1f}%，短期动能是近期表现的主要驱动力。")
+                    lines.append(nt("pnl_mom_up", m=r["mom_1m"]))
                 elif r["mom_1m"] < -5:
-                    lines.append(f"📉 近1个月下跌 {r['mom_1m']:.1f}%，短期抛压是近期走弱的主因。")
+                    lines.append(nt("pnl_mom_dn", m=r["mom_1m"]))
                 else:
-                    lines.append(f"➡️ 近1个月走势平淡（{r['mom_1m']:+.1f}%），短期没有明显单边驱动。")
+                    lines.append(nt("pnl_mom_flat", m=r["mom_1m"]))
 
                 if r["rsi"] > 70:
-                    lines.append(f"RSI={r['rsi']:.1f} 处于超买区间，若持仓正在盈利，需警惕短线获利回吐风险。")
+                    lines.append(nt("pnl_rsi_hi", v=r["rsi"]))
                 elif r["rsi"] < 30:
-                    lines.append(f"RSI={r['rsi']:.1f} 处于超卖区间，若持仓正在亏损，历史上此位置出现反弹的概率较高。")
+                    lines.append(nt("pnl_rsi_lo", v=r["rsi"]))
 
                 if r["macd_hist"] > 0:
-                    lines.append("MACD柱为正，多头动能仍在，短期趋势偏向支撑价格。")
+                    lines.append(nt("pnl_macd_pos"))
                 else:
-                    lines.append("MACD柱为负，空头动能主导，短期趋势仍偏弱，是压制价格的因素之一。")
+                    lines.append(nt("pnl_macd_neg"))
 
                 if r["obv_trend"] == "上升":
-                    lines.append(f"OBV资金面显示净流入（高于均线{r['obv_pct']:.1f}%），资金仍在积极参与，对价格形成支撑。")
+                    lines.append(nt("pnl_obv_in", v=r["obv_pct"]))
                 else:
-                    lines.append(f"OBV资金面显示净流出（低于均线{abs(r['obv_pct']):.1f}%），资金持续撤离是价格承压的重要原因之一。")
+                    lines.append(nt("pnl_obv_out", v=abs(r["obv_pct"])))
 
                 macro_sc  = st.session_state.get("macro_score")
                 macro_out = st.session_state.get("macro_outlook")
                 if macro_sc is not None:
                     beta = r.get("beta") or 1.0
                     if pnl_pct < 0 and macro_sc < 0:
-                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），高利率/通胀等逆风因素叠加该标的Beta={beta:.2f}，放大了下跌压力——部分亏损可归因于系统性宏观风险，而非仅仅是标的自身问题。")
+                        lines.append(nt("pnl_macro_bad", sc=macro_sc, out=macro_out, beta=beta))
                     elif pnl_pct >= 0 and macro_sc > 0:
-                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），顺风环境叠加该标的Beta={beta:.2f}放大了涨幅——部分盈利受益于系统性宏观利好，而非仅仅是个股alpha。")
+                        lines.append(nt("pnl_macro_good", sc=macro_sc, out=macro_out, beta=beta))
                     else:
-                        lines.append(f"当前宏观环境评分为 {macro_sc:+d}（{macro_out}），与该持仓当前走势方向不完全一致，说明个股/资产自身的基本面或资金面因素目前占主导。")
+                        lines.append(nt("pnl_macro_mixed", sc=macro_sc, out=macro_out))
                 else:
-                    lines.append("💡 前往「🌐 宏观分析」Tab 加载宏观数据后，此处会补充宏观环境对该持仓盈亏的归因分析。")
+                    lines.append(nt("pnl_macro_none"))
 
                 return lines
 
             for x in rows:
                 h, r = x["h"], x["r"]
                 icon = "🟢" if x["pnl"] >= 0 else "🔴"
-                with st.expander(f"{icon} {h['ticker']} · {r.get('name', h['ticker'])} — 盈亏 {x['pnl_pct']:+.1f}%",
+                with st.expander(tr("pos_expander", icon=icon, tk=h["ticker"],
+                                     name=r.get("name", h["ticker"]), pct=x["pnl_pct"]),
                                  expanded=False):
                     ccy_sym = CURRENCY_SYMBOLS.get(x["ccy_code"], "$")
                     cost_disp = (f"{ccy_sym}{h['cost']:.2f} {x['ccy_code']}"
                                 if x["ccy_code"] != "USD" else f"${h['cost']:.2f}")
 
                     pc1, pc2, pc3, pc4 = st.columns(4)
-                    pc1.metric("持仓数量", f"{h['qty']:g}")
-                    pc2.metric("成本 / 现价", f"{cost_disp} / ${r['price_now']:.2f}")
-                    pc3.metric("盈亏金额", f"${x['pnl']:+,.2f}")
-                    pc4.metric("盈亏比例", f"{x['pnl_pct']:+.1f}%",
+                    pc1.metric(tr("pos_qty"), f"{h['qty']:g}")
+                    pc2.metric(tr("pos_cost_price"), f"{cost_disp} / ${r['price_now']:.2f}")
+                    pc3.metric(tr("pos_pnl_amt"), f"${x['pnl']:+,.2f}")
+                    pc4.metric(tr("pos_pnl_pct"), f"{x['pnl_pct']:+.1f}%",
                                delta_color="normal" if x["pnl_pct"] >= 0 else "inverse")
 
-                    st.markdown("**🧠 盈亏归因分析（为什么涨/跌）**")
+                    st.markdown(tr("pos_attr"))
                     for line in analyze_position_pnl(h, r, x["pnl_pct"], x["cost_usd"], x["ccy_code"]):
                         st.markdown(f"- {line}")
 
-                    st.markdown("**🏦 长期投资前景**")
+                    st.markdown(tr("pos_lt"))
                     st.markdown(
                         f'<div style="background:#F8F9FA;border-left:4px solid {r["lt_color"]};'
                         f'padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:10px">'
-                        f'<b style="color:{r["lt_color"]}">{r["lt_rating"]}</b>（长期评分 {r["lt_score"]}/100）'
-                        f'&nbsp;·&nbsp;夏普比率 {r["sharpe"]:.2f}'
-                        f'&nbsp;·&nbsp;20日趋势斜率 {r["slope_pct"]:+.2f}%/日'
-                        f'&nbsp;·&nbsp;价格{"高于" if r["price_now"]>r["ma200"] else "低于"}MA200'
-                        f'</div>', unsafe_allow_html=True
+                        f'<b style="color:{r["lt_color"]}">{r["lt_rating"]}</b>'
+                        + tr("lt_score_line", score=r["lt_score"], sharpe=r["sharpe"],
+                             slope=r["slope_pct"],
+                             ma=tr("above") if r["price_now"] > r["ma200"] else tr("below"))
+                        + '</div>', unsafe_allow_html=True
                     )
 
-                    st.markdown("**🚀 赛道 / 市场潜力分析**")
+                    st.markdown(tr("pos_track"))
                     track_name, track_color, track_desc = get_track_info(h["ticker"], r.get("sector"))
                     st.markdown(
                         f'<div style="background:#F8F9FA;border-left:4px solid {track_color};'
@@ -6047,19 +6274,14 @@ with tabs[6]:
                         f'</div>', unsafe_allow_html=True
                     )
 
-            st.warning("⚠️ 以上分析基于技术指标及公开财报数据，仅供参考，不构成投资建议。投资有风险，入市需谨慎。")
+            st.warning(tr("disc_tab_note"))
 
 # ── Tab 8: 投资圣杯（达里欧分散化法则） ────────────────────────────────────────────
 with tabs[7]:
     st.subheader(tr("sec_grail"))
-    st.caption("Ray Dalio：「把 15 个以上互不相关的收益流组合起来，能在不牺牲收益的前提下把风险降低约 80%」—— 这是投资里唯一的免费午餐")
+    st.caption(nt("hg_caption"))
 
-    why("达里欧发现：决定组合风险的不是你持有多少个标的，而是这些标的**彼此有多不相关**。"
-        "持有 10 只都在 AI 赛道上的股票，看起来很分散，实际只是同一个赌注下了 10 次；"
-        "而股票 + 长久期国债 + 黄金 + 大宗商品这种组合，即使只有 4 个，风险下降幅度也远大于前者。"
-        "下面这条曲线就是圣杯的核心：**相关性越低，曲线掉得越快**。",
-        "neutral", calc="组合风险 σₚ = σ × √( 1/n + (n−1)/n × ρ )　　n=资产个数，ρ=平均相关性",
-        title="什么是投资圣杯")
+    why(nt("hg_intro"), "neutral", calc=nt("hg_intro_calc"), title=tr("hg_intro_title"))
 
     # ── 1. 圣杯理论曲线 ──
     _hg_n = np.arange(1, 21)
@@ -6067,48 +6289,45 @@ with tabs[7]:
     for _rho, _clr in [(0.0, "#0F6E56"), (0.2, "#1D9E75"), (0.4, "#BA7517"), (0.6, "#A32D2D")]:
         _risk = np.sqrt(1 / _hg_n + (_hg_n - 1) / _hg_n * _rho) * 100
         fig_hg.add_trace(go.Scatter(
-            x=_hg_n, y=_risk, mode="lines", name=f"平均相关性 ρ={_rho:.1f}",
+            x=_hg_n, y=_risk, mode="lines", name=tr("hg_legend", r=_rho),
             line=dict(color=_clr, width=2.6),
-            hovertemplate=f"ρ={_rho:.1f}<br>%{{x}} 个资产<br>风险为单一资产的 %{{y:.0f}}%<extra></extra>",
+            hovertemplate=f"ρ={_rho:.1f}<br>%{{x}} " + tr("hg_hover") + " %{y:.0f}%<extra></extra>",
         ))
     fig_hg.add_vline(x=5, line_dash="dot", line_color="#888", line_width=1.2,
-                     annotation_text=" 5个资产", annotation_font=dict(size=11))
+                     annotation_text=tr("hg_ann_5"), annotation_font=dict(size=11))
     fig_hg.add_vline(x=15, line_dash="dot", line_color="#534AB7", line_width=1.2,
-                     annotation_text=" 达里欧建议的15个", annotation_font=dict(size=11, color="#534AB7"))
+                     annotation_text=tr("hg_ann_15"), annotation_font=dict(size=11, color="#534AB7"))
     fig_hg.update_layout(
-        height=380, title=dict(text="圣杯曲线：资产越多、相关性越低，风险下降越快", font=dict(size=14)),
-        xaxis=dict(title="互不相关的资产个数", dtick=1, showgrid=True, gridcolor="#eeeeee"),
-        yaxis=dict(title="组合风险（相对单一资产 %）", showgrid=True, gridcolor="#eeeeee"),
+        height=380, title=dict(text=tr("hg_curve_title"), font=dict(size=14)),
+        xaxis=dict(title=tr("hg_ax_n"), dtick=1, showgrid=True, gridcolor="#eeeeee"),
+        yaxis=dict(title=tr("hg_ax_risk"), showgrid=True, gridcolor="#eeeeee"),
         legend=dict(orientation="h", y=1.1, x=0), margin=dict(t=70, b=50, l=60, r=30),
         hovermode="x unified",
     )
     glass_chart(fig_hg)
-    why("看 ρ=0（绿线）：1个资产风险是100%，5个降到45%，15个只剩26%——**风险砍掉约四分之三，而预期收益一分没少**。"
-        "再看 ρ=0.6（红线）：从1个加到15个，风险只从100%降到约80%，加再多也降不下去了，"
-        "因为 n→∞ 时曲线收敛于 √ρ（=77%）。这就是为什么达里欧强调「**不相关**」比「多」重要得多。",
-        "good", title="这条曲线在说什么")
+    why(nt("hg_curve_read"), "good", title=tr("hg_curve_read_t"))
 
     st.divider()
 
     # ── 2. 选择要分析的资产 ──
-    st.markdown("#### 🎯 分析你自己的组合")
+    st.markdown(tr("hg_your_pf"))
     _hold_tks = [h["ticker"] for h in st.session_state.get("holdings", []) if h.get("ticker")]
     if "hg_tickers" not in st.session_state:
         st.session_state["hg_tickers"] = (_hold_tks if len(_hold_tks) >= 2
                                           else ["SPY", "TLT", "GLD", "DBC", "VNQ", "BTC-USD"])
 
     _hg_presets = {
-        "🌦️ 全天候(达里欧)": ["VTI", "TLT", "IEF", "GLD", "DBC"],
-        "📊 股债黄金": ["SPY", "TLT", "GLD"],
-        "🌍 多元分散": ["SPY", "EFA", "VWO", "TLT", "GLD", "DBC", "VNQ", "BTC-USD"],
-        "🤖 AI集中(反面教材)": ["NVDA", "AMD", "SMCI", "MSFT", "GOOGL", "META"],
+        tr("hg_preset_aw"): ["VTI", "TLT", "IEF", "GLD", "DBC"],
+        tr("hg_preset_sbg"): ["SPY", "TLT", "GLD"],
+        tr("hg_preset_div"): ["SPY", "EFA", "VWO", "TLT", "GLD", "DBC", "VNQ", "BTC-USD"],
+        tr("hg_preset_ai"): ["NVDA", "AMD", "SMCI", "MSFT", "GOOGL", "META"],
     }
     _pc = st.columns(len(_hg_presets) + 1)
     for _i, (_pn, _pt) in enumerate(_hg_presets.items()):
         if _pc[_i].button(_pn, key=f"hg_preset_{_i}", use_container_width=True):
             st.session_state["hg_tickers"] = _pt
             st.rerun()
-    if _pc[-1].button("💰 用我的持仓", key="hg_use_holdings", use_container_width=True,
+    if _pc[-1].button(tr("hg_use_holdings"), key="hg_use_holdings", use_container_width=True,
                       disabled=len(_hold_tks) < 2):
         st.session_state["hg_tickers"] = _hold_tks
         st.rerun()
@@ -6118,18 +6337,18 @@ with tabs[7]:
         _hg_opts = list(dict.fromkeys(list(st.session_state["hg_tickers"]) + list(TICKER_UNIVERSE.keys())))
         try:
             _hg_tickers = st.multiselect(
-                "🔍 选择资产（边打边出提示，建议 5 个以上且分属不同类别）",
+                tr("hg_pick_assets"),
                 _hg_opts, default=st.session_state["hg_tickers"], key="hg_pick",
                 format_func=_uni_label, accept_new_options=True,
-                help="输入首字母即可联想，如 X → XOM / XLK；库里没有的代码也能直接输入")
+                help=tr("hg_pick_help"))
         except TypeError:
             _hg_tickers = st.multiselect(
-                "🔍 选择资产（建议 5 个以上且分属不同类别）",
+                tr("hg_pick_assets"),
                 _hg_opts, default=st.session_state["hg_tickers"], key="hg_pick",
                 format_func=_uni_label)
         _hg_tickers = [t.strip().upper() for t in _hg_tickers if t and t.strip()]
-    _hg_period = _hg_c2.selectbox("回看区间", ["1y", "2y", "3y", "5y"], index=1, key="hg_period")
-    _hg_bench = _hg_c3.selectbox("Beta基准", ["SPY", "QQQ", "VTI"], index=0, key="hg_bench")
+    _hg_period = _hg_c2.selectbox(tr("hg_lookback"), ["1y", "2y", "3y", "5y"], index=1, key="hg_period")
+    _hg_bench = _hg_c3.selectbox(tr("hg_bench"), ["SPY", "QQQ", "VTI"], index=0, key="hg_bench")
     st.session_state["hg_tickers"] = _hg_tickers
 
     @st.cache_data(ttl=900, show_spinner=False)
@@ -6167,15 +6386,15 @@ with tabs[7]:
         return df[keep], bench_s
 
     if len(_hg_tickers) < 2:
-        st.info("👆 请至少输入 2 个资产代码（要看出圣杯效应，建议 5 个以上且分属不同资产类别）")
+        st.info(tr("hg_need2"))
     else:
-        with st.spinner("正在计算相关性矩阵与 Alpha/Beta..."):
+        with st.spinner(tr("hg_computing")):
             _rets, _bench_r = fetch_returns_matrix(tuple(_hg_tickers), _hg_period, _hg_bench)
 
         if _rets is None or _rets.shape[1] < 2:
-            st.error("有效数据不足，请检查代码是否正确（至少需要 2 个能取到数据的资产）。")
+            st.error(tr("hg_nodata"))
         else:
-            report_invalid_tickers(_hg_tickers, set(_rets.columns), where="相关性与Alpha/Beta计算")
+            report_invalid_tickers(_hg_tickers, set(_rets.columns), where=tr("hg_where"))
 
             _n = _rets.shape[1]
             _corr = _rets.corr()
@@ -6190,41 +6409,37 @@ with tabs[7]:
 
             # ── 核心结论卡 ──
             k1, k2, k3, k4 = st.columns(4)
-            k1.metric("资产个数", f"{_n} 个", "达标 ✓" if _n >= 5 else "少于5个",
+            k1.metric(tr("hg_m_n"), f"{_n}", tr("hg_m_n_ok") if _n >= 5 else tr("hg_m_n_bad"),
                       delta_color="normal" if _n >= 5 else "inverse")
-            k2.metric("平均相关性 ρ", f"{_rho_bar:.2f}", "越低越好", delta_color="off")
-            k3.metric("有效分散数", f"{_n_eff:.1f} 个", f"名义{_n}个", delta_color="off")
-            k4.metric("风险下降幅度", f"{_div_benefit:.1f}%",
+            k2.metric(tr("hg_m_rho"), f"{_rho_bar:.2f}", tr("hg_m_rho_d"), delta_color="off")
+            k3.metric(tr("hg_m_eff"), f"{_n_eff:.1f}", tr("hg_m_eff_d", n=_n), delta_color="off")
+            k4.metric(tr("hg_m_cut"), f"{_div_benefit:.1f}%",
                       f"{_avg_vol*100:.1f}% → {_pf_vol*100:.1f}%", delta_color="normal")
 
-            why(f"你选了 {_n} 个资产，它们两两之间的平均相关性是 **{_rho_bar:.2f}**。"
-                + ("相关性很低，接近达里欧说的「互不相关的收益流」。" if _rho_bar < 0.3 else
-                   "相关性偏高，说明它们很大程度上在赌同一件事。" if _rho_bar < 0.6 else
-                   "相关性非常高，这些资产基本是同涨同跌，分散效果有限。"),
+            why(nt("hg_w_rho", n=_n, rho=_rho_bar,
+                      verdict=(nt("hg_rho_lo") if _rho_bar < 0.3 else
+                               nt("hg_rho_mid") if _rho_bar < 0.6 else nt("hg_rho_hi"))),
                 "good" if _rho_bar < 0.3 else "warn" if _rho_bar < 0.6 else "bad",
-                title=f"平均相关性 {_rho_bar:.2f}", target=k2)
-            why(f"名义上你有 {_n} 个资产，但因为它们彼此相关，实际只相当于 **{_n_eff:.1f} 个独立赌注**。"
-                f"相关性越高，这个数字缩水得越厉害——这才是衡量「真分散」的指标。",
+                title=tr("hg_t_rho", rho=_rho_bar), target=k2)
+            why(nt("hg_w_eff", n=_n, eff=_n_eff),
                 "good" if _n_eff >= 5 else "warn" if _n_eff >= 3 else "bad",
                 calc=f"{_n} ÷ (1 + {_n-1} × {_rho_bar:.2f}) = {_n_eff:.1f}",
-                title=f"有效分散数 {_n_eff:.1f}", target=k3)
-            why(f"单个资产的平均年化波动率是 {_avg_vol*100:.1f}%，而等权组合的实际波动率只有 {_pf_vol*100:.1f}%，"
-                f"**风险被抹掉了 {_div_benefit:.1f}%**。这部分降低完全来自资产之间的不相关性，"
-                f"不需要你放弃任何预期收益——这就是达里欧说的免费午餐。",
+                title=tr("hg_t_eff", eff=_n_eff), target=k3)
+            why(nt("hg_w_cut", avg=_avg_vol*100, pf=_pf_vol*100, cut=_div_benefit),
                 "good" if _div_benefit > 25 else "warn",
                 calc=f"1 − {_pf_vol*100:.1f}% ÷ {_avg_vol*100:.1f}% = {_div_benefit:.1f}%",
-                title=f"风险下降 {_div_benefit:.1f}%", target=k4)
+                title=tr("hg_t_cut", cut=_div_benefit), target=k4)
 
             st.divider()
 
             # ── 3. 相关性矩阵 ──
-            st.markdown("#### 🔥 相关性矩阵")
+            st.markdown(tr("hg_corr_matrix"))
             fig_corr = go.Figure(go.Heatmap(
                 z=_corr.values, x=list(_corr.columns), y=list(_corr.columns),
                 colorscale="RdYlGn_r", zmin=-1, zmax=1,
                 text=np.round(_corr.values, 2), texttemplate="%{text}",
-                textfont=dict(size=11), colorbar=dict(title="相关性"),
-                hovertemplate="%{y} vs %{x}<br>相关性 %{z:.2f}<extra></extra>",
+                textfont=dict(size=11), colorbar=dict(title=tr("hg_corr")),
+                hovertemplate="%{y} vs %{x}<br>" + tr("hg_corr") + " %{z:.2f}<extra></extra>",
             ))
             fig_corr.update_layout(height=90 + 52 * _n, margin=dict(t=20, b=40, l=90, r=30))
             glass_chart(fig_corr)
@@ -6236,18 +6451,15 @@ with tabs[7]:
                     _pairs.append((_cols[_i], _cols[_j], float(_corr.iloc[_i, _j])))
             _pairs.sort(key=lambda x: x[2])
             _lowest, _highest = _pairs[0], _pairs[-1]
-            why(f"绿色=不相关（好），红色=同涨同跌（分散无效）。"
-                f"当前**最理想的一对是 {_lowest[0]} 与 {_lowest[1]}（{_lowest[2]:.2f}）**，"
-                f"它们几乎独立，是组合里真正起分散作用的部分；"
-                f"而 **{_highest[0]} 与 {_highest[1]} 的相关性高达 {_highest[2]:.2f}**，"
-                + ("这两个基本可以看作同一个资产，同时持有并不会带来额外的分散效果。"
-                   if _highest[2] > 0.7 else "相关性偏高，分散作用有限。"),
-                "neutral", title="怎么读这张图")
+            why(nt("hg_corr_read", lo1=_lowest[0], lo2=_lowest[1], lov=_lowest[2],
+                      hi1=_highest[0], hi2=_highest[1], hiv=_highest[2],
+                      tail=nt("hg_corr_tail_hi") if _highest[2] > 0.7 else nt("hg_corr_tail_mid")),
+                "neutral", title=tr("why_howto_read"))
 
             st.divider()
 
             # ── 4. 你的组合在圣杯曲线上的位置 ──
-            st.markdown("#### 📍 你的组合在圣杯曲线上的位置")
+            st.markdown(tr("hg_pos_title"))
             fig_pos = go.Figure()
             for _rho, _clr in [(0.0, "#0F6E56"), (0.2, "#1D9E75"), (0.4, "#BA7517"), (0.6, "#A32D2D")]:
                 fig_pos.add_trace(go.Scatter(
@@ -6257,40 +6469,31 @@ with tabs[7]:
                 ))
             fig_pos.add_trace(go.Scatter(
                 x=[_n], y=[_pf_vol / _avg_vol * 100 if _avg_vol > 0 else 100],
-                mode="markers+text", name="你的组合",
+                mode="markers+text", name=tr("hg_your_pf_marker"),
                 marker=dict(size=20, color="#534AB7", symbol="star",
                             line=dict(color="white", width=2)),
-                text=[f" 你在这里（{_n}个资产，ρ={_rho_bar:.2f}）"], textposition="middle right",
+                text=[tr("hg_you_here", n=_n, rho=_rho_bar)], textposition="middle right",
                 textfont=dict(size=12, color="#534AB7"),
             ))
             fig_pos.update_layout(
-                height=400, xaxis=dict(title="资产个数", dtick=1, showgrid=True, gridcolor="#eeeeee"),
-                yaxis=dict(title="组合风险（相对单一资产 %）", showgrid=True, gridcolor="#eeeeee"),
+                height=400, xaxis=dict(title=tr("hg_ax_n2"), dtick=1, showgrid=True, gridcolor="#eeeeee"),
+                yaxis=dict(title=tr("hg_ax_risk"), showgrid=True, gridcolor="#eeeeee"),
                 legend=dict(orientation="h", y=1.1, x=0), margin=dict(t=60, b=50, l=60, r=140),
             )
             glass_chart(fig_pos)
             _room = _pf_vol / _avg_vol * 100 - np.sqrt(1 / max(_n, 1)) * 100
-            why(f"紫色星星就是你现在的位置：{_n} 个资产、平均相关性 {_rho_bar:.2f}，"
-                f"组合风险是单一资产的 {_pf_vol/_avg_vol*100:.0f}%。"
-                f"如果这 {_n} 个资产完全不相关（ρ=0），风险本可以降到 {np.sqrt(1/max(_n,1))*100:.0f}%，"
-                f"**中间这 {_room:.0f} 个百分点的差距就是相关性吃掉的分散收益**。"
-                f"想往绿线靠，靠的不是继续加同类资产，而是加入定价逻辑完全不同的资产类别。",
-                "good" if _room < 15 else "warn", title="怎么读这张图")
+            why(nt("hg_pos_read", n=_n, rho=_rho_bar, cur=_pf_vol/_avg_vol*100,
+                      ideal=np.sqrt(1/max(_n, 1))*100, room=_room),
+                "good" if _room < 15 else "warn", title=tr("why_howto_read"))
 
             st.divider()
 
             # ── 5. Alpha / Beta 分解 ──
-            st.markdown(f"#### ⚖️ Alpha / Beta 分解（基准：{_hg_bench}）")
-            why("达里欧把收益拆成两部分：**Beta 是你承担市场风险自动拿到的收益**（买指数就有，几乎免费）；"
-                "**Alpha 是与市场无关的超额收益**（真正稀缺、需要能力）。"
-                "分散化的意义在于：Beta 之间往往高度相关，而不同来源的 Alpha 天然不相关——"
-                "所以圣杯的真正含义是「收集多个互不相关的 Alpha」。下面对每个资产做回归："
-                "β 是它对大盘的敏感度，α 是剔除大盘影响后的年化超额收益，R² 是波动中由大盘解释的比例。",
-                "neutral", calc="资产日收益 = α + β × 基准日收益 + ε　（最小二乘回归）",
-                title="Alpha 和 Beta 有什么区别")
+            st.markdown(tr("hg_ab_title", b=_hg_bench))
+            why(nt("hg_ab_intro"), "neutral", calc=nt("hg_ab_calc"), title=tr("hg_ab_title2"))
 
             if _bench_r is None:
-                st.warning(f"无法取得基准 {_hg_bench} 的数据，跳过 Alpha/Beta 分解。")
+                st.warning(tr("hg_ab_nobench", b=_hg_bench))
             else:
                 _bvar = float(_bench_r.var())
                 _ab_rows = []
@@ -6311,115 +6514,104 @@ with tabs[7]:
                         f'<div><div class="ac-name">{_tk}</div>'
                         f'<div class="ac-sub">β={_beta:.2f} · R²={_r2*100:.0f}%</div></div></div>'
                         f'<div><div class="ac-val" style="color:{_ac}">α {_alpha:+.1f}%</div>'
-                        f'<div class="ac-note">年化超额收益（剔除大盘影响后）</div></div>'
+                        f'<div class="ac-note">{tr("hg_ab_note")}</div></div>'
                         '</div></div>'
                     )
                 render_asset_grid(_ab_cards, min_width=215)
 
-                with st.expander("📖 每个资产的 Alpha/Beta 怎么读？", expanded=False):
+                with st.expander(tr("hg_ab_expander"), expanded=False):
                     for _tk, _beta, _alpha, _r2 in sorted(_ab_rows, key=lambda x: -x[3]):
-                        _beta_txt = ("走势几乎与大盘无关，是组合里真正的分散来源" if abs(_beta) < 0.3 else
-                                     "与大盘反向，是天然的对冲工具" if _beta < 0 else
-                                     f"大盘涨1%它平均涨{_beta:.2f}%，属于放大版大盘" if _beta > 1.2 else
-                                     f"大盘涨1%它平均涨{_beta:.2f}%，波动小于大盘，偏防御")
-                        _r2_txt = (f"**{_r2*100:.0f}% 的波动由大盘解释**——这部分收益买指数就能拿到"
-                                   if _r2 > 0.5 else
-                                   f"只有 {_r2*100:.0f}% 的波动由大盘解释，**剩下 {(1-_r2)*100:.0f}% 是它自己的独立行情**，"
-                                   f"这正是圣杯需要的那种不相关收益流")
-                        _a_txt = (f"剔除大盘影响后年化 **{_alpha:+.1f}%** 的超额收益" if _alpha > 0 else
-                                  f"剔除大盘影响后年化 **{_alpha:+.1f}%**，承担了额外风险却没换来相应回报")
-                        why(f"β={_beta:.2f}，{_beta_txt}。{_r2_txt}。α：{_a_txt}。",
+                        _beta_txt = (nt("hg_beta_indep") if abs(_beta) < 0.3 else
+                                     nt("hg_beta_neg") if _beta < 0 else
+                                     nt("hg_beta_hi", b=_beta) if _beta > 1.2 else
+                                     nt("hg_beta_lo", b=_beta))
+                        _r2_txt = (nt("hg_r2_hi", r=_r2*100) if _r2 > 0.5
+                                   else nt("hg_r2_lo", r=_r2*100, rest=(1-_r2)*100))
+                        _a_txt = (nt("hg_alpha_pos", a=_alpha) if _alpha > 0
+                                  else nt("hg_alpha_neg", a=_alpha))
+                        why(nt("hg_ab_line", b=_beta, btxt=_beta_txt, r2txt=_r2_txt, atxt=_a_txt),
                             "good" if (_alpha > 0 and _r2 < 0.5) else "warn" if _alpha > 0 else "bad",
                             title=_tk)
 
                 _w = 1.0 / _n
                 _pf_beta = sum(b for _, b, _, _ in _ab_rows) * _w
                 _pf_alpha = sum(a for _, _, a, _ in _ab_rows) * _w
-                why(f"等权组合的加权 β = **{_pf_beta:.2f}**，加权 α = **{_pf_alpha:+.1f}%/年**。"
-                    + (f"β 接近1说明你的组合本质上还是在赌大盘方向，" if 0.8 <= _pf_beta <= 1.2 else
-                       f"β 只有 {_pf_beta:.2f}，组合对大盘的依赖度较低，这是好现象，" if _pf_beta < 0.8 else
-                       f"β 高达 {_pf_beta:.2f}，组合是放大版的大盘，牛市爽、熊市痛，")
-                    + "而真正决定你能否长期跑赢的是那部分 α。",
-                    "good" if _pf_beta < 0.8 else "warn", title="组合整体的 Alpha 与 Beta")
+                _tail = (nt("hg_pf_b_mid") if 0.8 <= _pf_beta <= 1.2 else
+                         nt("hg_pf_b_lo", b=_pf_beta) if _pf_beta < 0.8 else
+                         nt("hg_pf_b_hi", b=_pf_beta))
+                why(nt("hg_pf_ab", beta=_pf_beta, alpha=_pf_alpha, tail=_tail),
+                    "good" if _pf_beta < 0.8 else "warn", title=tr("hg_pf_ab_t"))
 
             st.divider()
 
             # ── 6. 圣杯评分与改进建议 ──
-            st.markdown("#### 🏅 圣杯评分")
+            st.markdown(tr("hg_score_title"))
             _sc_n   = 40 if _n >= 15 else 32 if _n >= 10 else 24 if _n >= 5 else 12 if _n >= 3 else 5
             _sc_rho = 40 if _rho_bar < 0.1 else 32 if _rho_bar < 0.3 else 20 if _rho_bar < 0.5 else 8 if _rho_bar < 0.7 else 2
             _sc_eff = 20 if _n_eff >= 8 else 14 if _n_eff >= 5 else 8 if _n_eff >= 3 else 3
             _hg_score = _sc_n + _sc_rho + _sc_eff
             _hg_color = ("#0F6E56" if _hg_score >= 75 else "#1D9E75" if _hg_score >= 60
                          else "#BA7517" if _hg_score >= 40 else "#A32D2D")
-            _hg_verdict = ("接近圣杯：资产数量足够、彼此独立性强，风险被有效摊薄" if _hg_score >= 75 else
-                           "分散良好：已经拿到大部分免费午餐，但仍有优化空间" if _hg_score >= 60 else
-                           "分散不足：看起来持有多个标的，实际押注高度重合" if _hg_score >= 40 else
-                           "几乎没有分散：这些资产本质上是同一个赌注")
+            _hg_verdict = (nt("hg_v_hi") if _hg_score >= 75 else
+                           nt("hg_v_mid") if _hg_score >= 60 else
+                           nt("hg_v_lo") if _hg_score >= 40 else nt("hg_v_none"))
             st.markdown(
                 f'<div style="background:{_hg_color};color:white;padding:16px 20px;border-radius:12px;font-size:14px">'
                 f'<span style="font-size:24px;font-weight:750">{_hg_score}/100</span>'
                 f'　<span style="font-size:15px;font-weight:600">{_hg_verdict}</span><br>'
-                f'<span style="font-size:12.5px;opacity:.92">资产数量 {_sc_n}/40　·　'
-                f'相关性 {_sc_rho}/40　·　有效分散数 {_sc_eff}/20</span></div>',
+                f'<span style="font-size:12.5px;opacity:.92">'
+                + tr("hg_score_break", n=_sc_n, r=_sc_rho, e=_sc_eff) + '</span></div>',
                 unsafe_allow_html=True)
-            why(f"评分由三部分构成：**资产个数 {_n} 个（{_sc_n}/40）**——达里欧建议15个以上；"
-                f"**平均相关性 {_rho_bar:.2f}（{_sc_rho}/40）**——这一项权重最重，因为它决定曲线的形状；"
-                f"**有效分散数 {_n_eff:.1f}（{_sc_eff}/20）**——名义资产数打完相关性折扣后的真实赌注数。"
-                f"{'你已满足「5个以上资产」的门槛，' if _n >= 5 else '你还没达到5个资产的基本门槛，'}"
-                f"但圣杯的关键从来不是数量，而是相关性。",
+            why(nt("hg_score_why", n=_n, sn=_sc_n, rho=_rho_bar, sr=_sc_rho, eff=_n_eff, se=_sc_eff,
+                      gate=nt("hg_gate_ok") if _n >= 5 else nt("hg_gate_no")),
                 "good" if _hg_score >= 60 else "warn" if _hg_score >= 40 else "bad",
-                calc=f"{_sc_n} + {_sc_rho} + {_sc_eff} = {_hg_score}/100", title="这个分数怎么来的")
+                calc=f"{_sc_n} + {_sc_rho} + {_sc_eff} = {_hg_score}/100", title=tr("why_score_src"))
 
             # 资产类别诊断
             def _classify(tk):
                 t = tk.upper()
                 if t.endswith("-USD"):
-                    return "加密货币"
+                    return tr("cls_crypto")
                 if t in ("TLT","IEF","SHY","BND","AGG","TIP","LQD","HYG","ZROZ","EDV","GOVT"):
-                    return "债券"
+                    return tr("cls_bond")
                 if t in ("GLD","IAU","SLV","GC=F","SI=F","PPLT","GDX","NEM"):
-                    return "贵金属"
+                    return tr("cls_pm")
                 if t in ("DBC","DJP","USO","UNG","CL=F","HG=F","CORN","WEAT","PDBC","FCX"):
-                    return "大宗商品"
+                    return tr("cls_comm")
                 if t in ("VNQ","IYR","SCHH","O","XLRE"):
-                    return "房地产"
+                    return tr("cls_re")
                 if t in ("EFA","VEA","VWO","EEM","FXI","MCHI","IEFA","IEMG","EWJ","BABA","JD","PDD","BIDU","NIO"):
-                    return "非美股票"
+                    return tr("cls_intl")
                 if t in ("UUP","FXE","FXY","USDU"):
-                    return "汇率"
-                return "美股"
+                    return tr("cls_fx")
+                return tr("cls_us")
             _classes = {}
             for _tk in _rets.columns:
                 _classes.setdefault(_classify(_tk), []).append(_tk)
             _missing_cls = {
-                "债券": ("长久期国债（TLT / IEF）", "经济衰退、避险时上涨，是股票最经典的负相关对冲；利率下行周期收益尤其明显"),
-                "贵金属": ("黄金（GLD / IAU）", "定价锚是实际利率和地缘风险，与企业盈利无关，常在股债双杀时逆势走强"),
-                "大宗商品": ("大宗商品（DBC / PDBC）", "通胀上行期股债往往同跌，而商品同涨，是对抗通胀情景的关键一块"),
-                "非美股票": ("非美股票（EFA / VWO）", "不同经济周期和货币体系，能摊薄单一国家的政策与汇率风险"),
-                "房地产": ("REITs（VNQ）", "租金现金流与股票盈利周期不完全同步，提供另一条收益来源"),
-                "加密货币": ("加密资产（BTC-USD）", "定价逻辑独立于企业盈利，但近年与纳指相关性上升，权重不宜过高"),
+                tr("cls_bond"):   (tr("hg_sugg_bond"),   nt("hg_sugg_bond_r")),
+                tr("cls_pm"):     (tr("hg_sugg_gold"),   nt("hg_sugg_gold_r")),
+                tr("cls_comm"):   (tr("hg_sugg_comm"),   nt("hg_sugg_comm_r")),
+                tr("cls_intl"):   (tr("hg_sugg_intl"),   nt("hg_sugg_intl_r")),
+                tr("cls_re"):     (tr("hg_sugg_re"),     nt("hg_sugg_re_r")),
+                tr("cls_crypto"): (tr("hg_sugg_crypto"), nt("hg_sugg_crypto_r")),
             }
             _have = set(_classes.keys())
             _sugg = [(v[0], v[1]) for k, v in _missing_cls.items() if k not in _have]
-            st.markdown("**当前组合的资产类别构成**")
+            st.markdown(tr("hg_cls_title"))
             st.markdown(
                 " ".join(f'<span style="display:inline-block;background:rgba(83,74,183,.12);color:#534AB7;'
                          f'border-radius:99px;padding:3px 12px;font-size:12px;font-weight:600;margin:2px">'
                          f'{k}：{", ".join(v)}</span>' for k, v in _classes.items()),
                 unsafe_allow_html=True)
             if _sugg:
-                why("你的组合目前缺少以下资产类别，它们与股票的定价逻辑不同，是把平均相关性压下来最有效的方式："
+                why(nt("hg_missing")
                     + "；".join(f"**{name}** — {rsn}" for name, rsn in _sugg[:4]) + "。",
-                    "warn", title="想往绿线靠，可以补什么")
+                    "warn", title=tr("hg_missing_t"))
             else:
-                why("你的组合已经覆盖了主要的低相关资产类别（股、债、金、商品等），"
-                    "接下来的优化方向不是继续加类别，而是调整各类别的**风险权重**——"
-                    "达里欧的全天候策略就是按风险平价（risk parity）而非金额平均来配置的。",
-                    "good", title="类别覆盖情况")
+                why(nt("hg_covered"), "good", title=tr("hg_covered_t"))
 
-            st.warning("⚠️ 相关性会随市场环境变化——危机时各类资产的相关性往往同时飙升（所谓「危机时刻相关性趋近于1」），"
-                       "历史相关性只能作为参考，不构成投资建议。")
+            st.warning(nt("hg_warn"))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 📄 页脚免责声明（位于所有 Tab 之外，每个页面底部都会显示）
