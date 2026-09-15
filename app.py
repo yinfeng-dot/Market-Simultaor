@@ -157,6 +157,22 @@ I18N = {
    "de":"ℹ️ Die Oberfläche ist übersetzt; die ausführlichen Analysetexte sind vorerst auf Chinesisch.",
    "ja":"ℹ️ UIは翻訳済みですが、詳細な自動生成コメントは現時点では中国語のままです。",
    "ko":"ℹ️ 인터페이스는 번역되었지만 상세 자동 생성 해설은 아직 중국어입니다."},
+ "why_default":{"zh":"为什么是这个结果","en":"Why this result","es":"Por qué este resultado","fr":"Pourquoi ce résultat","de":"Warum dieses Ergebnis","ja":"なぜこの結果になるか","ko":"왜 이런 결과인가"},
+ "why_score_src":{"zh":"这个分数怎么来的","en":"How this score is computed","es":"Cómo se calcula","fr":"Comment ce score est calculé","de":"Wie dieser Wert entsteht","ja":"このスコアの算出方法","ko":"이 점수의 산출 방식"},
+ "why_overall":{"zh":"整体怎么看","en":"The big picture","es":"Visión general","fr":"Vue d'ensemble","de":"Gesamtbild","ja":"全体の見方","ko":"전체적으로 보면"},
+ "why_howto_read":{"zh":"怎么读这张图","en":"How to read this chart","es":"Cómo leer este gráfico","fr":"Comment lire ce graphique","de":"So liest man diese Grafik","ja":"このグラフの読み方","ko":"이 차트 읽는 법"},
+ "exp_read_each":{"zh":"📖 每个指标怎么读？（点开看每个数字为什么是这样）","en":"📖 How to read each indicator (why every number looks the way it does)","es":"📖 Cómo leer cada indicador","fr":"📖 Comment lire chaque indicateur","de":"📖 Wie man jeden Indikator liest","ja":"📖 各指標の読み方","ko":"📖 각 지표 읽는 법"},
+ "exp_read_coin":{"zh":"📖 每个币怎么读？","en":"📖 How to read each coin","es":"📖 Cómo leer cada cripto","fr":"📖 Comment lire chaque crypto","de":"📖 Wie man jede Kryptowährung liest","ja":"📖 各通貨の読み方","ko":"📖 각 코인 읽는 법"},
+ "exp_read_metal":{"zh":"📖 每个品种怎么读？","en":"📖 How to read each metal","es":"📖 Cómo leer cada metal","fr":"📖 Comment lire chaque métal","de":"📖 Wie man jedes Metall liest","ja":"📖 各銘柄の読み方","ko":"📖 각 품목 읽는 법"},
+ "crypto_overall":{"zh":"加密市场整体 **{mood}**，平均涨跌 {avg:+.2f}%。加密资产没有现金流估值锚，价格几乎完全由流动性和风险偏好驱动，所以它常常是市场情绪的**放大版**——美联储宽松时涨得比纳斯达克更凶，收紧时也跌得更深。",
+   "en":"Crypto overall: **{mood}**, average move {avg:+.2f}%. Crypto has no cash-flow valuation anchor, so price is driven almost entirely by liquidity and risk appetite — it tends to be an **amplified version** of equity sentiment, rallying harder than the Nasdaq when the Fed eases and falling further when it tightens."},
+ "mood_up":{"zh":"🔥 普遍上涨，风险偏好回升","en":"🔥 broadly higher, risk appetite returning"},
+ "mood_dn":{"zh":"📉 普遍下跌，避险情绪升温","en":"📉 broadly lower, risk-off building"},
+ "mood_flat":{"zh":"⚖️ 涨跌互现，方向不明","en":"⚖️ mixed, no clear direction"},
+ "metal_overall":{"zh":"板块平均 {avg:+.2f}%。有色金属有两条独立的定价逻辑：**贵金属（金/银）看实际利率和避险需求**——实际利率下行或地缘冲突升温时走强；**工业金属（铜）看全球经济需求**——电动车、电网升级和数据中心建设是长期需求来源。所以金涨铜跌通常意味着市场在担心衰退，金铜齐涨则多半是通胀预期在升温。",
+   "en":"Sector average {avg:+.2f}%. Metals price off two separate engines: **precious metals (gold/silver) follow real rates and safe-haven demand**, strengthening when real rates fall or geopolitical risk rises; **industrial metals (copper) follow global demand**, with EVs, grid upgrades and data centres as the long-run drivers. So gold up with copper down usually signals recession worry, while both rising together typically means inflation expectations are heating up."},
+ "crypto_hint":{"zh":"可在「🔬 股票分析器」或「💰 我的持仓」输入 BTC-USD / ETH-USD 等代码查看详细技术面分析",
+   "en":"Enter tickers like BTC-USD / ETH-USD in the Stock Analyzer or My Holdings for full technical analysis"},
  "unit_sec":{"zh":"{n} 秒","en":"{n} sec","es":"{n} s","fr":"{n} s","de":"{n} Sek.","ja":"{n} 秒","ko":"{n}초"},
  "unit_min":{"zh":"{n} 分钟","en":"{n} min","es":"{n} min","fr":"{n} min","de":"{n} Min.","ja":"{n} 分","ko":"{n}분"},
  "watch_start_short":{"zh":"👀 开始盯盘","en":"👀 Start watching","es":"👀 Vigilar","fr":"👀 Surveiller","de":"👀 Beobachten","ja":"👀 監視開始","ko":"👀 관찰 시작"},
@@ -194,10 +210,147 @@ def asset_name(ticker, zh_name):
     return ASSET_NAMES_EN.get(ticker, ticker)
 
 def tr(key, **kw):
-    """取当前语言的文案；缺失时回退中文，再回退 key 本身"""
+    """取当前语言的界面文案；缺失时回退英文再回退中文"""
     lang = st.session_state.get("lang", "zh")
     entry = I18N.get(key, {})
-    s = entry.get(lang) or entry.get("zh") or key
+    s = entry.get(lang) or (entry.get("en") if lang != "zh" else None) or entry.get("zh") or key
+    try:
+        return s.format(**kw) if kw else s
+    except Exception:
+        return s
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📝 分析正文翻译层：英文已完成；其余语言暂回退英文（中文界面始终用中文）
+# ══════════════════════════════════════════════════════════════════════════════
+NARRATIVE = {
+ # ── VIX ──
+ "vix_low":{"zh":"VIX 现在 {p:.2f}，处在**极低区间（低于13）**。它衡量的是标普500未来30天的预期波动，这么低说明几乎没人花钱买下跌保险、市场偏自满——历史上这种时候一旦有利空，回调反而更猛。",
+   "en":"VIX is {p:.2f}, in the **very low zone (below 13)**. VIX measures expected S&P 500 volatility over the next 30 days, and a reading this low means almost nobody is paying for downside protection — the market is complacent. Historically, selloffs from here tend to be sharper."},
+ "vix_calm":{"zh":"VIX 现在 {p:.2f}，属于**平静区间（13–20）**。市场预期未来一个月不会有大波动，风险偏好正常，资金愿意待在股票等风险资产里，这对高估值的AI和IPO标的是有利环境。",
+   "en":"VIX is {p:.2f}, in the **calm zone (13–20)**. The market expects no major swings over the next month, risk appetite is normal, and capital is willing to stay in equities — a favourable backdrop for richly valued AI and IPO names."},
+ "vix_tense":{"zh":"VIX 现在 {p:.2f}，已进入**紧张区间（20–30）**。投资者正在为下跌买保险，避险需求上升时，最先被卖掉的通常就是没有盈利支撑的高估值成长股。",
+   "en":"VIX is {p:.2f}, now in the **tense zone (20–30)**. Investors are buying downside protection, and when hedging demand rises the first thing sold is usually unprofitable, high-multiple growth stock."},
+ "vix_panic":{"zh":"VIX 现在 {p:.2f}，处于**恐慌区间（高于30）**。历史上这种水平只在系统性风险事件中出现（如2008、2020年3月），此时泡沫类资产的抛压最集中。",
+   "en":"VIX is {p:.2f}, in the **panic zone (above 30)**. Levels like this historically appear only during systemic events (2008, March 2020), when bubble-type assets face the heaviest selling."},
+ "vix_mv_down":{"zh":"今日**大幅回落**，说明恐慌情绪在快速消退、风险偏好回升（{chg:+.2f}%）。",
+   "en":"It **fell sharply** today, meaning fear is draining fast and risk appetite is returning ({chg:+.2f}%)."},
+ "vix_mv_up":{"zh":"今日**明显上升**，说明市场正在加速买入下跌保护、担忧升温（{chg:+.2f}%）。",
+   "en":"It **rose notably** today — the market is rushing to buy protection and anxiety is building ({chg:+.2f}%)."},
+ "vix_mv_flat":{"zh":"今日变化不大，情绪维持现状（{chg:+.2f}%）。",
+   "en":"Little changed today; sentiment is holding steady ({chg:+.2f}%)."},
+ # ── 10年期美债 ──
+ "tnx_low":{"zh":"10年期美债收益率 {p:.2f}%，处于**低位**。它是全球资产定价的「无风险利率」基准，越低意味着未来现金流折现回来越值钱，对靠远期故事支撑的成长股最有利。今日{chg:+.2f}%。",
+   "en":"The 10-year Treasury yield is {p:.2f}%, which is **low**. This is the global \u201crisk-free rate\u201d benchmark: the lower it goes, the more valuable distant future cash flows become — which benefits growth stocks built on long-dated stories. Today: {chg:+.2f}%."},
+ "tnx_mid":{"zh":"10年期美债收益率 {p:.2f}%，处于**中性偏紧区间**。股票相对债券的吸引力被削弱，但还不至于压垮估值，市场会更看重公司能不能真正赚钱。今日{chg:+.2f}%。",
+   "en":"The 10-year Treasury yield is {p:.2f}%, a **neutral-to-tight** range. Equities look less attractive versus bonds, though not fatally so — the market simply starts caring more about whether companies actually earn money. Today: {chg:+.2f}%."},
+ "tnx_high":{"zh":"10年期美债收益率 {p:.2f}%，**偏高**。无风险利率越高，折现率就越高，没有当期盈利、只靠远期增长故事的AI股和新股受到的估值压制最大——这也是泡沫风险模型里利率权重很重的原因。今日{chg:+.2f}%。",
+   "en":"The 10-year Treasury yield is {p:.2f}%, which is **elevated**. A higher risk-free rate means a higher discount rate, and the valuation pressure lands hardest on AI names and new listings that have no current earnings — which is exactly why interest rates carry so much weight in the bubble-risk model. Today: {chg:+.2f}%."},
+ # ── 指数 ──
+ "idx_up_big":{"zh":"{idx}今日上涨 {chg:+.2f}%，属于**明显放量的风险偏好回升**，通常伴随资金从防御性板块流向成长股。",
+   "en":"{idx} rose {chg:+.2f}% today — a **clear risk-on move**, usually accompanied by rotation out of defensives and into growth."},
+ "idx_up":{"zh":"{idx}今日小幅收涨 {chg:+.2f}%，市场情绪偏稳，没有出现方向性突破。",
+   "en":"{idx} closed up {chg:+.2f}% today. Sentiment is steady, with no decisive directional breakout."},
+ "idx_dn":{"zh":"{idx}今日小幅回落 {chg:+.2f}%，属于正常波动区间，暂时看不出趋势反转。",
+   "en":"{idx} slipped {chg:+.2f}% today — within normal daily noise, no sign of a trend reversal yet."},
+ "idx_dn_big":{"zh":"{idx}今日下跌 {chg:+.2f}%，跌幅偏大，需要留意是否有宏观利空（利率、通胀或财报）在发酵。",
+   "en":"{idx} fell {chg:+.2f}% today, a sizeable drop — worth checking whether a macro negative (rates, inflation or earnings) is building."},
+ "idx_nasdaq":{"zh":"纳斯达克（科技股集中）","en":"the Nasdaq (tech-heavy)"},
+ "idx_sp":{"zh":"标普500（宽基大盘）","en":"the S&P 500 (broad market)"},
+ # ── SpaceX ──
+ "spcx":{"zh":"SpaceX 现价 ${p:.2f}，今日{chg:+.2f}%。作为2026年最大的IPO，它的走势是市场对「高估值、未盈利、故事驱动」这一类资产风险偏好的直接体温计。",
+   "en":"SpaceX trades at ${p:.2f}, {chg:+.2f}% today. As the largest IPO of 2026, its price action is a direct thermometer for appetite toward richly valued, unprofitable, narrative-driven assets."},
+ # ── 个股 ──
+ "stk_up_big":{"zh":"{name}今日大涨 {chg:+.2f}%，明显强于大盘，多半有个股层面的催化（财报、订单或行业消息）在推动。",
+   "en":"{name} jumped {chg:+.2f}% today, clearly outpacing the market — usually a sign of a stock-specific catalyst (earnings, orders or sector news)."},
+ "stk_up":{"zh":"{name}今日收涨 {chg:+.2f}%，跟随大盘小幅走强，属于常规波动。",
+   "en":"{name} closed up {chg:+.2f}%, drifting higher with the market — routine movement."},
+ "stk_dn":{"zh":"{name}今日回落 {chg:+.2f}%，幅度不大，更像是随大盘整理而非个股利空。",
+   "en":"{name} eased {chg:+.2f}% today. The move is small and looks like market-wide consolidation rather than a company-specific problem."},
+ "stk_dn_big":{"zh":"{name}今日下跌 {chg:+.2f}%，跌幅偏大，建议结合「股票分析器」看是技术面破位还是基本面出了问题。",
+   "en":"{name} dropped {chg:+.2f}% today — a large decline. Use the Stock Analyzer to check whether this is a technical breakdown or a fundamental issue."},
+ # ── 加密货币 ──
+ "crypto_up_big":{"zh":"现价 ${p:,.2f}，24小时{chg:+.2f}%，**涨势明显**。{role}。",
+   "en":"Trading at ${p:,.2f}, {chg:+.2f}% over 24h — **clearly rallying**. {role}."},
+ "crypto_up":{"zh":"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅走强。{role}。",
+   "en":"Trading at ${p:,.2f}, {chg:+.2f}% over 24h, modestly higher. {role}."},
+ "crypto_dn":{"zh":"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅回落，属于加密市场的日常波动。{role}。",
+   "en":"Trading at ${p:,.2f}, {chg:+.2f}% over 24h — a mild pullback, normal for crypto. {role}."},
+ "crypto_dn_big":{"zh":"现价 ${p:,.2f}，24小时{chg:+.2f}%，**跌幅较大**。{role}。",
+   "en":"Trading at ${p:,.2f}, {chg:+.2f}% over 24h — **a sharp decline**. {role}."},
+ "role_btc":{"zh":"比特币是整个加密市场的风险偏好温度计，与纳斯达克的相关性近年明显上升，流动性宽松时涨得最凶",
+   "en":"Bitcoin is the risk-appetite thermometer for all of crypto; its correlation with the Nasdaq has risen sharply in recent years, and it rallies hardest when liquidity is loose"},
+ "role_eth":{"zh":"以太坊的价格绑定链上活跃度（DeFi、Layer2、RWA），比比特币多一层「生态使用率」的基本面",
+   "en":"Ethereum's price is tied to on-chain activity (DeFi, Layer 2, RWA), giving it a usage-based fundamental layer that Bitcoin lacks"},
+ "role_sol":{"zh":"Solana 属于高贝塔品种，牛市涨幅通常超过主流币，回撤也更深",
+   "en":"Solana is a high-beta asset: it typically outruns the majors in bull phases and draws down harder in reverse"},
+ "role_bnb":{"zh":"币安币与交易所交易量和销毁机制挂钩，受监管消息影响特别大",
+   "en":"BNB is tied to exchange volume and its burn mechanism, which makes it unusually sensitive to regulatory news"},
+ "role_xrp":{"zh":"瑞波的价格主要由监管进展和跨境支付采用消息驱动，技术面之外的事件风险高",
+   "en":"XRP is driven mainly by regulatory progress and cross-border payment adoption, so event risk outweighs technicals"},
+ "role_doge":{"zh":"狗狗币没有现金流和技术护城河，价格几乎完全由社区情绪和名人效应驱动",
+   "en":"Dogecoin has no cash flow or technical moat; its price is driven almost entirely by community hype and celebrity attention"},
+ "role_generic":{"zh":"该币种价格主要由市场情绪和流动性驱动",
+   "en":"This coin's price is driven mainly by sentiment and liquidity"},
+ # ── 有色金属 ──
+ "metal_up_big":{"zh":"现价 ${p:,.2f}，今日{chg:+.2f}%，**涨幅明显**。{logic}。",
+   "en":"At ${p:,.2f}, {chg:+.2f}% today — **a strong gain**. {logic}."},
+ "metal_up":{"zh":"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅走强。{logic}。",
+   "en":"At ${p:,.2f}, {chg:+.2f}% today, modestly firmer. {logic}."},
+ "metal_dn":{"zh":"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅回落。{logic}。",
+   "en":"At ${p:,.2f}, {chg:+.2f}% today, slightly lower. {logic}."},
+ "metal_dn_big":{"zh":"现价 ${p:,.2f}，今日{chg:+.2f}%，**跌幅较大**。{logic}。",
+   "en":"At ${p:,.2f}, {chg:+.2f}% today — **a sharp drop**. {logic}."},
+ "logic_gold":{"zh":"黄金涨跌主要看**实际利率和避险需求**：实际利率下行或地缘风险升温时黄金走强",
+   "en":"Gold hinges on **real interest rates and safe-haven demand**: it strengthens when real rates fall or geopolitical risk rises"},
+ "logic_silver":{"zh":"白银是**贵金属+工业金属**双重属性，除了避险，还受光伏和电子需求影响，弹性比黄金大",
+   "en":"Silver is **both a precious and an industrial metal** — beyond safe-haven demand it tracks solar and electronics consumption, making it more volatile than gold"},
+ "logic_copper":{"zh":"铜被称为「铜博士」，是**全球经济需求的领先指标**，电动车、电网和数据中心建设是长期需求来源",
+   "en":"Copper is nicknamed \u201cDr. Copper\u201d — a **leading indicator of global demand**, with EVs, grid upgrades and data centres as its long-term drivers"},
+ "logic_gdx":{"zh":"金矿股相对金价有**杠杆效应**，金价涨1%时矿股往往涨2-3%，但也多了矿山成本和运营风险",
+   "en":"Gold miners are **leveraged to bullion**: a 1% move in gold often means 2–3% in the miners, at the cost of added mine-operating risk"},
+ "logic_slv":{"zh":"白银ETF跟踪银价，走势同时受避险情绪和工业（光伏）需求影响",
+   "en":"This silver ETF tracks spot silver, driven by both safe-haven flows and industrial (solar) demand"},
+ "logic_fcx":{"zh":"自由港是全球最大上市铜生产商之一，业绩与铜价高度绑定，可视为**铜价的放大器**",
+   "en":"Freeport is one of the largest listed copper producers; its earnings track the copper price closely, making it **an amplifier of copper**"},
+ "logic_generic":{"zh":"该品种主要受大宗商品供需和美元汇率影响",
+   "en":"This instrument is driven mainly by commodity supply/demand and the US dollar"},
+ # ── 市场情绪分 ──
+ "sent_text":{"zh":"这个 **{score}/100（{label}）** 不是拍脑袋来的，而是由三个实时数据加权算出来的：{notes}。三者共同决定了当前风险偏好水平，分数越高说明市场越愿意为高估值资产买单。",
+   "en":"This **{score}/100 ({label})** is not a guess — it is computed from three live inputs: {notes}. Together they set the current level of risk appetite; the higher the score, the more willing the market is to pay up for expensive assets."},
+ "sent_calc":{"zh":"计算过程：","en":"How it is computed: "},
+ "sent_base":{"zh":"中性起点 50","en":"neutral base 50"},
+ "sent_vix_note":{"zh":"VIX {v:.1f}（{eff}）","en":"VIX {v:.1f} ({eff})"},
+ "sent_vix_plus":{"zh":"低波动加分","en":"low volatility, adds points"},
+ "sent_vix_minus":{"zh":"波动升高扣分","en":"rising volatility, subtracts points"},
+ "sent_ixic_note":{"zh":"纳指今日{c:+.2f}%","en":"Nasdaq {c:+.2f}% today"},
+ "sent_nvda_note":{"zh":"英伟达（AI风向标）{c:+.2f}%","en":"NVIDIA (the AI bellwether) {c:+.2f}%"},
+ "lbl_panic2":{"zh":"极度恐慌","en":"extreme fear"}, "lbl_panic":{"zh":"恐慌","en":"fear"},
+ "lbl_neutral":{"zh":"中性","en":"neutral"}, "lbl_optimistic":{"zh":"乐观","en":"optimistic"},
+ "lbl_euphoric":{"zh":"极度狂热","en":"euphoric"},
+ # ── 泡沫模拟器 ──
+ "sim_pop":{"zh":"首日涨幅是四个输入的加权和：情绪和散户热度推高发行日溢价，利率则是唯一的拖累项。当前**{top}贡献最大（{topv:+.1f}）**，而**{drag}拖累最多（{dragv:+.1f}）**。",
+   "en":"The day-one pop is a weighted sum of four inputs: sentiment and retail enthusiasm push the listing premium up, while interest rates are the only drag. Right now **{top} contributes most ({topv:+.1f})**, and **{drag} weighs on it the most ({dragv:+.1f})**."},
+ "sim_six":{"zh":"6个月收益衡量的是「上市热度退潮后还剩多少」。它以中性值（情绪50、AI50、散户50、利率4%）为基准，只看偏离量，所以数值通常远小于首日涨幅。利率每高出基准1个百分点就直接扣8个点，是四项里权重最重的。",
+   "en":"The six-month return measures what survives once listing euphoria fades. It is benchmarked against neutral settings (sentiment 50, AI 50, retail 50, rate 4%) and counts only the deviation, so it is normally far smaller than the day-one pop. Every percentage point of rates above the 4% baseline subtracts 8 points — the heaviest weight of the four."},
+ "sim_burst":{"zh":"泡沫破裂概率从100分往下扣：情绪越乐观、AI落地越快、散户越活跃，破裂概率越低；而利率是唯一的**加分项（权重最高，×6）**，因为历史上刺破泡沫的通常都是利率上行（2000年互联网、2021年SPAC都是如此）。当前利率 {rate}% 贡献了 {contrib:+.1f} 的破裂概率。",
+   "en":"Burst probability counts down from 100: the more optimistic sentiment, the faster AI monetisation and the more active retail, the lower it goes. Interest rates are the only factor that **adds** to it — and with the largest weight (\u00d76) — because historically it is rising rates that pop bubbles (dot-com in 2000, SPACs in 2021). At {rate}%, rates currently contribute {contrib:+.1f} to the burst probability."},
+ "sim_temp":{"zh":"泡沫温度计是情绪(40%)、AI速度(30%)、散户参与(20%)和低利率红利(10%)的综合打分，越接近100说明市场越亢奋。它和破裂概率是一体两面：温度越高，一旦流动性收紧，回撤空间也越大。",
+   "en":"The bubble thermometer blends sentiment (40%), AI monetisation speed (30%), retail participation (20%) and the low-rate bonus (10%). The closer to 100, the more euphoric the market. It is the mirror image of burst probability: the hotter it runs, the further there is to fall once liquidity tightens."},
+ "drv_sentiment":{"zh":"市场情绪","en":"market sentiment"},
+ "drv_ai":{"zh":"AI商业化速度","en":"AI monetisation speed"},
+ "drv_rate":{"zh":"利率环境","en":"the interest-rate backdrop"},
+ "drv_retail":{"zh":"散户参与度","en":"retail participation"},
+ "term_base":{"zh":"基础","en":"base"}, "term_sent":{"zh":"情绪","en":"sentiment"},
+ "term_ai":{"zh":"AI速度","en":"AI speed"}, "term_rate":{"zh":"利率","en":"rate"},
+ "term_retail":{"zh":"散户","en":"retail"}, "term_lowrate":{"zh":"低利率红利","en":"low-rate bonus"},
+}
+
+def nt(key, **kw):
+    """取分析正文：当前语言 → 英文 → 中文"""
+    lang = st.session_state.get("lang", "zh")
+    e = NARRATIVE.get(key, {})
+    s = e.get(lang) or (e.get("en") if lang != "zh" else None) or e.get("zh") or key
     try:
         return s.format(**kw) if kw else s
     except Exception:
@@ -777,177 +930,156 @@ _WHY_C  = {"good": "#0F6E56", "bad": "#A32D2D", "warn": "#BA7517", "neutral": "#
 _WHY_BG = {"good": "rgba(29,158,117,.10)", "bad": "rgba(226,75,74,.10)",
            "warn": "rgba(186,117,23,.10)", "neutral": "rgba(100,116,139,.09)"}
 
-def why_html(text, tone="neutral", calc=None, title="为什么是这个结果"):
+def why_html(text, tone="neutral", calc=None, title=None):
     import re
+    if title is None:
+        title = tr("why_default")
     c, bg = _WHY_C.get(tone, "#475569"), _WHY_BG.get(tone, "rgba(100,116,139,.09)")
     text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)   # HTML 块内不会解析 markdown 粗体
     calc_html = f'<span class="calc">{calc}</span>' if calc else ""
     return (f'<div class="whybox" style="border-left:3px solid {c};background:{bg}">'
             f'<span class="wt" style="color:{c}">{title}：</span>{text}{calc_html}</div>')
 
-def why(text, tone="neutral", calc=None, title="为什么是这个结果", target=None):
+def why(text, tone="neutral", calc=None, title=None, target=None):
     """在指标下方渲染一条解读"""
     (target or st).markdown(why_html(text, tone, calc, title), unsafe_allow_html=True)
 
 def interpret_market(ticker, info):
     """解读市场概览里的每个标的：(解读文字, 语气)"""
     p, chg = info["price"], info["change_pct"]
-    name = info["name"]
+    name = asset_name(ticker, info["name"])   # 句子里的标的名也跟随语言
 
     if ticker == "^VIX":
         if p < 13:
-            base, tone = (f"VIX 现在 {p:.2f}，处在**极低区间（低于13）**。它衡量的是标普500未来30天的预期波动，"
-                          f"这么低说明几乎没人花钱买下跌保险、市场偏自满——historically 这种时候一旦有利空，回调反而更猛。"), "warn"
+            base, tone = nt("vix_low", p=p), "warn"
         elif p < 20:
-            base, tone = (f"VIX 现在 {p:.2f}，属于**平静区间（13–20）**。市场预期未来一个月不会有大波动，"
-                          f"风险偏好正常，资金愿意待在股票等风险资产里，这对高估值的AI和IPO标的是有利环境。"), "good"
+            base, tone = nt("vix_calm", p=p), "good"
         elif p < 30:
-            base, tone = (f"VIX 现在 {p:.2f}，已进入**紧张区间（20–30）**。投资者正在为下跌买保险，"
-                          f"避险需求上升时，最先被卖掉的通常就是没有盈利支撑的高估值成长股。"), "warn"
+            base, tone = nt("vix_tense", p=p), "warn"
         else:
-            base, tone = (f"VIX 现在 {p:.2f}，处于**恐慌区间（高于30）**。历史上这种水平只在系统性风险事件中出现"
-                          f"（如2008、2020年3月），此时泡沫类资产的抛压最集中。"), "bad"
-        move = ("今日**大幅回落**，说明恐慌情绪在快速消退、风险偏好回升" if chg < -5 else
-                "今日**明显上升**，说明市场正在加速买入下跌保护、担忧升温" if chg > 5 else
-                "今日变化不大，情绪维持现状")
-        return base + f" {move}（{chg:+.2f}%）。", tone
+            base, tone = nt("vix_panic", p=p), "bad"
+        move = (nt("vix_mv_down", chg=chg) if chg < -5 else
+                nt("vix_mv_up", chg=chg) if chg > 5 else nt("vix_mv_flat", chg=chg))
+        return base + " " + move, tone
 
     if ticker == "^TNX":
         if p < 3:
-            body, tone = (f"10年期美债收益率 {p:.2f}%，处于**低位**。它是全球资产定价的「无风险利率」基准，"
-                          f"越低意味着未来现金流折现回来越值钱，对靠远期故事支撑的成长股最有利。"), "good"
-        elif p < 4.5:
-            body, tone = (f"10年期美债收益率 {p:.2f}%，处于**中性偏紧区间**。股票相对债券的吸引力被削弱，"
-                          f"但还不至于压垮估值，市场会更看重公司能不能真正赚钱。"), "warn"
-        else:
-            body, tone = (f"10年期美债收益率 {p:.2f}%，**偏高**。无风险利率越高，折现率就越高，"
-                          f"没有当期盈利、只靠远期增长故事的AI股和新股受到的估值压制最大——这也是泡沫风险模型里利率权重很重的原因。"), "bad"
-        return body + f" 今日{chg:+.2f}%。", tone
+            return nt("tnx_low", p=p, chg=chg), "good"
+        if p < 4.5:
+            return nt("tnx_mid", p=p, chg=chg), "warn"
+        return nt("tnx_high", p=p, chg=chg), "bad"
 
     if ticker in ("^IXIC", "^GSPC"):
-        idx = "纳斯达克（科技股集中）" if ticker == "^IXIC" else "标普500（宽基大盘）"
+        idx = nt("idx_nasdaq") if ticker == "^IXIC" else nt("idx_sp")
         if chg > 1.5:
-            return f"{idx}今日上涨 {chg:+.2f}%，属于**明显放量的风险偏好回升**，通常伴随资金从防御性板块流向成长股。", "good"
+            return nt("idx_up_big", idx=idx, chg=chg), "good"
         if chg > 0:
-            return f"{idx}今日小幅收涨 {chg:+.2f}%，市场情绪偏稳，没有出现方向性突破。", "good"
+            return nt("idx_up", idx=idx, chg=chg), "good"
         if chg > -1.5:
-            return f"{idx}今日小幅回落 {chg:+.2f}%，属于正常波动区间，暂时看不出趋势反转。", "neutral"
-        return f"{idx}今日下跌 {chg:+.2f}%，跌幅偏大，需要留意是否有宏观利空（利率、通胀或财报）在发酵。", "bad"
+            return nt("idx_dn", idx=idx, chg=chg), "neutral"
+        return nt("idx_dn_big", idx=idx, chg=chg), "bad"
 
     if ticker == "SPCX":
-        return (f"SpaceX 现价 ${p:.2f}，今日{chg:+.2f}%。作为2026年最大的IPO，它的走势是市场对"
-                f"「高估值、未盈利、故事驱动」这一类资产风险偏好的直接体温计。"), ("good" if chg >= 0 else "bad")
+        return nt("spcx", p=p, chg=chg), ("good" if chg >= 0 else "bad")
 
     # 个股
     if chg > 3:
-        return f"{name}今日大涨 {chg:+.2f}%，明显强于大盘，多半有个股层面的催化（财报、订单或行业消息）在推动。", "good"
+        return nt("stk_up_big", name=name, chg=chg), "good"
     if chg > 0:
-        return f"{name}今日收涨 {chg:+.2f}%，跟随大盘小幅走强，属于常规波动。", "good"
+        return nt("stk_up", name=name, chg=chg), "good"
     if chg > -3:
-        return f"{name}今日回落 {chg:+.2f}%，幅度不大，更像是随大盘整理而非个股利空。", "neutral"
-    return f"{name}今日下跌 {chg:+.2f}%，跌幅偏大，建议结合「股票分析器」看是技术面破位还是基本面出了问题。", "bad"
+        return nt("stk_dn", name=name, chg=chg), "neutral"
+    return nt("stk_dn_big", name=name, chg=chg), "bad"
 
 def interpret_crypto(ticker, info):
-    chg, name, p = info["change_pct"], info["name"], info["price"]
-    role = {
-        "BTC-USD": "比特币是整个加密市场的风险偏好温度计，与纳斯达克的相关性近年明显上升，流动性宽松时涨得最凶",
-        "ETH-USD": "以太坊的价格绑定链上活跃度（DeFi、Layer2、RWA），比比特币多一层「生态使用率」的基本面",
-        "SOL-USD": "Solana 属于高贝塔品种，牛市涨幅通常超过主流币，回撤也更深",
-        "BNB-USD": "币安币与交易所交易量和销毁机制挂钩，受监管消息影响特别大",
-        "XRP-USD": "瑞波的价格主要由监管进展和跨境支付采用消息驱动，技术面之外的事件风险高",
-        "DOGE-USD": "狗狗币没有现金流和技术护城河，价格几乎完全由社区情绪和名人效应驱动",
-    }.get(ticker, "该币种价格主要由市场情绪和流动性驱动")
+    chg, p = info["change_pct"], info["price"]
+    role = nt({"BTC-USD": "role_btc", "ETH-USD": "role_eth", "SOL-USD": "role_sol",
+               "BNB-USD": "role_bnb", "XRP-USD": "role_xrp", "DOGE-USD": "role_doge",
+               }.get(ticker, "role_generic"))
     if chg > 3:
-        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，**涨势明显**。{role}。", "good"
+        return nt("crypto_up_big", p=p, chg=chg, role=role), "good"
     if chg > 0:
-        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅走强。{role}。", "good"
+        return nt("crypto_up", p=p, chg=chg, role=role), "good"
     if chg > -3:
-        return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，小幅回落，属于加密市场的日常波动。{role}。", "neutral"
-    return f"现价 ${p:,.2f}，24小时{chg:+.2f}%，**跌幅较大**。{role}。", "bad"
+        return nt("crypto_dn", p=p, chg=chg, role=role), "neutral"
+    return nt("crypto_dn_big", p=p, chg=chg, role=role), "bad"
 
 def interpret_metal(ticker, info):
     chg, p = info["change_pct"], info["price"]
-    logic = {
-        "GC=F": "黄金涨跌主要看**实际利率和避险需求**：实际利率下行或地缘风险升温时黄金走强",
-        "SI=F": "白银是**贵金属+工业金属**双重属性，除了避险，还受光伏和电子需求影响，弹性比黄金大",
-        "HG=F": "铜被称为「铜博士」，是**全球经济需求的领先指标**，电动车、电网和数据中心建设是长期需求来源",
-        "GDX": "金矿股相对金价有**杠杆效应**，金价涨1%时矿股往往涨2-3%，但也多了矿山成本和运营风险",
-        "SLV": "白银ETF跟踪银价，走势同时受避险情绪和工业（光伏）需求影响",
-        "FCX": "自由港是全球最大上市铜生产商之一，业绩与铜价高度绑定，可视为**铜价的放大器**",
-    }.get(ticker, "该品种主要受大宗商品供需和美元汇率影响")
+    logic = nt({"GC=F": "logic_gold", "SI=F": "logic_silver", "HG=F": "logic_copper",
+                "GDX": "logic_gdx", "SLV": "logic_slv", "FCX": "logic_fcx",
+                }.get(ticker, "logic_generic"))
     if chg > 2:
-        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，**涨幅明显**。{logic}。", "good"
+        return nt("metal_up_big", p=p, chg=chg, logic=logic), "good"
     if chg > 0:
-        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅走强。{logic}。", "good"
+        return nt("metal_up", p=p, chg=chg, logic=logic), "good"
     if chg > -2:
-        return f"现价 ${p:,.2f}，今日{chg:+.2f}%，小幅回落。{logic}。", "neutral"
-    return f"现价 ${p:,.2f}，今日{chg:+.2f}%，**跌幅较大**。{logic}。", "bad"
+        return nt("metal_dn", p=p, chg=chg, logic=logic), "neutral"
+    return nt("metal_dn_big", p=p, chg=chg, logic=logic), "bad"
 
 def explain_sentiment(data, score):
     """拆解市场情绪分是怎么算出来的"""
-    terms, notes = ["中性起点 50"], []
+    terms, notes = [nt("sent_base")], []
     if "^VIX" in data:
         v = data["^VIX"]["price"]
         pts = 20 if v < 15 else 10 if v < 20 else -10 if v < 30 else -25
         terms.append(f"VIX {v:.1f} → {pts:+d}")
-        notes.append(f"VIX {v:.1f}（{'低波动加分' if pts > 0 else '波动升高扣分'}）")
+        notes.append(nt("sent_vix_note", v=v,
+                        eff=nt("sent_vix_plus") if pts > 0 else nt("sent_vix_minus")))
     if "^IXIC" in data:
         c = data["^IXIC"]["change_pct"]
-        terms.append(f"纳指 {c:+.2f}% × 3 → {c*3:+.1f}")
-        notes.append(f"纳指今日{c:+.2f}%")
+        terms.append(f"Nasdaq {c:+.2f}% × 3 → {c*3:+.1f}")
+        notes.append(nt("sent_ixic_note", c=c))
     if "NVDA" in data:
         c = data["NVDA"]["change_pct"]
-        terms.append(f"英伟达 {c:+.2f}% × 2 → {c*2:+.1f}")
-        notes.append(f"英伟达（AI风向标）{c:+.2f}%")
-    label = ("极度恐慌" if score < 20 else "恐慌" if score < 40 else
-             "中性" if score < 60 else "乐观" if score < 80 else "极度狂热")
+        terms.append(f"NVDA {c:+.2f}% × 2 → {c*2:+.1f}")
+        notes.append(nt("sent_nvda_note", c=c))
+    label = (nt("lbl_panic2") if score < 20 else nt("lbl_panic") if score < 40 else
+             nt("lbl_neutral") if score < 60 else nt("lbl_optimistic") if score < 80
+             else nt("lbl_euphoric"))
     tone = "bad" if score < 40 else "neutral" if score < 60 else "good" if score < 80 else "warn"
-    text = (f"这个 **{score}/100（{label}）** 不是拍脑袋来的，而是由三个实时数据加权算出来的："
-            + "、".join(notes) + "。三者共同决定了当前风险偏好水平，分数越高说明市场越愿意为高估值资产买单。")
-    return text, tone, "计算过程：" + "　".join(terms) + f"　=　{score}"
+    sep = "、" if st.session_state.get("lang", "zh") == "zh" else ", "
+    text = nt("sent_text", score=score, label=label, notes=sep.join(notes))
+    return text, tone, nt("sent_calc") + "　".join(terms) + f"　=　{score}"
 
 def explain_simulate(sentiment, rate, ai_speed, retail, sim):
     """拆解泡沫模拟器的四个输出分别是怎么算出来的"""
     def fmt(terms, total, unit="%"):
         return "　".join(terms) + f"　=　{total}{unit}"
 
-    pop_terms = [f"基础 5", f"情绪 {sentiment}×0.4={sentiment*0.4:+.1f}",
-                 f"AI速度 {ai_speed}×0.2={ai_speed*0.2:+.1f}",
-                 f"利率 {rate}%×2={-rate*2:+.1f}", f"散户 {retail}×0.15={retail*0.15:+.1f}"]
-    six_terms = [f"(情绪{sentiment}-50)×0.3={(sentiment-50)*0.3:+.1f}",
-                 f"(AI{ai_speed}-50)×0.2={(ai_speed-50)*0.2:+.1f}",
-                 f"(利率{rate}-4)×8={-(rate-4)*8:+.1f}",
-                 f"(散户{retail}-50)×0.1={(retail-50)*0.1:+.1f}"]
-    burst_terms = [f"基础 100", f"情绪 {sentiment}×0.4={-sentiment*0.4:+.1f}",
-                   f"AI速度 {ai_speed}×0.2={-ai_speed*0.2:+.1f}",
-                   f"利率 {rate}%×6={rate*6:+.1f}", f"散户 {retail}×0.05={-retail*0.05:+.1f}"]
+    _b, _s, _a, _r, _re = (nt("term_base"), nt("term_sent"), nt("term_ai"),
+                           nt("term_rate"), nt("term_retail"))
+    pop_terms = [f"{_b} 5", f"{_s} {sentiment}×0.4={sentiment*0.4:+.1f}",
+                 f"{_a} {ai_speed}×0.2={ai_speed*0.2:+.1f}",
+                 f"{_r} {rate}%×2={-rate*2:+.1f}", f"{_re} {retail}×0.15={retail*0.15:+.1f}"]
+    six_terms = [f"({_s}{sentiment}-50)×0.3={(sentiment-50)*0.3:+.1f}",
+                 f"({_a}{ai_speed}-50)×0.2={(ai_speed-50)*0.2:+.1f}",
+                 f"({_r}{rate}-4)×8={-(rate-4)*8:+.1f}",
+                 f"({_re}{retail}-50)×0.1={(retail-50)*0.1:+.1f}"]
+    burst_terms = [f"{_b} 100", f"{_s} {sentiment}×0.4={-sentiment*0.4:+.1f}",
+                   f"{_a} {ai_speed}×0.2={-ai_speed*0.2:+.1f}",
+                   f"{_r} {rate}%×6={rate*6:+.1f}", f"{_re} {retail}×0.05={-retail*0.05:+.1f}"]
 
     # 找出影响最大的驱动因素
-    drivers = {"市场情绪": sentiment*0.4, "AI商业化速度": ai_speed*0.2,
-               "利率环境": -rate*2, "散户参与度": retail*0.15}
+    drivers = {nt("drv_sentiment"): sentiment*0.4, nt("drv_ai"): ai_speed*0.2,
+               nt("drv_rate"): -rate*2, nt("drv_retail"): retail*0.15}
     top = max(drivers.items(), key=lambda kv: abs(kv[1]))
     drag = min(drivers.items(), key=lambda kv: kv[1])
 
     return {
-        "pop": (f"首日涨幅是四个输入的加权和：情绪和散户热度推高发行日溢价，利率则是唯一的拖累项。"
-                f"当前**{top[0]}贡献最大（{top[1]:+.1f}）**，"
-                f"而**{drag[0]}拖累最多（{drag[1]:+.1f}）**。",
+        "pop": (nt("sim_pop", top=top[0], topv=top[1], drag=drag[0], dragv=drag[1]),
                 "good" if sim["pop"] > 20 else "neutral",
                 fmt(pop_terms, sim["pop"])),
-        "six_m": (f"6个月收益衡量的是「上市热度退潮后还剩多少」。它以中性值（情绪50、AI50、散户50、利率4%）为基准，"
-                  f"只看偏离量，所以数值通常远小于首日涨幅。利率每高出基准1个百分点就直接扣8个点，是四项里权重最重的。",
+        "six_m": (nt("sim_six"),
                   "good" if sim["six_m"] > 0 else "bad",
                   fmt(six_terms, sim["six_m"])),
-        "burst": (f"泡沫破裂概率从100分往下扣：情绪越乐观、AI落地越快、散户越活跃，破裂概率越低；"
-                  f"而利率是唯一的**加分项（权重最高，×6）**，因为历史上刺破泡沫的通常都是利率上行"
-                  f"（2000年互联网、2021年SPAC都是如此）。当前利率 {rate}% 贡献了 {rate*6:+.1f} 的破裂概率。",
+        "burst": (nt("sim_burst", rate=rate, contrib=rate*6),
                   "bad" if sim["burst"] > 65 else "warn" if sim["burst"] > 40 else "good",
                   fmt(burst_terms, sim["burst"])),
-        "temp": (f"泡沫温度计是情绪(40%)、AI速度(30%)、散户参与(20%)和低利率红利(10%)的综合打分，"
-                 f"越接近100说明市场越亢奋。它和破裂概率是一体两面：温度越高，一旦流动性收紧，回撤空间也越大。",
+        "temp": (nt("sim_temp"),
                  "warn" if sim["temp"] > 60 else "neutral",
-                 f"情绪 {sentiment}×0.4　AI {ai_speed}×0.3　散户 {retail}×0.2　"
-                 f"低利率红利 (100-{rate}×8)×0.1　=　{sim['temp']}/100"),
+                 f"{_s} {sentiment}×0.4　{_a} {ai_speed}×0.3　{_re} {retail}×0.2　"
+                 f"{nt('term_lowrate')} (100-{rate}×8)×0.1　=　{sim['temp']}/100"),
     }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2006,10 +2138,10 @@ with tabs[0]:
                 render_quick_analysis(_qv)
             st.divider()
 
-        with st.expander("📖 每个指标怎么读？（点开看每个数字为什么是这样）", expanded=True):
+        with st.expander(tr("exp_read_each"), expanded=True):
             for ticker, info in live_data_t1.items():
                 txt, tone = interpret_market(ticker, info)
-                why(txt, tone, title=f"{info['name']}")
+                why(txt, tone, title=asset_name(ticker, info["name"]))
 
         st.subheader(tr("sec_today_change"))
         tl_t1 = [v["name"] for v in live_data_t1.values()]
@@ -2032,7 +2164,7 @@ with tabs[0]:
         st.subheader(f"当前市场情绪：{label_t1}（{sentiment_t1}/100）")
         st.progress(sentiment_t1 / 100)
         _s_txt, _s_tone, _s_calc = explain_sentiment(live_data_t1, sentiment_t1)
-        why(_s_txt, _s_tone, calc=_s_calc, title="这个分数怎么来的")
+        why(_s_txt, _s_tone, calc=_s_calc, title=tr("why_score_src"))
     else:
         st.warning("无法获取实时数据，请检查网络连接。")
 
@@ -2088,17 +2220,15 @@ with tabs[0]:
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
             glass_chart(fig_crypto, use_container_width=True)
             avg_chg = sum(v["change_pct"] for v in crypto_data.values()) / len(crypto_data)
-            crypto_mood = ("🔥 普遍上涨，风险偏好回升" if avg_chg > 2 else
-                           "📉 普遍下跌，避险情绪升温" if avg_chg < -2 else "⚖️ 涨跌互现，方向不明")
-            why(f"加密市场整体 **{crypto_mood}**，平均涨跌 {avg_chg:+.2f}%。加密资产没有现金流估值锚，"
-                f"价格几乎完全由流动性和风险偏好驱动，所以它常常是市场情绪的**放大版**——"
-                f"美联储宽松时涨得比纳斯达克更凶，收紧时也跌得更深。",
-                "good" if avg_chg > 0 else "bad", title="整体怎么看")
-            with st.expander("📖 每个币怎么读？", expanded=False):
+            crypto_mood = (tr("mood_up") if avg_chg > 2 else
+                           tr("mood_dn") if avg_chg < -2 else tr("mood_flat"))
+            why(tr("crypto_overall", mood=crypto_mood, avg=avg_chg),
+                "good" if avg_chg > 0 else "bad", title=tr("why_overall"))
+            with st.expander(tr("exp_read_coin"), expanded=False):
                 for tk, info in crypto_data.items():
                     txt, tone = interpret_crypto(tk, info)
-                    why(txt, tone, title=info["name"])
-            st.caption("可在「🔬 股票分析器」或「💰 我的持仓」输入 BTC-USD / ETH-USD 等代码查看详细技术面分析")
+                    why(txt, tone, title=asset_name(tk, info["name"]))
+            st.caption(tr("crypto_hint"))
         else:
             st.warning("无法获取加密货币实时数据。")
 
@@ -2123,15 +2253,12 @@ with tabs[0]:
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
             glass_chart(fig_metals, use_container_width=True)
             _m_avg = sum(v["change_pct"] for v in metals_data.values()) / len(metals_data)
-            why(f"板块平均 {_m_avg:+.2f}%。有色金属有两条独立的定价逻辑："
-                f"**贵金属（金/银）看实际利率和避险需求**——实际利率下行或地缘冲突升温时走强；"
-                f"**工业金属（铜）看全球经济需求**——电动车、电网升级和数据中心建设是长期需求来源。"
-                f"所以金涨铜跌通常意味着市场在担心衰退，金铜齐涨则多半是通胀预期在升温。",
-                "good" if _m_avg > 0 else "neutral", title="整体怎么看")
-            with st.expander("📖 每个品种怎么读？", expanded=False):
+            why(tr("metal_overall", avg=_m_avg),
+                "good" if _m_avg > 0 else "neutral", title=tr("why_overall"))
+            with st.expander(tr("exp_read_metal"), expanded=False):
                 for tk, info in metals_data.items():
                     txt, tone = interpret_metal(tk, info)
-                    why(txt, tone, title=info["name"])
+                    why(txt, tone, title=asset_name(tk, info["name"]))
         else:
             st.warning("无法获取有色金属数据。")
 
