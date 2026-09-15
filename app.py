@@ -9,10 +9,199 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 st.set_page_config(
-    page_title="2026 IPO泡沫模拟器",
+    page_title="2026 IPO Bubble Simulator · IPO泡沫模拟器",
     page_icon="📈",
     layout="wide",
 )
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🌍 多语言支持（界面骨架已翻译；深度分析正文目前仍为中文）
+# ══════════════════════════════════════════════════════════════════════════════
+LANGUAGES = {
+    "zh": "🇨🇳 简体中文", "en": "🇺🇸 English",  "es": "🇪🇸 Español",
+    "fr": "🇫🇷 Français", "de": "🇩🇪 Deutsch", "ja": "🇯🇵 日本語", "ko": "🇰🇷 한국어",
+}
+
+I18N = {
+ "app_title": {
+   "zh":"📈 2026 大型IPO与泡沫风险模拟器", "en":"📈 2026 Mega-IPO & Bubble Risk Simulator",
+   "es":"📈 Simulador de Riesgo de Burbuja e IPO 2026", "fr":"📈 Simulateur de Risque de Bulle & IPO 2026",
+   "de":"📈 Mega-IPO- & Blasenrisiko-Simulator 2026", "ja":"📈 2026 大型IPO・バブルリスク シミュレーター",
+   "ko":"📈 2026 대형 IPO·버블 리스크 시뮬레이터"},
+ "app_subtitle": {
+   "zh":"数据基于公开市场信息 · 个人学习与技术演示项目",
+   "en":"Built on public market data · A personal learning & tech demo project",
+   "es":"Basado en datos públicos del mercado · Proyecto personal de aprendizaje y demostración",
+   "fr":"Basé sur des données de marché publiques · Projet personnel d'apprentissage et de démonstration",
+   "de":"Basiert auf öffentlichen Marktdaten · Persönliches Lern- und Demoprojekt",
+   "ja":"公開市場データに基づく · 個人の学習・技術デモ用プロジェクト",
+   "ko":"공개 시장 데이터 기반 · 개인 학습 및 기술 데모 프로젝트"},
+ # ── 免责声明 ──
+ "disc_title": {
+   "zh":"免责声明：本站为个人学习与技术演示用途，不构成任何投资建议。",
+   "en":"Disclaimer: This site is a personal learning and technical demo. It is NOT investment advice.",
+   "es":"Aviso legal: Este sitio es un proyecto personal de aprendizaje y demostración técnica. NO constituye asesoramiento de inversión.",
+   "fr":"Avertissement : Ce site est un projet personnel d'apprentissage et de démonstration technique. Il ne constitue PAS un conseil en investissement.",
+   "de":"Haftungsausschluss: Diese Website dient dem persönlichen Lernen und der technischen Demonstration. Sie stellt KEINE Anlageberatung dar.",
+   "ja":"免責事項：本サイトは個人の学習・技術デモを目的としたものであり、投資助言では一切ありません。",
+   "ko":"면책 조항: 본 사이트는 개인 학습 및 기술 데모용이며, 투자 자문이 아닙니다."},
+ "disc_body": {
+   "zh":"这不是持牌金融机构或投资顾问服务。站内所有评分、评级、目标价、概率与预测，均由公开数据配合简化数学模型自动生成，可能存在错误或失真；部分数据为静态示例数据，行情亦有延迟。请勿据此做出真实投资决策，据此操作风险自负。",
+   "en":"This is not a licensed financial institution or advisory service. All scores, ratings, price targets, probabilities and forecasts here are generated automatically from public data using simplified mathematical models and may be inaccurate or misleading. Some figures are static sample data, and quotes are delayed. Do not base real investment decisions on this content — you use it entirely at your own risk.",
+   "es":"No es una institución financiera autorizada ni un servicio de asesoramiento. Todas las puntuaciones, calificaciones, precios objetivo, probabilidades y previsiones se generan automáticamente a partir de datos públicos mediante modelos matemáticos simplificados y pueden ser inexactas. Algunos datos son de muestra estática y las cotizaciones tienen retraso. No tome decisiones reales de inversión basándose en esto; el riesgo es exclusivamente suyo.",
+   "fr":"Il ne s'agit ni d'un établissement financier agréé ni d'un service de conseil. Tous les scores, notations, objectifs de cours, probabilités et prévisions sont générés automatiquement à partir de données publiques via des modèles mathématiques simplifiés et peuvent être erronés. Certaines données sont des exemples statiques et les cotations sont différées. Ne fondez aucune décision d'investissement réelle sur ce contenu ; vous l'utilisez à vos propres risques.",
+   "de":"Dies ist kein lizenziertes Finanzinstitut und keine Anlageberatung. Alle Scores, Ratings, Kursziele, Wahrscheinlichkeiten und Prognosen werden automatisch aus öffentlichen Daten mit vereinfachten mathematischen Modellen erzeugt und können fehlerhaft sein. Einige Daten sind statische Beispieldaten, Kurse sind verzögert. Treffen Sie keine realen Anlageentscheidungen auf dieser Grundlage — die Nutzung erfolgt auf eigenes Risiko.",
+   "ja":"当サイトは免許を受けた金融機関でも投資顧問サービスでもありません。掲載されるスコア、レーティング、目標株価、確率、予測はすべて公開データと簡易的な数理モデルにより自動生成されたもので、誤りや歪みを含む可能性があります。一部は静的なサンプルデータであり、相場も遅延しています。実際の投資判断の根拠とせず、利用は自己責任でお願いします。",
+   "ko":"본 사이트는 허가받은 금융기관이나 투자자문 서비스가 아닙니다. 모든 점수, 등급, 목표가, 확률, 예측은 공개 데이터와 단순화된 수학 모델로 자동 생성되며 오류가 있을 수 있습니다. 일부는 정적 샘플 데이터이며 시세도 지연됩니다. 이를 근거로 실제 투자 결정을 내리지 마시고, 사용에 따른 책임은 전적으로 본인에게 있습니다."},
+ "disc_foot_title": {"zh":"⚠️ 免责声明 / Disclaimer", "en":"⚠️ Disclaimer", "es":"⚠️ Aviso legal",
+   "fr":"⚠️ Avertissement", "de":"⚠️ Haftungsausschluss", "ja":"⚠️ 免責事項", "ko":"⚠️ 면책 조항"},
+ "disc_f1": {
+   "zh":"<b>本站为个人学习与技术演示项目，不构成任何投资建议、要约或推荐</b>，也不是持牌金融机构、券商或投资顾问提供的服务。",
+   "en":"<b>This is a personal learning and technical demo project. Nothing here is investment advice, an offer, or a recommendation</b>, and it is not a service of any licensed financial institution, broker or advisor.",
+   "es":"<b>Este es un proyecto personal de aprendizaje y demostración técnica. Nada aquí es asesoramiento, oferta ni recomendación de inversión</b>, ni un servicio de ninguna entidad financiera autorizada.",
+   "fr":"<b>Ce projet personnel d'apprentissage et de démonstration ne constitue ni conseil, ni offre, ni recommandation d'investissement</b>, et n'émane d'aucun établissement agréé.",
+   "de":"<b>Dies ist ein persönliches Lern- und Demoprojekt. Nichts davon ist Anlageberatung, ein Angebot oder eine Empfehlung</b> und stammt von keinem lizenzierten Finanzinstitut.",
+   "ja":"<b>本サイトは個人の学習・技術デモであり、投資助言・勧誘・推奨には一切あたりません</b>。免許を受けた金融機関や証券会社によるサービスでもありません。",
+   "ko":"<b>본 사이트는 개인 학습·기술 데모 프로젝트이며 투자 자문, 청약 권유, 추천이 아닙니다</b>. 허가받은 금융기관의 서비스도 아닙니다."},
+ "disc_f2": {
+   "zh":"站内全部评分、评级、目标价、泡沫概率、蒙地卡罗路径与长期预测，均由公开数据配合<b>简化数学模型自动生成</b>，不代表对未来表现的任何承诺或保证。",
+   "en":"All scores, ratings, price targets, bubble probabilities, Monte-Carlo paths and long-term forecasts are <b>auto-generated by simplified mathematical models</b> and promise nothing about future performance.",
+   "es":"Todas las puntuaciones, calificaciones, precios objetivo, probabilidades y simulaciones de Monte Carlo son <b>generadas automáticamente por modelos simplificados</b> y no garantizan resultados futuros.",
+   "fr":"Scores, notations, objectifs de cours, probabilités et trajectoires de Monte-Carlo sont <b>générés automatiquement par des modèles simplifiés</b> et ne garantissent aucune performance future.",
+   "de":"Alle Scores, Ratings, Kursziele, Wahrscheinlichkeiten und Monte-Carlo-Pfade werden <b>automatisch durch vereinfachte Modelle erzeugt</b> und garantieren keine künftige Wertentwicklung.",
+   "ja":"スコア・レーティング・目標株価・バブル確率・モンテカルロ経路・長期予測はすべて<b>簡易モデルによる自動生成</b>であり、将来の成果を約束するものではありません。",
+   "ko":"모든 점수·등급·목표가·버블 확률·몬테카를로 경로·장기 예측은 <b>단순화된 모델로 자동 생성</b>되며 미래 수익을 보장하지 않습니다."},
+ "disc_f3": {
+   "zh":"行情数据来自雅虎财经等公开来源，<b>美股约延迟15分钟</b>；其中IPO估值、宏观指标等部分内容为<b>静态示例数据</b>，可能与真实市场不符。",
+   "en":"Quotes come from public sources such as Yahoo Finance and are <b>delayed ~15 minutes</b> for US equities. IPO valuations and macro indicators are partly <b>static sample data</b> that may differ from the real market.",
+   "es":"Las cotizaciones provienen de fuentes públicas como Yahoo Finance y tienen <b>un retraso de ~15 minutos</b>. Las valoraciones de IPO y los indicadores macro son en parte <b>datos de muestra estáticos</b>.",
+   "fr":"Les cotations proviennent de sources publiques (Yahoo Finance) et sont <b>différées d'environ 15 minutes</b>. Les valorisations d'IPO et indicateurs macro sont en partie des <b>données d'exemple statiques</b>.",
+   "de":"Kurse stammen aus öffentlichen Quellen wie Yahoo Finance und sind <b>ca. 15 Minuten verzögert</b>. IPO-Bewertungen und Makrodaten sind teilweise <b>statische Beispieldaten</b>.",
+   "ja":"相場データは Yahoo Finance 等の公開ソースで、米国株は<b>約15分遅延</b>します。IPO評価額やマクロ指標の一部は<b>静的なサンプルデータ</b>です。",
+   "ko":"시세는 Yahoo Finance 등 공개 소스에서 가져오며 미국 주식은 <b>약 15분 지연</b>됩니다. IPO 밸류에이션과 매크로 지표 일부는 <b>정적 샘플 데이터</b>입니다."},
+ "disc_f4": {
+   "zh":"模拟结果基于历史数据与随机过程假设，<b>历史表现不代表未来收益</b>；实际投资可能导致本金部分或全部损失。",
+   "en":"Simulations rest on historical data and stochastic assumptions. <b>Past performance does not indicate future returns</b>; real investing can lose part or all of your capital.",
+   "es":"Las simulaciones se basan en datos históricos y supuestos estocásticos. <b>El rendimiento pasado no indica rendimientos futuros</b>; puede perder parte o todo su capital.",
+   "fr":"Les simulations reposent sur des données historiques et des hypothèses stochastiques. <b>Les performances passées ne préjugent pas des performances futures</b> ; vous pouvez perdre tout ou partie de votre capital.",
+   "de":"Simulationen beruhen auf historischen Daten und stochastischen Annahmen. <b>Vergangene Wertentwicklung ist kein Hinweis auf künftige Renditen</b>; Kapitalverluste sind möglich.",
+   "ja":"シミュレーションは過去データと確率過程の仮定に基づきます。<b>過去の実績は将来の収益を示しません</b>。元本の一部または全部を失う可能性があります。",
+   "ko":"시뮬레이션은 과거 데이터와 확률 과정 가정에 기반합니다. <b>과거 성과가 미래 수익을 보장하지 않으며</b>, 원금의 일부 또는 전부를 잃을 수 있습니다."},
+ "disc_f5": {
+   "zh":"请在做出任何真实投资决策前，咨询具备资质的专业人士。任何人因使用本站内容而产生的盈亏，均由使用者自行承担。",
+   "en":"Consult a qualified professional before making any real investment decision. Any gains or losses from using this site are entirely your own responsibility.",
+   "es":"Consulte a un profesional cualificado antes de invertir. Las ganancias o pérdidas derivadas del uso de este sitio son exclusivamente suyas.",
+   "fr":"Consultez un professionnel qualifié avant toute décision d'investissement. Les gains ou pertes liés à l'usage de ce site relèvent de votre seule responsabilité.",
+   "de":"Konsultieren Sie vor realen Anlageentscheidungen eine qualifizierte Fachperson. Gewinne oder Verluste aus der Nutzung liegen allein in Ihrer Verantwortung.",
+   "ja":"実際の投資判断の前に、資格を持つ専門家にご相談ください。本サイト利用により生じた損益はすべて利用者の負担となります。",
+   "ko":"실제 투자 결정 전에 자격을 갖춘 전문가와 상담하십시오. 본 사이트 이용으로 발생한 손익은 전적으로 이용자 책임입니다."},
+ "disc_side": {
+   "zh":"⚠️ **免责声明**：本站为个人学习与技术演示项目，所有分析与预测由简化模型自动生成，**不构成投资建议**，据此操作风险自负。",
+   "en":"⚠️ **Disclaimer**: personal learning/demo project. All analysis is auto-generated by simplified models and is **not investment advice** — use at your own risk.",
+   "es":"⚠️ **Aviso**: proyecto personal de aprendizaje. Todo el análisis es automático y **no es asesoramiento de inversión**; úselo bajo su responsabilidad.",
+   "fr":"⚠️ **Avertissement** : projet personnel de démonstration. Analyses générées automatiquement, **pas un conseil en investissement** ; à vos risques.",
+   "de":"⚠️ **Hinweis**: persönliches Lern-/Demoprojekt. Alle Analysen sind automatisch erzeugt und **keine Anlageberatung** — Nutzung auf eigenes Risiko.",
+   "ja":"⚠️ **免責**：個人の学習・デモ用。分析は簡易モデルによる自動生成で、**投資助言ではありません**。自己責任でご利用ください。",
+   "ko":"⚠️ **면책**: 개인 학습·데모 프로젝트. 모든 분석은 자동 생성되며 **투자 자문이 아닙니다**. 사용 책임은 본인에게 있습니다."},
+ # ── 页签 ──
+ "tab_market":{"zh":"🏠 市场概览","en":"🏠 Market","es":"🏠 Mercado","fr":"🏠 Marché","de":"🏠 Markt","ja":"🏠 マーケット","ko":"🏠 시장 개요"},
+ "tab_ipo":{"zh":"🔍 IPO详情","en":"🔍 IPO Details","es":"🔍 Detalles IPO","fr":"🔍 Détails IPO","de":"🔍 IPO-Details","ja":"🔍 IPO詳細","ko":"🔍 IPO 상세"},
+ "tab_history":{"zh":"📜 历史对比","en":"📜 History","es":"📜 Histórico","fr":"📜 Historique","de":"📜 Historie","ja":"📜 過去比較","ko":"📜 과거 비교"},
+ "tab_forecast":{"zh":"📈 趋势预测 + 泡沫模拟","en":"📈 Forecast & Bubble Sim","es":"📈 Pronóstico y Burbuja","fr":"📈 Prévision & Bulle","de":"📈 Prognose & Blase","ja":"📈 予測・バブル試算","ko":"📈 예측·버블 시뮬"},
+ "tab_macro":{"zh":"🌐 宏观分析","en":"🌐 Macro","es":"🌐 Macro","fr":"🌐 Macro","de":"🌐 Makro","ja":"🌐 マクロ分析","ko":"🌐 매크로"},
+ "tab_analyzer":{"zh":"🔬 股票分析器","en":"🔬 Stock Analyzer","es":"🔬 Analizador","fr":"🔬 Analyseur","de":"🔬 Aktien-Analyse","ja":"🔬 銘柄分析","ko":"🔬 종목 분석"},
+ "tab_holdings":{"zh":"💰 我的持仓","en":"💰 My Holdings","es":"💰 Mi Cartera","fr":"💰 Mon Portefeuille","de":"💰 Mein Depot","ja":"💰 保有銘柄","ko":"💰 내 보유"},
+ "tab_grail":{"zh":"🏆 投资圣杯","en":"🏆 Holy Grail","es":"🏆 Santo Grial","fr":"🏆 Saint Graal","de":"🏆 Heiliger Gral","ja":"🏆 投資の聖杯","ko":"🏆 투자 성배"},
+ # ── 侧边栏 / 盯盘 ──
+ "lang_label":{"zh":"🌍 语言 / Language","en":"🌍 Language","es":"🌍 Idioma","fr":"🌍 Langue","de":"🌍 Sprache","ja":"🌍 言語","ko":"🌍 언어"},
+ "watch_title":{"zh":"### 👀 盯盘模式","en":"### 👀 Watch Mode","es":"### 👀 Modo Vigilancia","fr":"### 👀 Mode Surveillance","de":"### 👀 Beobachtungsmodus","ja":"### 👀 ウォッチモード","ko":"### 👀 관찰 모드"},
+ "watch_updated":{"zh":"本次数据更新于 **{ts}**","en":"Data updated at **{ts}**","es":"Datos actualizados a las **{ts}**","fr":"Données mises à jour à **{ts}**","de":"Daten aktualisiert um **{ts}**","ja":"データ更新時刻 **{ts}**","ko":"데이터 갱신 시각 **{ts}**"},
+ "watch_active":{"zh":"🟢 盯盘中 · 每 {iv} 秒自动刷新","en":"🟢 Watching · auto-refresh every {iv}s","es":"🟢 Vigilando · cada {iv}s","fr":"🟢 Surveillance · toutes les {iv}s","de":"🟢 Aktiv · alle {iv}s","ja":"🟢 監視中 · {iv}秒ごとに更新","ko":"🟢 관찰 중 · {iv}초마다 갱신"},
+ "watch_left":{"zh":"⏳ 剩余 {mm}:{ss}　·　已刷新 {n} 次","en":"⏳ {mm}:{ss} left · refreshed {n}×","es":"⏳ quedan {mm}:{ss} · {n} actualizaciones","fr":"⏳ {mm}:{ss} restantes · {n} actualisations","de":"⏳ {mm}:{ss} übrig · {n} Aktualisierungen","ja":"⏳ 残り {mm}:{ss} · {n} 回更新","ko":"⏳ {mm}:{ss} 남음 · {n}회 갱신"},
+ "watch_stop":{"zh":"⏹ 结束盯盘","en":"⏹ Stop","es":"⏹ Detener","fr":"⏹ Arrêter","de":"⏹ Stoppen","ja":"⏹ 停止","ko":"⏹ 중지"},
+ "watch_extend":{"zh":"⏱ 再延长","en":"⏱ Extend","es":"⏱ Extender","fr":"⏱ Prolonger","de":"⏱ Verlängern","ja":"⏱ 延長","ko":"⏱ 연장"},
+ "watch_start":{"zh":"▶️ 开始盯盘","en":"▶️ Start Watching","es":"▶️ Iniciar","fr":"▶️ Démarrer","de":"▶️ Starten","ja":"▶️ 監視開始","ko":"▶️ 관찰 시작"},
+ "watch_interval":{"zh":"刷新间隔","en":"Interval","es":"Intervalo","fr":"Intervalle","de":"Intervall","ja":"更新間隔","ko":"갱신 주기"},
+ "watch_duration":{"zh":"盯盘时长","en":"Duration","es":"Duración","fr":"Durée","de":"Dauer","ja":"監視時間","ko":"관찰 시간"},
+ "watch_manual":{"zh":"⚪ 当前为手动模式：只有你操作页面或点刷新时才会取新数据，不消耗后台资源。","en":"⚪ Manual mode: data is fetched only when you interact or hit refresh — no background load.","es":"⚪ Modo manual: los datos solo se actualizan al interactuar o pulsar actualizar.","fr":"⚪ Mode manuel : les données ne sont récupérées qu'à votre demande.","de":"⚪ Manueller Modus: Daten werden nur bei Interaktion geladen.","ja":"⚪ 手動モード：操作または更新時のみデータを取得します。","ko":"⚪ 수동 모드: 조작하거나 새로고침할 때만 데이터를 가져옵니다."},
+ "watch_expired":{"zh":"⏸️ 盯盘时段已结束，自动刷新已停止（避免你离开后继续空转）。需要时再点开始。","en":"⏸️ Watch session ended; auto-refresh stopped so it doesn't idle while you're away. Start again when needed.","es":"⏸️ Sesión finalizada; la actualización automática se detuvo. Reinícielo cuando lo necesite.","fr":"⏸️ Session terminée ; l'actualisation automatique est arrêtée. Relancez si besoin.","de":"⏸️ Sitzung beendet; Auto-Aktualisierung gestoppt. Bei Bedarf neu starten.","ja":"⏸️ 監視時間が終了し、自動更新を停止しました。必要なときに再開してください。","ko":"⏸️ 관찰 시간이 끝나 자동 갱신을 중지했습니다. 필요할 때 다시 시작하세요."},
+ "watch_src":{"zh":"行情来自雅虎财经，美股约延迟15分钟；加密货币 24 小时连续报价。","en":"Quotes from Yahoo Finance; US equities delayed ~15 min, crypto trades 24/7.","es":"Cotizaciones de Yahoo Finance; acciones de EE. UU. con ~15 min de retraso.","fr":"Cotations Yahoo Finance ; actions US différées d'environ 15 min.","de":"Kurse von Yahoo Finance; US-Aktien ca. 15 Min. verzögert.","ja":"相場は Yahoo Finance より。米国株は約15分遅延、暗号資産は24時間取引。","ko":"시세 출처 Yahoo Finance. 미국 주식 약 15분 지연, 암호화폐는 24시간 거래."},
+ "force_refresh":{"zh":"🔄 立即强制刷新全部数据","en":"🔄 Force refresh all data","es":"🔄 Forzar actualización","fr":"🔄 Forcer l'actualisation","de":"🔄 Alles neu laden","ja":"🔄 全データを再取得","ko":"🔄 전체 데이터 새로고침"},
+ # ── 通用 ──
+ "refresh_live":{"zh":"🔄 刷新实时数据","en":"🔄 Refresh live data","es":"🔄 Actualizar datos","fr":"🔄 Actualiser","de":"🔄 Aktualisieren","ja":"🔄 データ更新","ko":"🔄 데이터 새로고침"},
+ "view_analysis":{"zh":"📊 查看分析与走势","en":"📊 View analysis & chart","es":"📊 Ver análisis","fr":"📊 Voir l'analyse","de":"📊 Analyse ansehen","ja":"📊 分析とチャート","ko":"📊 분석·차트 보기"},
+ "btn_analyze":{"zh":"分析","en":"Analyze","es":"Analizar","fr":"Analyser","de":"Analyse","ja":"分析","ko":"분석"},
+ "btn_start_analyze":{"zh":"🔍 开始分析","en":"🔍 Analyze","es":"🔍 Analizar","fr":"🔍 Analyser","de":"🔍 Analysieren","ja":"🔍 分析する","ko":"🔍 분석 시작"},
+ "btn_close":{"zh":"✕ 关闭","en":"✕ Close","es":"✕ Cerrar","fr":"✕ Fermer","de":"✕ Schließen","ja":"✕ 閉じる","ko":"✕ 닫기"},
+ "col_code":{"zh":"代码","en":"Ticker","es":"Símbolo","fr":"Symbole","de":"Kürzel","ja":"銘柄コード","ko":"종목 코드"},
+ "col_qty":{"zh":"数量","en":"Quantity","es":"Cantidad","fr":"Quantité","de":"Menge","ja":"数量","ko":"수량"},
+ "col_cost":{"zh":"平均成本价","en":"Avg. cost","es":"Coste medio","fr":"Prix de revient","de":"Ø Kaufpreis","ja":"平均取得単価","ko":"평균 단가"},
+ "col_ccy":{"zh":"成本价货币","en":"Cost currency","es":"Moneda","fr":"Devise","de":"Währung","ja":"通貨","ko":"통화"},
+ "col_delete":{"zh":"删除","en":"Delete","es":"Eliminar","fr":"Supprimer","de":"Löschen","ja":"削除","ko":"삭제"},
+ # ── 各区块标题 ──
+ "sec_live":{"zh":"📊 市场实时动态","en":"📊 Live Market","es":"📊 Mercado en Vivo","fr":"📊 Marché en Direct","de":"📊 Live-Markt","ja":"📊 マーケット速報","ko":"📊 실시간 시장"},
+ "sec_crypto_metals":{"zh":"💎 加密货币 & 有色金属/矿业","en":"💎 Crypto & Metals/Mining","es":"💎 Cripto y Metales","fr":"💎 Crypto & Métaux","de":"💎 Krypto & Metalle","ja":"💎 暗号資産・非鉄金属","ko":"💎 암호화폐·비철금속"},
+ "sec_today_change":{"zh":"今日涨跌幅","en":"Today's Change","es":"Variación de Hoy","fr":"Variation du Jour","de":"Tagesveränderung","ja":"本日の騰落率","ko":"오늘 등락률"},
+ "sec_holdings":{"zh":"💰 我的持仓","en":"💰 My Holdings","es":"💰 Mi Cartera","fr":"💰 Mon Portefeuille","de":"💰 Mein Depot","ja":"💰 保有銘柄","ko":"💰 내 보유 종목"},
+ "sec_holdings_overview":{"zh":"#### 📊 持仓总览","en":"#### 📊 Portfolio Summary","es":"#### 📊 Resumen de Cartera","fr":"#### 📊 Synthèse du Portefeuille","de":"#### 📊 Depot-Übersicht","ja":"#### 📊 保有サマリー","ko":"#### 📊 보유 요약"},
+ "sec_analyzer":{"zh":"🔬 股票智能分析器","en":"🔬 Smart Stock Analyzer","es":"🔬 Analizador de Acciones","fr":"🔬 Analyseur d'Actions","de":"🔬 Aktien-Analysetool","ja":"🔬 銘柄アナライザー","ko":"🔬 스마트 종목 분석기"},
+ "sec_grail":{"zh":"🏆 投资圣杯 · 达里欧的分散化法则","en":"🏆 The Holy Grail · Dalio's Diversification Rule","es":"🏆 El Santo Grial · Diversificación de Dalio","fr":"🏆 Le Saint Graal · Diversification de Dalio","de":"🏆 Der Heilige Gral · Dalios Diversifikation","ja":"🏆 投資の聖杯 · ダリオの分散法則","ko":"🏆 투자의 성배 · 달리오의 분산 법칙"},
+ "m_total_cost":{"zh":"总成本","en":"Total cost","es":"Coste total","fr":"Coût total","de":"Gesamtkosten","ja":"取得総額","ko":"총 매입금액"},
+ "m_market_value":{"zh":"当前市值","en":"Market value","es":"Valor actual","fr":"Valeur actuelle","de":"Marktwert","ja":"評価額","ko":"평가금액"},
+ "m_total_pnl":{"zh":"总盈亏","en":"Total P&L","es":"P&L total","fr":"P&L total","de":"Gesamt-G/V","ja":"損益合計","ko":"총 손익"},
+ "m_win_ratio":{"zh":"盈利/持仓数","en":"Winners / positions","es":"Ganadoras / posiciones","fr":"Gagnantes / positions","de":"Gewinner / Positionen","ja":"利益銘柄 / 保有数","ko":"수익 종목 / 보유 수"},
+ "i18n_note":{
+   "zh":"", "en":"ℹ️ Interface is translated; the detailed auto-generated commentary is still in Chinese for now.",
+   "es":"ℹ️ La interfaz está traducida; los comentarios analíticos detallados siguen en chino por ahora.",
+   "fr":"ℹ️ L'interface est traduite ; les commentaires analytiques détaillés restent en chinois pour l'instant.",
+   "de":"ℹ️ Die Oberfläche ist übersetzt; die ausführlichen Analysetexte sind vorerst auf Chinesisch.",
+   "ja":"ℹ️ UIは翻訳済みですが、詳細な自動生成コメントは現時点では中国語のままです。",
+   "ko":"ℹ️ 인터페이스는 번역되었지만 상세 자동 생성 해설은 아직 중국어입니다."},
+ "unit_sec":{"zh":"{n} 秒","en":"{n} sec","es":"{n} s","fr":"{n} s","de":"{n} Sek.","ja":"{n} 秒","ko":"{n}초"},
+ "unit_min":{"zh":"{n} 分钟","en":"{n} min","es":"{n} min","fr":"{n} min","de":"{n} Min.","ja":"{n} 分","ko":"{n}분"},
+ "watch_start_short":{"zh":"👀 开始盯盘","en":"👀 Start watching","es":"👀 Vigilar","fr":"👀 Surveiller","de":"👀 Beobachten","ja":"👀 監視開始","ko":"👀 관찰 시작"},
+ "watch_bar_on":{"zh":"🟢 盯盘中 · 每 {iv} 秒自动刷新 · 剩余 {mm}:{ss} · 已刷新 {n} 次",
+   "en":"🟢 Watching · refresh every {iv}s · {mm}:{ss} left · {n} refreshes",
+   "es":"🟢 Vigilando · cada {iv}s · quedan {mm}:{ss} · {n} actualizaciones",
+   "fr":"🟢 Surveillance · toutes les {iv}s · {mm}:{ss} restantes · {n} actualisations",
+   "de":"🟢 Aktiv · alle {iv}s · {mm}:{ss} übrig · {n} Aktualisierungen",
+   "ja":"🟢 監視中 · {iv}秒ごと更新 · 残り {mm}:{ss} · {n}回更新",
+   "ko":"🟢 관찰 중 · {iv}초마다 갱신 · {mm}:{ss} 남음 · {n}회 갱신"},
+ "watch_bar_off":{"zh":"⚪ 手动模式：数据只在你操作时更新。点「开始盯盘」后会每 {iv} 秒自动刷新一次，{mn} 分钟后自动停止（可在左侧边栏调整）。",
+   "en":"⚪ Manual mode: data updates only when you interact. Hit \u201cStart watching\u201d to auto-refresh every {iv}s, stopping automatically after {mn} min (adjustable in the sidebar).",
+   "es":"⚪ Modo manual: los datos solo se actualizan al interactuar. Pulse \u201cVigilar\u201d para actualizar cada {iv}s durante {mn} min.",
+   "fr":"⚪ Mode manuel : les données ne changent qu\u2019à votre action. Cliquez sur \u00ab Surveiller \u00bb pour actualiser toutes les {iv}s pendant {mn} min.",
+   "de":"⚪ Manueller Modus: Daten ändern sich nur bei Interaktion. \u201eBeobachten\u201c aktualisiert alle {iv}s für {mn} Min.",
+   "ja":"⚪ 手動モード：操作時のみ更新。「監視開始」で {iv} 秒ごとに自動更新し、{mn} 分後に自動停止します。",
+   "ko":"⚪ 수동 모드: 조작할 때만 갱신됩니다. \u201c관찰 시작\u201d을 누르면 {iv}초마다 갱신되고 {mn}분 후 자동 중지됩니다."},
+}
+
+# 标的显示名：非中文界面下使用英文名
+ASSET_NAMES_EN = {
+    "^IXIC":"NASDAQ Composite", "^GSPC":"S&P 500", "^VIX":"VIX Volatility Index",
+    "^TNX":"US 10Y Treasury Yield", "^DJI":"Dow Jones", "SPCX":"SpaceX",
+    "NVDA":"NVIDIA", "MSFT":"Microsoft", "GOOGL":"Alphabet", "META":"Meta", "AMZN":"Amazon",
+    "BTC-USD":"Bitcoin", "ETH-USD":"Ethereum", "SOL-USD":"Solana", "BNB-USD":"BNB",
+    "XRP-USD":"XRP", "DOGE-USD":"Dogecoin",
+    "GC=F":"Gold Futures", "SI=F":"Silver Futures", "HG=F":"Copper Futures",
+    "GDX":"Gold Miners ETF", "SLV":"Silver ETF", "FCX":"Freeport-McMoRan (Copper)",
+}
+
+def asset_name(ticker, zh_name):
+    """中文界面用原中文名，其它语言优先用英文名"""
+    if st.session_state.get("lang", "zh") == "zh":
+        return zh_name
+    return ASSET_NAMES_EN.get(ticker, ticker)
+
+def tr(key, **kw):
+    """取当前语言的文案；缺失时回退中文，再回退 key 本身"""
+    lang = st.session_state.get("lang", "zh")
+    entry = I18N.get(key, {})
+    s = entry.get(lang) or entry.get("zh") or key
+    try:
+        return s.format(**kw) if kw else s
+    except Exception:
+        return s
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 🎨 苹果风毛玻璃主题（Glassmorphism）
@@ -101,6 +290,33 @@ div[data-testid="stPlotlyChart"] {
 
 /* ── 隐藏 Plotly 工具栏（下载图片/缩放等按钮）── */
 .js-plotly-plot .modebar, .modebar-container, .modebar { display: none !important; }
+
+/* ── 顶部免责声明横幅 ── */
+.disclaimer-top {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: rgba(186,117,23,0.10);
+    border: 1px solid rgba(186,117,23,0.35);
+    border-left: 4px solid #BA7517;
+    border-radius: 12px;
+    padding: 12px 16px; margin: 6px 0 16px;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.stApp .disclaimer-top, .stApp .disclaimer-top b { color: #6b4a10; }
+.disclaimer-top .dt-icon { font-size: 19px; line-height: 1.3; }
+.stApp .disclaimer-top .dt-sub { color: #7a5a22; font-size: 12px; line-height: 1.7; }
+
+/* ── 页脚免责声明 ── */
+.disclaimer-foot {
+    margin-top: 26px; padding: 16px 20px; border-radius: 14px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.75);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    box-shadow: 0 4px 18px rgba(15,23,42,0.06);
+    font-size: 12px; line-height: 1.85;
+}
+.stApp .disclaimer-foot, .stApp .disclaimer-foot li { color: #5b6678; }
+.stApp .disclaimer-foot b { color: #0f172a; }
+.disclaimer-foot ul { margin: 6px 0 0; padding-left: 20px; }
 
 /* ── 数值解读条：告诉用户"为什么是这个结果" ── */
 .whybox {
@@ -344,35 +560,48 @@ def setup_auto_refresh():
     ss = st.session_state
     active, iv, left = watch_status()
     with st.sidebar:
-        st.markdown("### 👀 盯盘模式")
-        st.caption(f"本次数据更新于 **{_dtn.now().strftime('%H:%M:%S')}**")
+        _lang_codes = list(LANGUAGES.keys())
+        st.selectbox(tr("lang_label"), _lang_codes,
+                     index=_lang_codes.index(ss.get("lang", "zh")),
+                     format_func=lambda c: LANGUAGES[c], key="lang")
+        if ss.get("lang", "zh") != "zh" and tr("i18n_note"):
+            st.caption(tr("i18n_note"))
+        st.divider()
+        st.markdown(tr("watch_title"))
+        st.caption(tr("watch_updated", ts=_dtn.now().strftime('%H:%M:%S')))
         if active:
-            st.success(f"🟢 盯盘中 · 每 {iv} 秒自动刷新\n\n"
-                       f"⏳ 剩余 {left//60:02d}:{left%60:02d}　·　已刷新 {ss.get('watch_count', 0)} 次")
+            st.success(tr("watch_active", iv=iv) + "\n\n" +
+                       tr("watch_left", mm=f"{left//60:02d}", ss=f"{left%60:02d}",
+                         n=ss.get("watch_count", 0)))
             b1, b2 = st.columns(2)
-            if b1.button("⏹ 结束盯盘", use_container_width=True, key="watch_stop"):
+            if b1.button(tr("watch_stop"), use_container_width=True, key="watch_stop"):
                 stop_watch(); st.rerun()
-            if b2.button("⏱ 再延长", use_container_width=True, key="watch_extend",
+            if b2.button(tr("watch_extend"), use_container_width=True, key="watch_extend",
                          help=f"再延长 {ss.get('watch_min', 15)} 分钟"):
                 start_watch(); st.rerun()
         else:
             if ss.pop("watch_expired", False):
-                st.info("⏸️ 盯盘时段已结束，自动刷新已停止（避免你离开后继续空转）。需要时再点开始。")
+                st.info(tr("watch_expired"))
             c1, c2 = st.columns(2)
-            _iv = c1.selectbox("刷新间隔", [30, 60, 120, 300],
+            # key 里带上语言：切换语言时强制重建控件，否则选项文案不会跟着刷新
+            _lg = ss.get("lang", "zh")
+            _iv = c1.selectbox(tr("watch_interval"), [30, 60, 120, 300],
                                index=[30, 60, 120, 300].index(ss.get("watch_iv", 60)),
-                               key="watch_iv_sel",
-                               format_func=lambda s: f"{s} 秒" if s < 60 else f"{s // 60} 分钟")
-            _mn = c2.selectbox("盯盘时长", [5, 15, 30, 60],
+                               key=f"watch_iv_sel_{_lg}",
+                               format_func=lambda s: tr("unit_sec", n=s) if s < 60 else tr("unit_min", n=s // 60))
+            _mn = c2.selectbox(tr("watch_duration"), [5, 15, 30, 60],
                                index=[5, 15, 30, 60].index(ss.get("watch_min", 15)),
-                               key="watch_min_sel", format_func=lambda m: f"{m} 分钟")
-            if st.button("▶️ 开始盯盘", use_container_width=True, type="primary", key="watch_start"):
+                               key=f"watch_min_sel_{_lg}",
+                               format_func=lambda m: tr("unit_min", n=m))
+            if st.button(tr("watch_start"), use_container_width=True, type="primary", key="watch_start"):
                 start_watch(minutes=_mn, interval=_iv); st.rerun()
-            st.caption("⚪ 当前为手动模式：只有你操作页面或点刷新时才会取新数据，不消耗后台资源。")
-        st.caption("行情来自雅虎财经，美股约延迟15分钟；加密货币 24 小时连续报价。")
-        if st.button("🔄 立即强制刷新全部数据", use_container_width=True, key="force_refresh_all"):
+            st.caption(tr("watch_manual"))
+        st.caption(tr("watch_src"))
+        if st.button(tr("force_refresh"), use_container_width=True, key="force_refresh_all"):
             st.cache_data.clear()
             st.rerun()
+        st.divider()
+        st.caption(tr("disc_side"))
     return active, iv
 
 _auto_on, _auto_interval = setup_auto_refresh()
@@ -891,7 +1120,7 @@ def ticker_autocomplete(key, default=None, label="股票代码（边打边出提
                                 label_visibility="collapsed")
     return (val or "").strip().upper()
 
-def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label="📊 查看分析与走势"):
+def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label=None):
     """items: [(ticker, card_html)]；每张卡下方带一个跳转按钮"""
     for start in range(0, len(items), cols):
         chunk = items[start:start + cols]
@@ -900,7 +1129,8 @@ def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label="📊 查�
             with cc[i]:
                 st.markdown(f'<div class="ac-grid" style="--acmin:100%;margin-bottom:6px">{html}</div>',
                             unsafe_allow_html=True)
-                if st.button(btn_label, key=f"{key_prefix}_{tk}", use_container_width=True):
+                if st.button(btn_label or tr("view_analysis"),
+                             key=f"{key_prefix}_{tk}", use_container_width=True):
                     st.session_state["quick_view_ticker"] = tk
                     st.session_state["selected_ticker"] = tk      # 同步给「股票分析器」
                     st.session_state["analysis_result"] = None
@@ -1703,40 +1933,48 @@ def fetch_stock_analysis(ticker: str):
         return {"error": str(e)}
 
 # ── 标题 ──────────────────────────────────────────────────────────────────────
-st.title("📈 2026 大型IPO与泡沫风险模拟器")
-st.caption("数据基于2026年Q1公开市场信息 · 仅供研究参考，不构成投资建议")
+st.title(tr("app_title"))
+st.caption(tr("app_subtitle"))
 
-tabs = st.tabs(["🏠 市场概览","🔍 IPO详情","📜 历史对比","📈 趋势预测 + 泡沫模拟","🌐 宏观分析","🔬 股票分析器","💰 我的持仓","🏆 投资圣杯"])
+# ── 顶部免责声明（每个页面都能第一眼看到）──
+st.markdown(
+    '<div class="disclaimer-top">'
+    '<span class="dt-icon">⚠️</span>'
+    f'<div><b>{tr("disc_title")}</b><br>'
+    f'<span class="dt-sub">{tr("disc_body")}</span></div>'
+    '</div>', unsafe_allow_html=True)
+
+tabs = st.tabs([tr("tab_market"), tr("tab_ipo"), tr("tab_history"), tr("tab_forecast"),
+                tr("tab_macro"), tr("tab_analyzer"), tr("tab_holdings"), tr("tab_grail")])
 
 # ── Tab 1: 市场概览 + 实时市场 ──────────────────────────────────────────────────
 with tabs[0]:
-    st.subheader("📊 市场实时动态")
+    st.subheader(tr("sec_live"))
 
     live_data_t1 = fetch_market_data()
     if live_data_t1:
         _w_on, _w_iv, _w_left = watch_status()
         _wc1, _wc2, _wc3 = st.columns([1.1, 1.3, 3.6])
-        if _wc1.button("🔄 刷新实时数据", key="refresh_t1", use_container_width=True):
+        if _wc1.button(tr("refresh_live"), key="refresh_t1", use_container_width=True):
             st.cache_data.clear(); st.rerun()
         if _w_on:
-            if _wc2.button("⏹ 结束盯盘", key="watch_stop_t1", use_container_width=True):
+            if _wc2.button(tr("watch_stop"), key="watch_stop_t1", use_container_width=True):
                 stop_watch(); st.rerun()
             _wc3.markdown(
                 f'<div class="arow" style="margin-top:2px;background:rgba(29,158,117,.14);'
                 f'border:1px solid rgba(29,158,117,.35)">'
                 f'<span style="font-size:13px;color:#0F6E56;font-weight:600">'
-                f'🟢 盯盘中 · 每 {_w_iv} 秒自动刷新 · 剩余 {_w_left//60:02d}:{_w_left%60:02d} · '
-                f'已刷新 {st.session_state.get("watch_count", 0)} 次</span></div>',
+                + tr("watch_bar_on", iv=_w_iv, mm=f"{_w_left//60:02d}", ss=f"{_w_left%60:02d}",
+                     n=st.session_state.get("watch_count", 0)) + '</span></div>',
                 unsafe_allow_html=True)
         else:
-            if _wc2.button("👀 开始盯盘", key="watch_start_t1", use_container_width=True, type="primary"):
+            if _wc2.button(tr("watch_start_short"), key="watch_start_t1", use_container_width=True, type="primary"):
                 start_watch(); st.rerun()
             _wc3.markdown(
                 f'<div class="arow" style="margin-top:2px">'
                 f'<span style="font-size:12.5px;color:#64748b">'
-                f'⚪ 手动模式：数据只在你操作时更新。点「开始盯盘」后会每 '
-                f'{st.session_state.get("watch_iv", 60)} 秒自动刷新一次，'
-                f'{st.session_state.get("watch_min", 15)} 分钟后自动停止（可在左侧边栏调整）。</span></div>',
+                + tr("watch_bar_off", iv=st.session_state.get("watch_iv", 60),
+                     mn=st.session_state.get("watch_min", 15)) + '</span></div>',
                 unsafe_allow_html=True)
 
         cards_t1 = []
@@ -1750,7 +1988,7 @@ with tabs[0]:
             sub = {"^IXIC": "NASDAQ 综合指数", "^GSPC": "S&P 500 指数",
                    "^VIX": "CBOE 波动率指数", "^TNX": "US 10Y Treasury"}.get(ticker, ticker)
             cards_t1.append((ticker, asset_card_html(
-                ticker, info["name"], sub, val, info["change_pct"],
+                ticker, asset_name(ticker, info["name"]), sub, val, info["change_pct"],
                 invert_color=(ticker == "^VIX"),
             )))
         render_asset_grid_clickable(cards_t1, key_prefix="t1card", cols=4)
@@ -1761,7 +1999,7 @@ with tabs[0]:
             st.divider()
             _qc1, _qc2 = st.columns([5, 1])
             _qc1.markdown(f"#### 🔎 {_qv} 快速分析")
-            if _qc2.button("✕ 关闭", key="qv_close", use_container_width=True):
+            if _qc2.button(tr("btn_close"), key="qv_close", use_container_width=True):
                 st.session_state["quick_view_ticker"] = None
                 st.rerun()
             with st.spinner(f"正在分析 {_qv}..."):
@@ -1773,7 +2011,7 @@ with tabs[0]:
                 txt, tone = interpret_market(ticker, info)
                 why(txt, tone, title=f"{info['name']}")
 
-        st.subheader("今日涨跌幅")
+        st.subheader(tr("sec_today_change"))
         tl_t1 = [v["name"] for v in live_data_t1.values()]
         ch_t1 = [v["change_pct"] for v in live_data_t1.values()]
         fig_live_t1 = go.Figure(go.Bar(
@@ -1799,7 +2037,7 @@ with tabs[0]:
         st.warning("无法获取实时数据，请检查网络连接。")
 
     st.divider()
-    st.subheader("💎 加密货币 & 有色金属/矿业")
+    st.subheader(tr("sec_crypto_metals"))
 
     @st.cache_data(ttl=60)
     def fetch_crypto_metals_data(tickers_dict):
@@ -1834,7 +2072,7 @@ with tabs[0]:
         crypto_data = fetch_crypto_metals_data(CRYPTO_TICKERS)
         if crypto_data:
             render_asset_grid_clickable([
-                (tk, asset_card_html(tk, info["name"], tk.replace("-USD", " / USD"),
+                (tk, asset_card_html(tk, asset_name(tk, info["name"]), tk.replace("-USD", " / USD"),
                                      f"${info['price']:,.2f}", info["change_pct"],
                                      note=get_track_info(tk)[0]))
                 for tk, info in crypto_data.items()
@@ -1868,7 +2106,7 @@ with tabs[0]:
         metals_data = fetch_crypto_metals_data(METALS_TICKERS)
         if metals_data:
             render_asset_grid_clickable([
-                (tk, asset_card_html(tk, info["name"],
+                (tk, asset_card_html(tk, asset_name(tk, info["name"]),
                                      "期货合约" if "=" in tk else tk,
                                      f"${info['price']:,.2f}", info["change_pct"],
                                      note=get_track_info(tk)[0]))
@@ -1920,8 +2158,8 @@ with tabs[0]:
          "（70以上），意味着当前定价已经把很多乐观假设提前兑现了。", "bad"),
     ]
     with st.expander("📖 这四个数字分别说明什么？", expanded=False):
-        for t, d, tone in _ipo_why:
-            why(d, tone, title=t)
+        for _ttl, _desc, _tone in _ipo_why:
+            why(_desc, _tone, title=_ttl)
 
     st.subheader("市场集中度风险")
     _conc_why = {
@@ -2070,7 +2308,7 @@ with tabs[1]:
         st.divider()
         _ic1, _ic2 = st.columns([5, 1])
         _ic1.markdown(f"#### 🔎 {_iv} 走势与技术分析")
-        if _ic2.button("✕ 关闭", key="ipo_qv_close", use_container_width=True):
+        if _ic2.button(tr("btn_close"), key="ipo_qv_close", use_container_width=True):
             st.session_state["ipo_quick_view"] = None
             st.rerun()
         with st.spinner(f"正在分析 {_iv}..."):
@@ -3802,7 +4040,7 @@ with tabs[4]:
 
 # ── Tab 6: 股票分析器 ──────────────────────────────────────────────────────────
 with tabs[5]:
-    st.subheader("🔬 股票智能分析器")
+    st.subheader(tr("sec_analyzer"))
     st.caption("输入任意股票代码，自动分析技术面+基本面，给出评级与价格目标")
 
     # ── 全局 session_state 初始化 ──
@@ -3826,7 +4064,7 @@ with tabs[5]:
                         f'{logo_chip_html(tk, cls="arow-chip")}'
                         f'<span style="font-size:12.5px;font-weight:700;color:#0f172a">{tk}</span></div>',
                         unsafe_allow_html=True)
-                    if st.button("分析", key=f"q_{group}_{tk}", use_container_width=True):
+                    if st.button(tr("btn_analyze"), key=f"q_{group}_{tk}", use_container_width=True):
                         st.session_state["selected_ticker"] = tk
                         st.session_state["analysis_result"] = None
                         st.rerun()
@@ -3843,7 +4081,7 @@ with tabs[5]:
     with col_btn:
         st.write("")
         st.write("")
-        analyze_btn = st.button("🔍 开始分析", use_container_width=True, type="primary")
+        analyze_btn = st.button(tr("btn_start_analyze"), use_container_width=True, type="primary")
 
     # 触发分析：点击开始分析 或 输入框里有内容且与上次不同
     if analyze_btn and ticker_input:
@@ -5325,7 +5563,7 @@ with tabs[5]:
 
 # ── Tab 7: 我的持仓 ──────────────────────────────────────────────────────────────
 with tabs[6]:
-    st.subheader("💰 我的持仓")
+    st.subheader(tr("sec_holdings"))
     st.caption("记录你的真实持仓（含成本价），自动分析盈亏原因、长期投资前景与赛道潜力 · 支持股票/ETF/加密货币/大宗商品期货")
 
     if "holdings" not in st.session_state:
@@ -5339,11 +5577,11 @@ with tabs[6]:
 
     st.markdown("**添加/编辑持仓**")
     hh = st.columns([1.8, 1.3, 1.5, 1.4, 0.8])
-    hh[0].markdown("**代码**")
-    hh[1].markdown("**数量**")
-    hh[2].markdown("**平均成本价**")
-    hh[3].markdown("**成本价货币**")
-    hh[4].markdown("**删除**")
+    hh[0].markdown(f"**{tr('col_code')}**")
+    hh[1].markdown(f"**{tr('col_qty')}**")
+    hh[2].markdown(f"**{tr('col_cost')}**")
+    hh[3].markdown(f"**{tr('col_ccy')}**")
+    hh[4].markdown(f"**{tr('col_delete')}**")
 
     holdings = st.session_state["holdings"]
     h_to_remove = []
@@ -5430,14 +5668,14 @@ with tabs[6]:
             total_pnl     = total_mv - total_cost
             total_pnl_pct = (total_mv / total_cost - 1) * 100 if total_cost > 0 else 0
 
-            st.markdown("#### 📊 持仓总览")
+            st.markdown(tr("sec_holdings_overview"))
             oc1, oc2, oc3, oc4 = st.columns(4)
-            oc1.metric("总成本", f"${total_cost:,.2f}")
-            oc2.metric("当前市值", f"${total_mv:,.2f}")
-            oc3.metric("总盈亏", f"${total_pnl:+,.2f}", f"{total_pnl_pct:+.1f}%",
+            oc1.metric(tr("m_total_cost"), f"${total_cost:,.2f}")
+            oc2.metric(tr("m_market_value"), f"${total_mv:,.2f}")
+            oc3.metric(tr("m_total_pnl"), f"${total_pnl:+,.2f}", f"{total_pnl_pct:+.1f}%",
                        delta_color="normal" if total_pnl >= 0 else "inverse")
             win_n = sum(1 for x in rows if x["pnl"] >= 0)
-            oc4.metric("盈利/持仓数", f"{win_n}/{len(rows)}")
+            oc4.metric(tr("m_win_ratio"), f"{win_n}/{len(rows)}")
 
             _best = max(rows, key=lambda x: x["pnl"])
             _worst = min(rows, key=lambda x: x["pnl"])
@@ -5600,7 +5838,7 @@ with tabs[6]:
 
 # ── Tab 8: 投资圣杯（达里欧分散化法则） ────────────────────────────────────────────
 with tabs[7]:
-    st.subheader("🏆 投资圣杯 · 达里欧的分散化法则")
+    st.subheader(tr("sec_grail"))
     st.caption("Ray Dalio：「把 15 个以上互不相关的收益流组合起来，能在不牺牲收益的前提下把风险降低约 80%」—— 这是投资里唯一的免费午餐")
 
     why("达里欧发现：决定组合风险的不是你持有多少个标的，而是这些标的**彼此有多不相关**。"
@@ -5969,3 +6207,17 @@ with tabs[7]:
 
             st.warning("⚠️ 相关性会随市场环境变化——危机时各类资产的相关性往往同时飙升（所谓「危机时刻相关性趋近于1」），"
                        "历史相关性只能作为参考，不构成投资建议。")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📄 页脚免责声明（位于所有 Tab 之外，每个页面底部都会显示）
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown(
+    '<div class="disclaimer-foot">'
+    f'<b>{tr("disc_foot_title")}</b>'
+    '<ul>'
+    f'<li>{tr("disc_f1")}</li>'
+    f'<li>{tr("disc_f2")}</li>'
+    f'<li>{tr("disc_f3")}</li>'
+    f'<li>{tr("disc_f4")}</li>'
+    f'<li>{tr("disc_f5")}</li>'
+    '</ul></div>', unsafe_allow_html=True)
