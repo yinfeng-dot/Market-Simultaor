@@ -157,6 +157,60 @@ I18N = {
    "de":"ℹ️ Die Oberfläche ist übersetzt; die ausführlichen Analysetexte sind vorerst auf Chinesisch.",
    "ja":"ℹ️ UIは翻訳済みですが、詳細な自動生成コメントは現時点では中国語のままです。",
    "ko":"ℹ️ 인터페이스는 번역되었지만 상세 자동 생성 해설은 아직 중국어입니다."},
+ "sent_headline":{"zh":"当前市场情绪：{label}（{score}/100）","en":"Current market sentiment: {label} ({score}/100)",
+   "es":"Sentimiento actual del mercado: {label} ({score}/100)","fr":"Sentiment de marché actuel : {label} ({score}/100)",
+   "de":"Aktuelle Marktstimmung: {label} ({score}/100)","ja":"現在のマーケット心理：{label}（{score}/100）","ko":"현재 시장 심리: {label} ({score}/100)"},
+ "ax_change":{"zh":"涨跌幅 (%)","en":"Change (%)","es":"Variación (%)","fr":"Variation (%)","de":"Veränderung (%)","ja":"騰落率 (%)","ko":"등락률 (%)"},
+ "ax_change_24h":{"zh":"24h涨跌幅 (%)","en":"24h change (%)","es":"Variación 24h (%)","fr":"Variation 24h (%)","de":"24h-Veränderung (%)","ja":"24時間騰落率 (%)","ko":"24시간 등락률 (%)"},
+ "ax_change_today":{"zh":"今日涨跌幅 (%)","en":"Today's change (%)","es":"Variación de hoy (%)","fr":"Variation du jour (%)","de":"Tagesveränderung (%)","ja":"本日の騰落率 (%)","ko":"오늘 등락률 (%)"},
+ "sub_crypto":{"zh":"🪙 加密货币","en":"🪙 Crypto","es":"🪙 Cripto","fr":"🪙 Crypto","de":"🪙 Krypto","ja":"🪙 暗号資産","ko":"🪙 암호화폐"},
+ "sub_metals":{"zh":"⛏️ 有色金属/矿业","en":"⛏️ Metals & Mining","es":"⛏️ Metales y Minería","fr":"⛏️ Métaux & Mines","de":"⛏️ Metalle & Bergbau","ja":"⛏️ 非鉄金属・鉱業","ko":"⛏️ 비철금속·광업"},
+ "err_live":{"zh":"无法获取实时数据，请检查网络连接。","en":"Could not load live data — please check your connection.","es":"No se pudieron cargar los datos en vivo.","fr":"Impossible de charger les données en direct.","de":"Live-Daten konnten nicht geladen werden.","ja":"リアルタイムデータを取得できませんでした。","ko":"실시간 데이터를 불러오지 못했습니다."},
+ "err_crypto":{"zh":"无法获取加密货币实时数据。","en":"Could not load live crypto data.","es":"No se pudieron cargar los datos de cripto.","fr":"Impossible de charger les données crypto.","de":"Krypto-Daten konnten nicht geladen werden.","ja":"暗号資産のデータを取得できませんでした。","ko":"암호화폐 데이터를 불러오지 못했습니다."},
+ "err_metals":{"zh":"无法获取有色金属数据。","en":"Could not load metals data.","es":"No se pudieron cargar los datos de metales.","fr":"Impossible de charger les données métaux.","de":"Metalldaten konnten nicht geladen werden.","ja":"非鉄金属のデータを取得できませんでした。","ko":"금속 데이터를 불러오지 못했습니다."},
+ "futures":{"zh":"期货合约","en":"Futures contract","es":"Contrato de futuros","fr":"Contrat à terme","de":"Futures-Kontrakt","ja":"先物","ko":"선물"},
+ "quick_analysis":{"zh":"#### 🔎 {tk} 快速分析","en":"#### 🔎 {tk} quick analysis","es":"#### 🔎 Análisis rápido de {tk}","fr":"#### 🔎 Analyse rapide de {tk}","de":"#### 🔎 {tk} Schnellanalyse","ja":"#### 🔎 {tk} クイック分析","ko":"#### 🔎 {tk} 빠른 분석"},
+ "analyzing":{"zh":"正在分析 {tk}...","en":"Analyzing {tk}...","es":"Analizando {tk}...","fr":"Analyse de {tk}...","de":"Analysiere {tk}...","ja":"{tk} を分析中...","ko":"{tk} 분석 중..."},
+ "sub_ipo_overview":{"zh":"📈 2026 IPO市场总览","en":"📈 2026 IPO Market Overview","es":"📈 Panorama del mercado de IPO 2026","fr":"📈 Panorama du marché IPO 2026","de":"📈 IPO-Marktüberblick 2026","ja":"📈 2026 IPO市場概況","ko":"📈 2026 IPO 시장 개요"},
+ "sub_conc_risk":{"zh":"市场集中度风险","en":"Market Concentration Risk","es":"Riesgo de concentración","fr":"Risque de concentration","de":"Konzentrationsrisiko","ja":"市場集中リスク","ko":"시장 집중 리스크"},
+ "exp_four_numbers":{"zh":"📖 这四个数字分别说明什么？","en":"📖 What do these four numbers mean?","es":"📖 ¿Qué significan estas cuatro cifras?","fr":"📖 Que signifient ces quatre chiffres ?","de":"📖 Was sagen diese vier Zahlen aus?","ja":"📖 この4つの数字の意味","ko":"📖 이 네 숫자의 의미"},
+ "m_total_mcap":{"zh":"预期总市值","en":"Expected total market cap","es":"Cap. de mercado prevista","fr":"Capitalisation attendue","de":"Erwartete Marktkap.","ja":"想定時価総額","ko":"예상 시가총액"},
+ "m_total_mcap_d":{"zh":"12大待上市公司","en":"12 upcoming listings","es":"12 próximas salidas","fr":"12 introductions à venir","de":"12 anstehende Börsengänge","ja":"上場予定12社","ko":"상장 예정 12개사"},
+ "m_q1_raise":{"zh":"Q1 2026 融资额","en":"Q1 2026 capital raised","es":"Capital captado Q1 2026","fr":"Levées de fonds T1 2026","de":"Kapital Q1 2026","ja":"2026年Q1 調達額","ko":"2026 Q1 조달액"},
+ "m_q1_raise_d":{"zh":"同比 +45%","en":"+45% YoY","es":"+45% interanual","fr":"+45% sur un an","de":"+45% ggü. Vorjahr","ja":"前年比 +45%","ko":"전년比 +45%"},
+ "m_ai_share":{"zh":"AI占风投比例","en":"AI share of VC funding","es":"Peso de la IA en el capital riesgo","fr":"Part de l'IA dans le capital-risque","de":"KI-Anteil am Wagniskapital","ja":"VC投資に占めるAI比率","ko":"VC 투자 중 AI 비중"},
+ "m_ai_share_d":{"zh":"泡沫风险高","en":"High bubble risk","es":"Alto riesgo de burbuja","fr":"Risque de bulle élevé","de":"Hohes Blasenrisiko","ja":"バブルリスク高","ko":"버블 리스크 높음"},
+ "m_bubble_idx":{"zh":"泡沫综合指数","en":"Composite bubble index","es":"Índice compuesto de burbuja","fr":"Indice composite de bulle","de":"Blasen-Gesamtindex","ja":"バブル総合指数","ko":"버블 종합 지수"},
+ "m_bubble_idx_d":{"zh":"⚠ 高度警戒","en":"⚠ High alert","es":"⚠ Alerta alta","fr":"⚠ Alerte élevée","de":"⚠ Hohe Warnstufe","ja":"⚠ 高度警戒","ko":"⚠ 높은 경계"},
+ # IPO 四个数字的解读
+ "ipo_w1_t":{"zh":"预期总市值 $3.12T","en":"Expected total market cap $3.12T"},
+ "ipo_w1":{"zh":"把2026年12家待上市公司的最新一轮估值加总得到。$3.12万亿这个体量本身就是信号——相当于一次性要市场消化掉一个「英伟达级别」的市值，而这些公司绝大多数还没有稳定盈利。",
+   "en":"This is the sum of the latest private valuations of the 12 companies queued to list in 2026. The $3.12 trillion figure is itself the signal: the market would have to absorb an NVIDIA-sized market cap in one wave, and most of these companies are not yet reliably profitable."},
+ "ipo_w2_t":{"zh":"Q1融资额 $42.6B 同比+45%","en":"Q1 raise $42.6B, +45% YoY"},
+ "ipo_w2":{"zh":"一级市场融资额同比大增45%，说明资金正在加速涌入Pre-IPO阶段。融资越容易，公司上市时的估值起点就越高，留给二级市场投资者的安全边际也就越薄。",
+   "en":"Private-market funding is up 45% year on year, meaning capital is rushing into the pre-IPO stage. The easier it is to raise, the higher the valuation companies start from when they list — and the thinner the margin of safety left for public investors."},
+ "ipo_w3_t":{"zh":"AI占风投比例 80%","en":"AI is 80% of VC funding"},
+ "ipo_w3":{"zh":"每100元风险投资里有80元投向AI。这个集中度在历史上只有2000年的互联网和2021年的SPAC可比——**赛道越拥挤，一旦叙事证伪，资金同时撤离造成的踩踏就越严重**。",
+   "en":"Eighty of every hundred venture dollars go to AI. Historically only the 2000 dot-com era and the 2021 SPAC wave were this concentrated — **the more crowded a theme, the worse the stampede when the story is disproved and everyone exits at once**."},
+ "ipo_w4_t":{"zh":"泡沫综合指数 74/100","en":"Composite bubble index 74/100"},
+ "ipo_w4":{"zh":"由估值倍数（P/S）、盈利覆盖率、资金集中度和锁定期抛压四项加权得到。74分落在「高度警戒」区间（70以上），意味着当前定价已经把很多乐观假设提前兑现了。",
+   "en":"A weighted blend of valuation multiples (P/S), earnings coverage, capital concentration and lock-up selling pressure. A score of 74 sits in the \u201chigh alert\u201d band (above 70), meaning today's prices already bake in a lot of optimistic assumptions."},
+ # 集中度风险五项
+ "conc_ai_t":{"zh":"AI估值集中","en":"AI valuation concentration"},
+ "conc_ai":{"zh":"衡量市值有多少集中在少数AI标的上。88%意味着整个板块的涨跌几乎由几家公司决定，分散投资在这里失效了。",
+   "en":"Measures how much market cap sits in a handful of AI names. At 88%, the sector's direction is decided by just a few companies — diversification stops working here."},
+ "conc_liq_t":{"zh":"流动性压力","en":"Liquidity pressure"},
+ "conc_liq":{"zh":"衡量市场有没有足够的资金接住这些新股。79%说明在高利率环境下，能承接$3万亿新增供给的增量资金并不充裕。",
+   "en":"Measures whether there is enough money to absorb the new supply. At 79%, a high-rate environment simply does not have abundant incremental capital to take down $3 trillion of new issuance."},
+ "conc_prof_t":{"zh":"盈利能力缺口","en":"Profitability gap"},
+ "conc_prof":{"zh":"待上市公司中亏损企业的占比与亏损幅度。72%说明大部分标的的估值靠的是远期预期，而不是当期利润。",
+   "en":"The share and depth of losses among companies queued to list. At 72%, most of these valuations rest on distant expectations rather than current profits."},
+ "conc_lock_t":{"zh":"锁定期后抛压","en":"Post-lock-up selling pressure"},
+ "conc_lock":{"zh":"IPO后约180天锁定期到期时，早期投资者和员工可抛售的股份占比。65%属于偏高水平，通常对应解禁后的一波明显回调。",
+   "en":"The share of stock early investors and employees can sell once the ~180-day lock-up expires. 65% is on the high side and usually maps to a visible pullback after unlock."},
+ "conc_absorb_t":{"zh":"市场吸收能力","en":"Market absorption capacity"},
+ "conc_absorb":{"zh":"市场实际能消化多少新增供给。42%是唯一的低分项——**分数越低越危险**，说明供给远超需求承接力。",
+   "en":"How much new supply the market can actually digest. 42% is the only low reading here — and **lower is worse**: supply far outstrips the demand available to absorb it."},
  "why_default":{"zh":"为什么是这个结果","en":"Why this result","es":"Por qué este resultado","fr":"Pourquoi ce résultat","de":"Warum dieses Ergebnis","ja":"なぜこの結果になるか","ko":"왜 이런 결과인가"},
  "why_score_src":{"zh":"这个分数怎么来的","en":"How this score is computed","es":"Cómo se calcula","fr":"Comment ce score est calculé","de":"Wie dieser Wert entsteht","ja":"このスコアの算出方法","ko":"이 점수의 산출 방식"},
  "why_overall":{"zh":"整体怎么看","en":"The big picture","es":"Visión general","fr":"Vue d'ensemble","de":"Gesamtbild","ja":"全体の見方","ko":"전체적으로 보면"},
@@ -1504,14 +1558,49 @@ SECTOR_TRACK_MAP = {
     "Basic Materials":     ("原材料 / 大宗商品", "受益于全球工业化和新能源转型带来的结构性需求，周期性强，供给端约束是核心逻辑。"),
 }
 
+# 赛道名称的英文对照（正文说明仍在后续批次翻译）
+TRACK_NAME_EN = {
+    "数字黄金 / 价值存储": "Digital gold / store of value",
+    "智能合约平台 / Layer2 + DeFi生态": "Smart-contract platform / L2 + DeFi",
+    "高性能公链": "High-throughput L1",
+    "交易所生态币": "Exchange ecosystem token",
+    "跨境支付": "Cross-border payments",
+    "Meme币 / 社区驱动": "Meme coin / community-driven",
+    "避险资产 / 抗通胀": "Safe haven / inflation hedge",
+    "工业+贵金属双属性": "Industrial + precious metal",
+    "电气化 / 新能源基建金属": "Electrification / clean-energy metal",
+    "黄金矿业股（金价的杠杆敞口）": "Gold miners (leveraged gold exposure)",
+    "铜矿开采（新能源金属敞口）": "Copper mining (clean-energy metals)",
+    "黄金开采": "Gold mining",
+    "科技 / AI基础设施": "Technology / AI infrastructure",
+    "金融服务": "Financial services",
+    "可选消费": "Consumer discretionary",
+    "医疗健康": "Healthcare",
+    "能源": "Energy",
+    "房地产 / REITs": "Real estate / REITs",
+    "传媒 / 互联网": "Media / internet",
+    "工业 / 制造": "Industrials / manufacturing",
+    "必需消费": "Consumer staples",
+    "公用事业": "Utilities",
+    "原材料 / 大宗商品": "Materials / commodities",
+    "综合板块": "General sector",
+}
+
+def _track_name(zh_name):
+    if st.session_state.get("lang", "zh") == "zh":
+        return zh_name
+    return TRACK_NAME_EN.get(zh_name, zh_name)
+
 def get_track_info(ticker, sector=None):
     """返回 (赛道名称, 主题色, 潜力叙述)，优先按代码匹配，其次按行业匹配"""
     if ticker in TRACK_POTENTIAL:
-        return TRACK_POTENTIAL[ticker]
+        nm, color, desc = TRACK_POTENTIAL[ticker]
+        return (_track_name(nm), color, desc)
     if sector in SECTOR_TRACK_MAP:
         name, desc = SECTOR_TRACK_MAP[sector]
-        return (name, "#534AB7", desc)
-    return ("综合板块", "#666666", "暂无该行业的专项赛道分析，建议结合公司基本面和所处行业竞争格局自行评估长期成长空间。")
+        return (_track_name(name), "#534AB7", desc)
+    return (_track_name("综合板块"), "#666666",
+            "暂无该行业的专项赛道分析，建议结合公司基本面和所处行业竞争格局自行评估长期成长空间。")
 
 # 多币种支持（成本价可用非美元货币录入，自动换算为美元用于盈亏计算）
 CURRENCY_LIST = [
@@ -2117,8 +2206,12 @@ with tabs[0]:
                 val = f"{info['price']:,.2f}"
             else:
                 val = f"${info['price']:,.2f}"
-            sub = {"^IXIC": "NASDAQ 综合指数", "^GSPC": "S&P 500 指数",
-                   "^VIX": "CBOE 波动率指数", "^TNX": "US 10Y Treasury"}.get(ticker, ticker)
+            _subs = ({"^IXIC": "NASDAQ 综合指数", "^GSPC": "S&P 500 指数",
+                      "^VIX": "CBOE 波动率指数", "^TNX": "US 10Y Treasury"}
+                     if st.session_state.get("lang", "zh") == "zh" else
+                     {"^IXIC": "NASDAQ Composite", "^GSPC": "S&P 500 Index",
+                      "^VIX": "CBOE Volatility Index", "^TNX": "US 10Y Treasury"})
+            sub = _subs.get(ticker, ticker)
             cards_t1.append((ticker, asset_card_html(
                 ticker, asset_name(ticker, info["name"]), sub, val, info["change_pct"],
                 invert_color=(ticker == "^VIX"),
@@ -2130,11 +2223,11 @@ with tabs[0]:
         if _qv:
             st.divider()
             _qc1, _qc2 = st.columns([5, 1])
-            _qc1.markdown(f"#### 🔎 {_qv} 快速分析")
+            _qc1.markdown(tr("quick_analysis", tk=_qv))
             if _qc2.button(tr("btn_close"), key="qv_close", use_container_width=True):
                 st.session_state["quick_view_ticker"] = None
                 st.rerun()
-            with st.spinner(f"正在分析 {_qv}..."):
+            with st.spinner(tr("analyzing", tk=_qv)):
                 render_quick_analysis(_qv)
             st.divider()
 
@@ -2144,7 +2237,7 @@ with tabs[0]:
                 why(txt, tone, title=asset_name(ticker, info["name"]))
 
         st.subheader(tr("sec_today_change"))
-        tl_t1 = [v["name"] for v in live_data_t1.values()]
+        tl_t1 = [asset_name(k, v["name"]) for k, v in live_data_t1.items()]
         ch_t1 = [v["change_pct"] for v in live_data_t1.values()]
         fig_live_t1 = go.Figure(go.Bar(
             x=tl_t1, y=ch_t1,
@@ -2152,21 +2245,22 @@ with tabs[0]:
             text=[f"{c:+.2f}%" for c in ch_t1], textposition="outside",
         ))
         fig_live_t1.update_layout(
-            height=300, yaxis_title="涨跌幅 (%)", plot_bgcolor="#fafafa",
+            height=300, yaxis_title=tr("ax_change"), plot_bgcolor="#fafafa",
             showlegend=False, margin=dict(t=20, b=20),
             yaxis=dict(zeroline=True, zerolinecolor="#cccccc"),
         )
         glass_chart(fig_live_t1, use_container_width=True)
 
         sentiment_t1 = market_to_sentiment(live_data_t1)
-        label_t1 = ("极度恐慌" if sentiment_t1 < 20 else "恐慌" if sentiment_t1 < 40
-                    else "中性" if sentiment_t1 < 60 else "乐观" if sentiment_t1 < 80 else "极度狂热")
-        st.subheader(f"当前市场情绪：{label_t1}（{sentiment_t1}/100）")
+        label_t1 = (nt("lbl_panic2") if sentiment_t1 < 20 else nt("lbl_panic") if sentiment_t1 < 40
+                    else nt("lbl_neutral") if sentiment_t1 < 60 else nt("lbl_optimistic")
+                    if sentiment_t1 < 80 else nt("lbl_euphoric"))
+        st.subheader(tr("sent_headline", label=label_t1, score=sentiment_t1))
         st.progress(sentiment_t1 / 100)
         _s_txt, _s_tone, _s_calc = explain_sentiment(live_data_t1, sentiment_t1)
         why(_s_txt, _s_tone, calc=_s_calc, title=tr("why_score_src"))
     else:
-        st.warning("无法获取实时数据，请检查网络连接。")
+        st.warning(tr("err_live"))
 
     st.divider()
     st.subheader(tr("sec_crypto_metals"))
@@ -2199,7 +2293,7 @@ with tabs[0]:
         except ImportError:
             return {}
 
-    cm_tab1, cm_tab2 = st.tabs(["🪙 加密货币", "⛏️ 有色金属/矿业"])
+    cm_tab1, cm_tab2 = st.tabs([tr("sub_crypto"), tr("sub_metals")])
     with cm_tab1:
         crypto_data = fetch_crypto_metals_data(CRYPTO_TICKERS)
         if crypto_data:
@@ -2210,12 +2304,12 @@ with tabs[0]:
                 for tk, info in crypto_data.items()
             ], key_prefix="cryptocard", cols=3)
             fig_crypto = go.Figure(go.Bar(
-                x=[v["name"] for v in crypto_data.values()],
+                x=[asset_name(k, v["name"]) for k, v in crypto_data.items()],
                 y=[v["change_pct"] for v in crypto_data.values()],
                 marker_color=["#A32D2D" if v["change_pct"] < 0 else "#0F6E56" for v in crypto_data.values()],
                 text=[f"{v['change_pct']:+.2f}%" for v in crypto_data.values()], textposition="outside",
             ))
-            fig_crypto.update_layout(height=280, yaxis_title="24h涨跌幅 (%)", plot_bgcolor="#fafafa",
+            fig_crypto.update_layout(height=280, yaxis_title=tr("ax_change_24h"), plot_bgcolor="#fafafa",
                                      showlegend=False, margin=dict(t=20, b=20),
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
             glass_chart(fig_crypto, use_container_width=True)
@@ -2230,25 +2324,25 @@ with tabs[0]:
                     why(txt, tone, title=asset_name(tk, info["name"]))
             st.caption(tr("crypto_hint"))
         else:
-            st.warning("无法获取加密货币实时数据。")
+            st.warning(tr("err_crypto"))
 
     with cm_tab2:
         metals_data = fetch_crypto_metals_data(METALS_TICKERS)
         if metals_data:
             render_asset_grid_clickable([
                 (tk, asset_card_html(tk, asset_name(tk, info["name"]),
-                                     "期货合约" if "=" in tk else tk,
+                                     tr("futures") if "=" in tk else tk,
                                      f"${info['price']:,.2f}", info["change_pct"],
                                      note=get_track_info(tk)[0]))
                 for tk, info in metals_data.items()
             ], key_prefix="metalcard", cols=3)
             fig_metals = go.Figure(go.Bar(
-                x=[v["name"] for v in metals_data.values()],
+                x=[asset_name(k, v["name"]) for k, v in metals_data.items()],
                 y=[v["change_pct"] for v in metals_data.values()],
                 marker_color=["#A32D2D" if v["change_pct"] < 0 else "#0F6E56" for v in metals_data.values()],
                 text=[f"{v['change_pct']:+.2f}%" for v in metals_data.values()], textposition="outside",
             ))
-            fig_metals.update_layout(height=280, yaxis_title="今日涨跌幅 (%)", plot_bgcolor="#fafafa",
+            fig_metals.update_layout(height=280, yaxis_title=tr("ax_change_today"), plot_bgcolor="#fafafa",
                                      showlegend=False, margin=dict(t=20, b=20),
                                      yaxis=dict(zeroline=True, zerolinecolor="#cccccc"))
             glass_chart(fig_metals, use_container_width=True)
@@ -2260,45 +2354,37 @@ with tabs[0]:
                     txt, tone = interpret_metal(tk, info)
                     why(txt, tone, title=asset_name(tk, info["name"]))
         else:
-            st.warning("无法获取有色金属数据。")
+            st.warning(tr("err_metals"))
 
     st.divider()
-    st.subheader("📈 2026 IPO市场总览")
+    st.subheader(tr("sub_ipo_overview"))
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("预期总市值", "$3.12T", "12大待上市公司")
-    c2.metric("Q1 2026 融资额", "$42.6B", "同比 +45%")
-    c3.metric("AI占风投比例", "80%", "泡沫风险高", delta_color="inverse")
-    c4.metric("泡沫综合指数", "74/100", "⚠ 高度警戒", delta_color="inverse")
+    c1.metric(tr("m_total_mcap"), "$3.12T", tr("m_total_mcap_d"))
+    c2.metric(tr("m_q1_raise"), "$42.6B", tr("m_q1_raise_d"))
+    c3.metric(tr("m_ai_share"), "80%", tr("m_ai_share_d"), delta_color="inverse")
+    c4.metric(tr("m_bubble_idx"), "74/100", tr("m_bubble_idx_d"), delta_color="inverse")
 
     _ipo_why = [
-        ("预期总市值 $3.12T",
-         "把2026年12家待上市公司的最新一轮估值加总得到。$3.12万亿这个体量本身就是信号——"
-         "相当于一次性要市场消化掉一个「英伟达级别」的市值，而这些公司绝大多数还没有稳定盈利。", "warn"),
-        ("Q1融资额 $42.6B 同比+45%",
-         "一级市场融资额同比大增45%，说明资金正在加速涌入Pre-IPO阶段。融资越容易，公司上市时的"
-         "估值起点就越高，留给二级市场投资者的安全边际也就越薄。", "warn"),
-        ("AI占风投比例 80%",
-         "每100元风险投资里有80元投向AI。这个集中度在历史上只有2000年的互联网和2021年的SPAC可比——"
-         "**赛道越拥挤，一旦叙事证伪，资金同时撤离造成的踩踏就越严重**。", "bad"),
-        ("泡沫综合指数 74/100",
-         "由估值倍数（P/S）、盈利覆盖率、资金集中度和锁定期抛压四项加权得到。74分落在「高度警戒」区间"
-         "（70以上），意味着当前定价已经把很多乐观假设提前兑现了。", "bad"),
+        (tr("ipo_w1_t"), nt("ipo_w1"), "warn"),
+        (tr("ipo_w2_t"), nt("ipo_w2"), "warn"),
+        (tr("ipo_w3_t"), nt("ipo_w3"), "bad"),
+        (tr("ipo_w4_t"), nt("ipo_w4"), "bad"),
     ]
-    with st.expander("📖 这四个数字分别说明什么？", expanded=False):
+    with st.expander(tr("exp_four_numbers"), expanded=False):
         for _ttl, _desc, _tone in _ipo_why:
             why(_desc, _tone, title=_ttl)
 
-    st.subheader("市场集中度风险")
-    _conc_why = {
-        "AI估值集中": "衡量市值有多少集中在少数AI标的上。88%意味着整个板块的涨跌几乎由几家公司决定，分散投资在这里失效了。",
-        "流动性压力": "衡量市场有没有足够的资金接住这些新股。79%说明在高利率环境下，能承接$3万亿新增供给的增量资金并不充裕。",
-        "盈利能力缺口": "待上市公司中亏损企业的占比与亏损幅度。72%说明大部分标的的估值靠的是远期预期，而不是当期利润。",
-        "锁定期后抛压": "IPO后约180天锁定期到期时，早期投资者和员工可抛售的股份占比。65%属于偏高水平，通常对应解禁后的一波明显回调。",
-        "市场吸收能力": "市场实际能消化多少新增供给。42%是唯一的低分项——**分数越低越危险**，说明供给远超需求承接力。",
-    }
-    for label, val in {"AI估值集中":88,"流动性压力":79,"盈利能力缺口":72,"锁定期后抛压":65,"市场吸收能力":42}.items():
-        st.progress(val/100, text=f"{label}：**{val}%**")
-        why(_conc_why[label], "bad" if val >= 70 or label == "市场吸收能力" else "warn", title=label)
+    st.subheader(tr("sub_conc_risk"))
+    _conc_items = [
+        ("conc_ai_t",      "conc_ai",      88),
+        ("conc_liq_t",     "conc_liq",     79),
+        ("conc_prof_t",    "conc_prof",    72),
+        ("conc_lock_t",    "conc_lock",    65),
+        ("conc_absorb_t",  "conc_absorb",  42),
+    ]
+    for _tk_, _dk_, _val_ in _conc_items:
+        st.progress(_val_ / 100, text=f"{tr(_tk_)}：**{_val_}%**")
+        why(nt(_dk_), "bad" if (_val_ >= 70 or _dk_ == "conc_absorb") else "warn", title=tr(_tk_))
 
 # ── Tab 2: IPO详情（含估值总览） ────────────────────────────────────────────────
 with tabs[1]:
