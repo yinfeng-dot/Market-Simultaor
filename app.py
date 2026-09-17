@@ -1773,7 +1773,8 @@ def render_quick_analysis(ticker):
         f'<div style="font-size:13px;opacity:.92">{r["name"]} · {r["sector"]}</div></div>'
         f'<div style="margin-left:auto;text-align:right">'
         f'<div style="font-size:28px;font-weight:750">${r["price_now"]:.2f}</div>'
-        f'<div style="font-size:12.5px;opacity:.92">综合评分：{r["score"]}/100</div>'
+        f'<div style="font-size:12.5px;opacity:.92">趋势 {r["trend_score"]}/100　·　'
+        f'位置 {r["stretch_score"]}/100</div>'
         f'</div></div></div>', unsafe_allow_html=True)
 
     q1, q2, q3, q4, q5 = st.columns(5)
@@ -1781,7 +1782,7 @@ def render_quick_analysis(ticker):
     q2.metric("1个月动量", f"{r['mom_1m']:+.1f}%", delta_color="normal" if r['mom_1m'] >= 0 else "inverse")
     q3.metric("RSI(14)", f"{r['rsi']:.1f}",
               "超卖" if r['rsi'] < 30 else "超买" if r['rsi'] > 70 else "正常")
-    q4.metric("52周区间", f"${r['price_52w_low']:.0f}–${r['price_52w_high']:.0f}",
+    q4.metric("52周区间", f"${r['price_52w_low']:.0f} – {r['price_52w_high']:.0f}",
               f"距高点{r['price_from_high']:.1f}%", delta_color="inverse")
     q5.metric("长期评分", f"{r['lt_score']}/100", r["lt_rating"], delta_color="off")
 
@@ -2222,6 +2223,10 @@ STATIC_STOCK_DATA = {
         "slope_pct": 2.1, "sharpe": 1.2,
         "lt_score": 62, "lt_rating": "适合长期投资", "lt_color": "#1D9E75",
         "rf_annual": 0.04,
+        "trend_score": 68, "stretch_score": 62,
+        "rating_note": "趋势强劲但位置偏高：上市首周涨幅已透支部分预期，等回调更合适。",
+        "range_low": 168.0, "range_high": 253.0, "range_pct": 20.5,
+        "analyst_target": 196.0, "analyst_upside": -4.9,
     }
 }
 
@@ -2431,157 +2436,207 @@ def fetch_stock_analysis(ticker: str):
         else:
             lt_rating = "规避，高风险资产"; lt_color = "#A32D2D"
 
-        # ── 评分系统（总分 100） ──
-        score = 50  # 中性起点
+        # ══ 评分系统：拆成两个正交的分数 ══════════════════════════════
+        # 以前所有信号加进同一个 score，但它们回答的是两个不同的问题：
+        #   · 动量/均线/MACD/斜率/OBV/成交量 → "往哪个方向走"（顺势）
+        #   · RSI/布林/斐波那契             → "现在贵不贵"（反向）
+        # 混在一起会互相抵消：强势上涨股 动量+10、RSI-5 = +5；
+        # 暴跌股 动量-10、RSI+15 = +5 —— 两者得分几乎一样，方向信息全丢了。
+        # 拆开后才能区分"趋势强但偏贵（等回调）"和"跌不动了但趋势没转（别接）"。
+        trend_score   = 50      # 0-100，越高趋势越强
+        stretch_score = 50      # 0-100，越高越超买（越贵）
         signals = []
 
-        # RSI 信号 (±15分)
+        # ── 位置类信号：越高越超买 ─────────────────────────────────
         if rsi < 30:
-            score += 15
-            signals.append(("✅", "RSI超卖", f"RSI={rsi:.1f}，技术面严重超卖，反弹概率高"))
+            stretch_score -= 25
+            signals.append(("✅", "RSI超卖", f"RSI={rsi:.1f}，技术面严重超卖，短线反弹概率高"))
         elif rsi < 45:
-            score += 8
-            signals.append(("✅", "RSI偏低", f"RSI={rsi:.1f}，存在买入机会"))
+            stretch_score -= 12
+            signals.append(("✅", "RSI偏低", f"RSI={rsi:.1f}，位置不算贵，进场性价比相对有利"))
         elif rsi > 75:
-            score -= 15
+            stretch_score += 25
             signals.append(("🔴", "RSI超买", f"RSI={rsi:.1f}，短期获利回吐压力大"))
         elif rsi > 60:
-            score -= 5
-            signals.append(("🟡", "RSI偏高", f"RSI={rsi:.1f}，上涨动能趋弱"))
+            stretch_score += 12
+            signals.append(("🟡", "RSI偏高", f"RSI={rsi:.1f}，位置偏高，追高性价比下降"))
         else:
             signals.append(("⚪", "RSI中性", f"RSI={rsi:.1f}，无明显超买超卖信号"))
 
-        # MACD 信号 (±12分)
-        if macd_hist > 0 and macd_val > signal_val:
-            score += 12
-            signals.append(("✅", "MACD金叉", f"MACD柱={macd_hist:.3f}，多头趋势确认"))
-        elif macd_hist < 0 and macd_val < signal_val:
-            score -= 12
-            signals.append(("🔴", "MACD死叉", f"MACD柱={macd_hist:.3f}，空头趋势确认"))
-        else:
-            signals.append(("🟡", "MACD待确认", "MACD信号模糊，等待方向选择"))
-
-        # 均线系统 (±10分)
-        if price_now > ma20 > ma50:
-            score += 10
-            signals.append(("✅", "多头排列", f"价格>${ma20:.2f}(MA20)>${ma50:.2f}(MA50)"))
-        elif price_now < ma20 < ma50:
-            score -= 10
-            signals.append(("🔴", "空头排列", f"价格<MA20<MA50，下行趋势明确"))
-        elif price_now > ma20:
-            score += 5
-            signals.append(("🟡", "价格站上MA20", f"短期趋势向好"))
-
-        # 布林带 (±8分)
         if price_now < bb_low:
-            score += 8
+            stretch_score -= 15
             signals.append(("✅", "触及布林下轨", f"价格${price_now:.2f}低于下轨${bb_low:.2f}，超卖区间"))
         elif price_now > bb_up:
-            score -= 8
+            stretch_score += 15
             signals.append(("🔴", "突破布林上轨", f"价格${price_now:.2f}高于上轨${bb_up:.2f}，超买区间"))
 
-        # 成交量 (±5分)
-        if vol_ratio > 1.5 and mom_1m > 0:
-            score += 5
-            signals.append(("✅", "放量上涨", f"成交量是均值的{vol_ratio:.1f}倍，资金流入确认"))
-        elif vol_ratio > 1.5 and mom_1m < 0:
-            score -= 5
-            signals.append(("🔴", "放量下跌", f"成交量是均值的{vol_ratio:.1f}倍，资金出逃信号"))
-
-        # 动量 (±10分)
-        if mom_1m > 10:
-            score += 10
-            signals.append(("✅", "强势动量", f"1个月涨幅+{mom_1m:.1f}%，趋势强劲"))
-        elif mom_1m < -15:
-            score -= 10
-            signals.append(("🔴", "弱势动量", f"1个月跌幅{mom_1m:.1f}%，下行压力大"))
-
-        # 基本面 PE (±5分)
-        if pe and pe > 0:
-            if pe < 15:
-                score += 5
-                signals.append(("✅", "估值便宜", f"P/E={pe:.1f}x，低于市场平均"))
-            elif pe > 50:
-                score -= 5
-                signals.append(("🔴", "估值偏贵", f"P/E={pe:.1f}x，溢价明显需要高增长支撑"))
-
-        # 分析师目标价 (±5分)
-        if target and target > 0:
-            upside = (target - price_now) / price_now * 100
-            if upside > 20:
-                score += 5
-                signals.append(("✅", "分析师看多", f"目标价${target:.2f}，较现价上行空间{upside:.1f}%"))
-            elif upside < -10:
-                score -= 5
-                signals.append(("🔴", "分析师看空", f"目标价${target:.2f}，较现价下行风险{abs(upside):.1f}%"))
-
-        # OBV 信号 (±8分)
-        if obv_trend == "上升" and obv_pct > 5:
-            score += 8
-            signals.append(("✅", "OBV资金流入", f"能量潮高于均线{obv_pct:.1f}%，机构资金持续买入"))
-        elif obv_trend == "下降" and obv_pct < -5:
-            score -= 8
-            signals.append(("🔴", "OBV资金流出", f"能量潮低于均线{abs(obv_pct):.1f}%，资金持续流出"))
-        else:
-            signals.append(("⚪", "OBV中性", f"资金流向尚不明确，趋势待确认"))
-
-        # 线性回归斜率信号 (±6分)
-        if slope_pct > 0.15:
-            score += 6
-            signals.append(("✅", "上升趋势", f"20日线性回归斜率 +{slope_pct:.2f}%/日，价格趋势向上"))
-        elif slope_pct < -0.15:
-            score -= 6
-            signals.append(("🔴", "下降趋势", f"20日线性回归斜率 {slope_pct:.2f}%/日，价格趋势向下"))
-        else:
-            signals.append(("⚪", "趋势平坦", f"20日线性回归斜率接近0（{slope_pct:.2f}%/日），横盘整理中"))
-
-        # 斐波那契位置信号 (±5分)
-        fib_position = (price_now - fib_low) / fib_range * 100 if fib_range > 0 else 50
         if abs(price_now - nearest_support) / price_now < 0.02:
-            score += 5
+            stretch_score -= 10
             signals.append(("✅", "斐波那契支撑", f"价格${price_now:.2f}接近支撑位${nearest_support:.2f}（Fib回撤）"))
         elif abs(price_now - nearest_resistance) / price_now < 0.02:
-            score -= 5
+            stretch_score += 10
             signals.append(("🔴", "斐波那契阻力", f"价格${price_now:.2f}接近阻力位${nearest_resistance:.2f}（Fib回撤）"))
         else:
             signals.append(("⚪", "斐波那契中性", f"支撑${nearest_support:.2f} → 当前${price_now:.2f} → 阻力${nearest_resistance:.2f}"))
 
-        # 夏普比率信号 (±5分)
+        # 距52周高点也是"位置"的一部分
+        if price_from_high > -3:
+            stretch_score += 8
+            signals.append(("🟡", "逼近52周高点", f"距高点仅 {abs(price_from_high):.1f}%，上方没有套牢盘参照"))
+        elif price_from_high < -35:
+            stretch_score -= 8
+            signals.append(("🟡", "深度回撤", f"距52周高点 {price_from_high:.1f}%，位置低但需确认趋势是否企稳"))
+
+        stretch_score = max(0, min(100, stretch_score))
+
+        # ── 趋势类信号：越高方向越向上 ─────────────────────────────
+        if macd_hist > 0:
+            trend_score += 12
+            signals.append(("✅", "MACD金叉", f"MACD柱={macd_hist:.3f}，多头动能占优"))
+        elif macd_hist < 0:
+            trend_score -= 12
+            signals.append(("🔴", "MACD死叉", f"MACD柱={macd_hist:.3f}，空头动能占优"))
+        else:
+            signals.append(("🟡", "MACD待确认", "MACD柱在零轴附近，方向未定"))
+
+        if price_now > ma20 > ma50:
+            trend_score += 10
+            signals.append(("✅", "多头排列", f"价格>${ma20:.2f}(MA20)>${ma50:.2f}(MA50)"))
+        elif price_now < ma20 < ma50:
+            trend_score -= 10
+            signals.append(("🔴", "空头排列", f"价格<MA20<MA50，下行趋势明确"))
+        elif price_now > ma20:
+            trend_score += 5
+            signals.append(("🟡", "价格站上MA20", "短期趋势向好，但中期均线尚未跟上"))
+        else:
+            trend_score -= 5
+            signals.append(("🟡", "价格跌破MA20", "短期趋势转弱"))
+
+        if mom_1m > 10:
+            trend_score += 10
+            signals.append(("✅", "强势动量", f"1个月涨幅+{mom_1m:.1f}%，趋势强劲"))
+        elif mom_1m < -15:
+            trend_score -= 10
+            signals.append(("🔴", "弱势动量", f"1个月跌幅{mom_1m:.1f}%，下行压力大"))
+
+        if obv_trend == "上升" and obv_pct > 5:
+            trend_score += 8
+            signals.append(("✅", "OBV资金流入", f"能量潮高于均线{obv_pct:.1f}%，资金持续买入"))
+        elif obv_trend == "下降" and obv_pct < -5:
+            trend_score -= 8
+            signals.append(("🔴", "OBV资金流出", f"能量潮低于均线{abs(obv_pct):.1f}%，资金持续流出"))
+        else:
+            signals.append(("⚪", "OBV中性", "资金流向尚不明确，趋势待确认"))
+
+        if slope_pct > 0.15:
+            trend_score += 6
+            signals.append(("✅", "上升趋势", f"20日线性回归斜率 +{slope_pct:.2f}%/日，价格趋势向上"))
+        elif slope_pct < -0.15:
+            trend_score -= 6
+            signals.append(("🔴", "下降趋势", f"20日线性回归斜率 {slope_pct:.2f}%/日，价格趋势向下"))
+        else:
+            signals.append(("⚪", "趋势平坦", f"20日线性回归斜率接近0（{slope_pct:.2f}%/日），横盘整理中"))
+
+        if vol_ratio > 1.5 and mom_1m > 0:
+            trend_score += 5
+            signals.append(("✅", "放量上涨", f"成交量是均值的{vol_ratio:.1f}倍，资金流入确认"))
+        elif vol_ratio > 1.5 and mom_1m < 0:
+            trend_score -= 5
+            signals.append(("🔴", "放量下跌", f"成交量是均值的{vol_ratio:.1f}倍，资金出逃信号"))
+
         if sharpe > 1.5:
-            score += 5
+            trend_score += 5
             signals.append(("✅", "夏普比率优秀", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），风险调整后收益极佳"))
         elif sharpe > 0.5:
-            score += 2
+            trend_score += 2
             signals.append(("🟡", "夏普比率良好", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），风险收益比尚可"))
         elif sharpe < 0:
-            score -= 5
+            trend_score -= 5
             signals.append(("🔴", "夏普比率为负", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），跑不赢无风险收益，不如持有现金/短债"))
 
-        score = max(0, min(100, score))
+        trend_score = max(0, min(100, trend_score))
 
-        # ── 评级逻辑 ──
-        if score >= 80:
-            rating = "强力买入"; rating_color = "#0F6E56"; rating_emoji = "🚀"
-            price_target_pct = round(mom_3m * 0.5 + 15 + (100 - rsi) * 0.3, 1)
-        elif score >= 65:
-            rating = "买入";     rating_color = "#1D9E75"; rating_emoji = "📈"
-            price_target_pct = round(mom_3m * 0.3 + 8 + (60 - rsi) * 0.1, 1)
-        elif score >= 45:
-            rating = "持有";     rating_color = "#BA7517"; rating_emoji = "⚖️"
-            price_target_pct = round(mom_3m * 0.1, 1)
-        elif score >= 30:
-            rating = "卖出";     rating_color = "#D85A30"; rating_emoji = "📉"
-            price_target_pct = round(mom_3m * 0.3 - 8, 1)
+        # ── 基本面：既不是趋势也不是位置，单列 ─────────────────────
+        if pe and pe > 0:
+            if pe < 15:
+                signals.append(("✅", "估值便宜", f"P/E={pe:.1f}x，低于市场平均"))
+            elif pe > 50:
+                signals.append(("🔴", "估值偏贵", f"P/E={pe:.1f}x，溢价明显需要高增长支撑"))
+
+        if target and target > 0:
+            _up = (target - price_now) / price_now * 100
+            if _up > 20:
+                signals.append(("✅", "分析师看多", f"一致目标价${target:.2f}，较现价上行空间{_up:.1f}%"))
+            elif _up < -10:
+                signals.append(("🔴", "分析师看空", f"一致目标价${target:.2f}，较现价下行风险{abs(_up):.1f}%"))
+
+        # ── 评级：由"趋势 × 位置"二维组合决定，而不是把两者相加 ────────
+        if trend_score >= 65:
+            if stretch_score >= 70:
+                rating = "顺势但偏贵"; rating_color = "#BA7517"; rating_emoji = "⏳"
+                rating_note = "趋势方向是对的，但位置已经偏高，追进去的风险收益比不划算，等回调到均线附近更合适。"
+            elif stretch_score <= 35:
+                rating = "强力买入"; rating_color = "#0F6E56"; rating_emoji = "🚀"
+                rating_note = "趋势强劲且位置不贵——方向和进场点同时有利，是技术面最理想的组合。"
+            else:
+                rating = "买入"; rating_color = "#1D9E75"; rating_emoji = "📈"
+                rating_note = "趋势向上，位置处于中性区间，顺势参与的条件成立。"
+        elif trend_score >= 45:
+            if stretch_score <= 30:
+                rating = "超卖反弹候选"; rating_color = "#BA7517"; rating_emoji = "🔍"
+                rating_note = "趋势本身不强，但位置已经很低，属于博反弹而非趋势跟随，需要控制仓位。"
+            elif stretch_score >= 70:
+                rating = "回调风险"; rating_color = "#D85A30"; rating_emoji = "⚠️"
+                rating_note = "趋势没有支撑，位置却已偏高——这是最容易被套的组合。"
+            else:
+                rating = "持有"; rating_color = "#BA7517"; rating_emoji = "⚖️"
+                rating_note = "趋势与位置都在中性区间，缺乏明确的进出场信号，观望为主。"
         else:
-            rating = "强力卖出"; rating_color = "#A32D2D"; rating_emoji = "💥"
-            price_target_pct = round(mom_3m * 0.5 - 18, 1)
+            if stretch_score <= 30:
+                rating = "止跌观察"; rating_color = "#D85A30"; rating_emoji = "🩹"
+                rating_note = "跌幅已经很大、位置很低，但趋势尚未转向——「跌不动」不等于「要涨了」，等趋势确认再说。"
+            elif stretch_score >= 70:
+                rating = "强力卖出"; rating_color = "#A32D2D"; rating_emoji = "💥"
+                rating_note = "趋势向下、位置却偏高，是风险收益比最差的组合。"
+            else:
+                rating = "卖出"; rating_color = "#D85A30"; rating_emoji = "📉"
+                rating_note = "趋势向下，位置没有提供足够的安全边际。"
 
-        price_target_pct = max(-50, min(100, price_target_pct))
-        price_target = price_now * (1 + price_target_pct / 100)
+        # 兼容旧字段：score 现在代表趋势强度
+        score = trend_score
+
+        # ══ 价格区间：不再用动量外推一个"目标价" ═══════════════════════
+        # 原来的写法是 mom_3m*0.5 + 15 + (100-rsi)*0.3 —— 把过去3个月的涨幅
+        # 线性外推到未来，既没有估值锚，(100-rsi) 项还让"RSI越低目标价越高"，
+        # 而这只票能进高档位又恰恰部分因为 RSI 低，属于循环论证。
+        # 改成两样都给真实依据的东西：
+        #   · 分析师一致目标价（yfinance 的 targetMeanPrice，真实数据）
+        #   · 按这只票自身波动率推的 3 个月 ±1σ 区间（约 68% 概率落在其中）
+        _sig_d = float(daily_returns.std()) if len(daily_returns) > 5 else 0.02
+        _sig_3m = _sig_d * (63 ** 0.5)               # 3个月 ≈ 63 个交易日
+        range_low  = price_now * math.exp(-_sig_3m)
+        range_high = price_now * math.exp(_sig_3m)
+        range_pct  = _sig_3m * 100
+
+        analyst_target = float(target) if (target and target > 0) else None
+        analyst_upside = ((analyst_target - price_now) / price_now * 100
+                          if analyst_target else None)
+
+        # 兼容旧字段：有分析师目标价就用它，否则退回现价（即"无预测"）
+        price_target = analyst_target if analyst_target else price_now
+        price_target_pct = analyst_upside if analyst_upside is not None else 0.0
 
         return {
             "ticker": ticker.upper(),
             "rf_annual": rf_annual,
+            "trend_score": trend_score,
+            "stretch_score": stretch_score,
+            "rating_note": rating_note,
+            "range_low": range_low,
+            "range_high": range_high,
+            "range_pct": range_pct,
+            "analyst_target": analyst_target,
+            "analyst_upside": analyst_upside,
             "name": name,
             "sector": sector,
             "price_now": price_now,
@@ -4784,24 +4839,89 @@ with tabs[4]:
                 pass
         return all_news[:15]
 
+    # ── 新闻情绪分类 ──────────────────────────────────────────────
+    # 旧版是裸关键词匹配，两个毛病很致命：
+    #   1. 把国名（china/russia/taiwan…）当成地缘风险词 ——
+    #      "China retail sales beat expectations" 会被判成地缘利空；
+    #   2. 只匹配裸名词 —— "inflation" 一律算利空，
+    #      可 "inflation cools" 明明是利多。
+    # 改成"主题词 + 方向词"的组合规则，并处理否定式。
+    import re as _re_news
+
+    # "价格类"主语 —— 只有绑定它，涨跌词才有确定的多空含义。
+    # 这里刻意不放通配符：宁可漏判也不要判反。
+    # "Nvidia surges" 没有主语词会落到中性，而 "Nvidia shares surge" 能命中。
+    _MKT = (r"(stocks?|shares?|equit\w*|markets?|index|indices|futures|"
+            r"nasdaq|s&p|dow|bitcoin|crypto|oil|gold|treasur\w*|bonds?|yields?)")
+
+    _BULL_RULES = [
+        r"rate cut", r"\bfed (cut|cuts|easing|pivot)",
+        r"beat(s|ing)? (estimat|expect|forecast|street)",
+        r"(record|all-time) (high|profit|revenue|quarter)",
+        r"upgrade[sd]?\b", r"\brall(y|ies|ied)\b",
+        # surge/jump/soar 必须绑定"价格类"主语：
+        # "stocks surge" 是利多，"inflation surges" 是利空，裸词会两边都命中
+        _MKT + r"\s+(\w+\s+){0,2}(surge|jump|soar|climb|gain|ris|advance|rebound)",
+        r"strong (demand|growth|earnings|guidance|hiring)",
+        r"(profit|revenue|earnings) (jump|surge|ris|beat|grow)",
+        r"inflation (cool|eas|slow|fall|drop|declin|moderat|retreat|plunge|sink|tumbl|slid)",
+        r"unemployment (fall|drop|declin|improv|ease|eas)",
+        r"(raises|lifts|hikes) (guidance|outlook|forecast)",
+        r"\bstimulus\b", r"\bai boost\b",
+    ]
+    _BEAR_RULES = [
+        r"rate hike", r"\bfed (hike|hikes|raise|tighten)",
+        r"\brecession\b", r"miss(es|ed|ing)? (estimat|expect|forecast|street)",
+        # 同理，跌类词也要绑主语："inflation plunges" 其实是利多
+        r"sell-?off", r"\bcrash(es|ed)?\b",
+        _MKT + r"\s+(\w+\s+){0,2}(plunge|slump|tumble|sink|slide|drop|fall|dive)",
+        r"\brout\b",
+        r"layoff|job cuts|hiring freeze", r"bankrupt", r"downgrade[sd]?\b",
+        r"inflation (surg|jump|spike|soar|acceler|climb|ris|hotter|heat|re-?accelerat)",
+        r"unemployment (ris|jump|surg|climb|worsen)",
+        r"weak (demand|growth|earnings|guidance|jobs)",
+        r"(cuts|lowers|slashes) (guidance|outlook|forecast)",
+        r"\bwarn(s|ing|ed)?\b", r"\bprobe\b|\binvestigation\b",
+    ]
+    # 真正的冲突/贸易壁垒词，不含任何国名
+    _GEO_RULES = [
+        r"\bwar\b(?! ?chest)", r"\binvasion\b|\binvade", r"\bmissile",
+        r"air ?strike", r"\bsanction", r"\bembargo", r"\bceasefire",
+        r"military (strike|action|buildup|operation)", r"\bcoup\b",
+        r"\btariff", r"trade war", r"export (ban|control|restriction)",
+    ]
+    # 否定式：出现这些词时，命中的极性不能直接采信
+    _NEG = _re_news.compile(
+        r"(no longer|not |isn.t|aren.t|won.t|fails? to|unlikely|denies|denied|"
+        r"rules out|avoids?|averted|no sign of|despite)")
+
     def classify_news(title):
-        t = title.lower()
-        geo = ["war","conflict","sanction","military","russia","ukraine","china","taiwan",
-               "iran","missile","attack","invasion","tariff","trade war"]
-        bull = ["rate cut","fed cut","rally","surge","beat","strong","record","ai boost",
-                "upgrade","profit","earnings beat"]
-        bear = ["recession","inflation","rate hike","selloff","crash","miss","weak",
-                "layoff","bankruptcy","downgrade","warning"]
-        if any(k in t for k in geo):
-            return ("🌍","地缘政治","#534AB7","#EEEDFE",
-                    "地缘风险短期利空，推升避险需求，压制科技股和周期股。")
-        elif any(k in t for k in bull) and not any(k in t for k in bear):
-            return ("🟢","利多信号","#0F6E56","#E1F5EE",
+        t = " " + str(title).lower().strip() + " "
+
+        def _hits(rules):
+            return sum(1 for p in rules if _re_news.search(p, t))
+
+        g, b, r = _hits(_GEO_RULES), _hits(_BULL_RULES), _hits(_BEAR_RULES)
+        negated = bool(_NEG.search(t))
+
+        # 有否定词时，多空双方都降权到"存疑"，不硬判方向
+        if negated and abs(b - r) <= 1:
+            return ("⚪", "中性", "#555", "#F5F5F5",
+                    "标题含否定或转折表述，方向不明确，未计入情绪打分。")
+
+        # 地缘词只有在没有更强的多空信号时才主导
+        if g and g >= max(b, r):
+            return ("🌍", "地缘政治", "#534AB7", "#EEEDFE",
+                    "地缘/贸易壁垒风险，通常推升避险需求，压制科技股和周期股。")
+        if b > r:
+            return ("🟢", "利多信号", "#0F6E56", "#E1F5EE",
                     "正面消息，可能推动相关板块上涨，成长股和科技股受益。")
-        elif any(k in t for k in bear) and not any(k in t for k in bull):
-            return ("🔴","利空信号","#A32D2D","#FCEBEB",
+        if r > b:
+            return ("🔴", "利空信号", "#A32D2D", "#FCEBEB",
                     "负面消息，可能引发回调，防御性资产相对受益。")
-        return ("⚪","中性","#555","#F5F5F5","对市场整体影响中性。")
+        # 多空持平（含都没命中）一律归中性，不再偏向任何一边
+        return ("⚪", "中性", "#555", "#F5F5F5",
+                "未识别出明确的方向性信号，对市场整体影响视为中性。")
 
     news_list = fetch_financial_news()
     bull_c = bear_c = geo_c = 0
@@ -4818,6 +4938,10 @@ with tabs[4]:
     nc3.metric("🔴 利空", bear_c, f"{bear_c/total_n*100:.0f}%", delta_color="inverse")
     nc4.metric("🌍 地缘", geo_c, f"{geo_c/total_n*100:.0f}%", delta_color="off")
 
+    st.caption("ℹ️ 新闻情绪由**关键词规则**判定（主题词+方向词组合，含否定式处理），"
+               "不是语义理解，对反讽、复杂从句和一词多义会判错。仅作粗略参考。")
+
+    # 地缘事件按半个利空计入：它通常压制风险资产，但强度弱于直接的基本面利空
     news_score = (bull_c - bear_c - geo_c*0.5) / total_n
     if news_score > 0.2:
         nb,nc2c = "📰 新闻面整体正面，短线情绪偏多","#1D9E75"
@@ -4926,23 +5050,35 @@ with tabs[5]:
                 f'</div>'
                 f'<div style="margin-left:auto;text-align:right">'
                 f'<div style="font-size:31px;font-weight:750;letter-spacing:-.5px">${result["price_now"]:.2f}</div>'
-                f'<div style="font-size:12.5px;opacity:.92">综合评分：{result["score"]}/100</div>'
+                f'<div style="font-size:12.5px;opacity:.92">趋势 {result["trend_score"]}/100　·　'
+                f'位置 {result["stretch_score"]}/100</div>'
                 f'</div></div></div>',
                 unsafe_allow_html=True
             )
 
             # ── 核心指标 ──
             m1,m2,m3,m4,m5 = st.columns(5)
-            pct = result["price_target_pct"]
+            _at = result.get("analyst_target")
+            _au = result.get("analyst_upside")
             m1.metric("📍 当前价格", f"${result['price_now']:.2f}")
-            m2.metric("🎯 价格目标", f"${result['price_target']:.2f}",
-                      f"{'+' if pct>=0 else ''}{pct:.1f}%",
-                      delta_color="normal" if pct>=0 else "inverse")
-            m3.metric("52周最高", f"${result['price_52w_high']:.2f}",
-                      f"{result['price_from_high']:.1f}%", delta_color="inverse")
-            m4.metric("RSI (14)", f"{result['rsi']:.1f}",
-                      "超卖" if result['rsi']<30 else "超买" if result['rsi']>70 else "正常")
-            m5.metric("综合评分", f"{result['score']}/100")
+            if _at:
+                m2.metric("🎯 分析师目标价", f"${_at:.2f}",
+                          f"{_au:+.1f}%", delta_color="normal" if _au >= 0 else "inverse")
+            else:
+                m2.metric("🎯 分析师目标价", "—", "无覆盖", delta_color="off")
+            m3.metric("📐 3个月波动区间",
+                      f"${result['range_low']:.0f} – {result['range_high']:.0f}",
+                      f"±{result['range_pct']:.0f}%", delta_color="off")
+            m4.metric("📈 趋势强度", f"{result['trend_score']}/100",
+                      "向上" if result['trend_score'] >= 65 else
+                      "向下" if result['trend_score'] < 45 else "中性",
+                      delta_color="normal" if result['trend_score'] >= 65
+                      else "inverse" if result['trend_score'] < 45 else "off")
+            m5.metric("📍 位置（超买超卖）", f"{result['stretch_score']}/100",
+                      "偏贵" if result['stretch_score'] >= 70 else
+                      "偏低" if result['stretch_score'] <= 30 else "中性",
+                      delta_color="inverse" if result['stretch_score'] >= 70
+                      else "normal" if result['stretch_score'] <= 30 else "off")
 
             # ── 逐项解释这五个数字 ──
             _sig = result.get("signals", [])
@@ -4956,41 +5092,63 @@ with tabs[5]:
             why(f"现价是最近一个交易日的收盘价。相对均线看，它{_pos_desc}"
                 f"（MA20=${_ma20:.2f}，MA50=${_ma50:.2f}）——均线位置决定了下面所有技术信号的基调。",
                 "good" if _p > _ma20 else "bad", title="当前价格", target=m1)
-            why(f"目标价不是分析师给的，是本模型按「综合评分档位 + 3个月动量 + RSI 修正」算出来的。"
-                f"当前评分 {result['score']} 落在「{result['rating']}」档，再叠加3个月动量 {result['mom_3m']:+.1f}%，"
-                f"得到 {result['price_target_pct']:+.1f}% 的空间。**它反映的是技术面延续性，不是基本面估值。**",
-                "good" if result["price_target_pct"] >= 0 else "bad", title="价格目标", target=m2)
-            why(f"当前价距52周最高价 ${result['price_52w_high']:.2f} 还有 {result['price_from_high']:.1f}%。"
-                + ("离高点很近，说明趋势强势，但也意味着上方没有套牢盘做参照，回调时缺乏支撑位。"
-                   if result["price_from_high"] > -5 else
-                   "距离高点有明显回撤空间，说明股价已经历过一轮调整，上方存在套牢抛压。"),
-                "good" if result["price_from_high"] > -10 else "warn", title="52周最高", target=m3)
-            why(f"RSI 用过去14天的涨跌幅算出来：涨得多、跌得少，数值就高。"
-                + (f"现在 {result['rsi']:.1f} **超过70属于超买**，说明短期买盘透支，回调风险上升。"
-                   if result["rsi"] > 70 else
-                   f"现在 {result['rsi']:.1f} **低于30属于超卖**，短期抛压释放较充分，反弹概率偏高。"
-                   if result["rsi"] < 30 else
-                   f"现在 {result['rsi']:.1f} 在30–70的中性区间，没有明显的超买或超卖信号。"),
-                "bad" if result["rsi"] > 70 else "good" if result["rsi"] < 30 else "neutral",
-                title="RSI (14)", target=m4)
-            why(f"评分从 **50分中性起点** 出发，由下方「技术信号详情」里的每一条信号加减而来："
-                f"本次共 **{_pos} 条利多信号加分、{_neg} 条利空信号减分、{_neu} 条中性**，最终得到 {result['score']} 分，"
-                f"对应「{result['rating']}」评级（80+强力买入／65+买入／45+持有／30+卖出／30以下强力卖出）。",
-                "good" if result["score"] >= 65 else "bad" if result["score"] < 45 else "neutral",
-                title="综合评分", target=m5)
+            why((f"这是华尔街分析师的**一致目标价**（{result.get('analyst_n') or '多'}家机构均值，来自雅虎财经），"
+                 f"不是本站算的。相对现价还有 **{_au:+.1f}%** 的空间。"
+                 f"分析师目标价通常是 12 个月视角，且系统性偏乐观，看方向比看数值更有意义。"
+                 if _at else
+                 "雅虎财经没有这只标的的分析师覆盖数据（指数、商品期货、部分加密货币通常都没有）。"
+                 "本站**不会自己编一个目标价**——右边的波动区间才是有依据的参考。"),
+                "good" if (_au or 0) >= 0 else "bad", title="分析师目标价", target=m2)
+            why(f"这不是预测，是按这只标的**自身的历史波动率**推出来的统计区间："
+                f"日收益标准差 × √63（3个月的交易日数）得到 ±{result['range_pct']:.1f}%，"
+                f"即约 **68% 的概率**落在 ${result['range_low']:.2f} – ${result['range_high']:.2f} 之间。"
+                f"区间越宽说明这只票越颠簸，同样的仓位承担的风险越大。"
+                f"（前提是收益近似对数正态且波动率不变——真实市场两条都只是近似。）",
+                "neutral", title="3个月波动区间", target=m3)
+            why(f"**趋势强度**只由方向性指标构成：MACD、均线排列、1个月动量、OBV资金流、"
+                f"20日回归斜率、成交量配合、夏普比率。它回答的是「**往哪个方向走**」，"
+                f"不掺任何超买超卖判断。当前 {result['trend_score']}/100"
+                + ("，方向明确向上。" if result['trend_score'] >= 65
+                   else "，方向明确向下。" if result['trend_score'] < 45 else "，方向不明朗。"),
+                "good" if result['trend_score'] >= 65 else "bad" if result['trend_score'] < 45 else "neutral",
+                title="趋势强度", target=m4)
+            why(f"**位置分**只由摆动指标构成：RSI {result['rsi']:.1f}、布林带位置、"
+                f"斐波那契回撤、距52周高点 {result['price_from_high']:.1f}%。"
+                f"它回答的是「**现在贵不贵**」，越高越超买。当前 {result['stretch_score']}/100"
+                + ("，位置偏高，追进去性价比差。" if result['stretch_score'] >= 70
+                   else "，位置偏低，安全边际相对好。" if result['stretch_score'] <= 30
+                   else "，处在中性区间。")
+                + "　这两个分数**故意分开**——把它们相加会互相抵消，"
+                  "强势上涨股和暴跌股会得到几乎一样的分数。",
+                "bad" if result['stretch_score'] >= 70 else "good" if result['stretch_score'] <= 30 else "neutral",
+                title="位置（超买超卖）", target=m5)
+            st.markdown(
+                f'<div style="background:{result["rating_color"]};color:white;padding:12px 18px;'
+                f'border-radius:10px;font-size:14px;margin:10px 0">'
+                f'<b style="font-size:16px">{result["rating_emoji"]} {result["rating"]}</b>'
+                f'　<span style="opacity:.9">趋势 {result["trend_score"]}/100　·　'
+                f'位置 {result["stretch_score"]}/100</span><br>'
+                f'<span style="font-size:13px;opacity:.94">{result["rating_note"]}</span></div>',
+                unsafe_allow_html=True)
+            why(f"评级不是把两个分数相加，而是看它们的**组合**："
+                f"趋势 {result['trend_score']} × 位置 {result['stretch_score']} 落在「{result['rating']}」这一格。"
+                f"下方「技术信号详情」共 **{_pos} 条利多、{_neg} 条利空、{_neu} 条中性**。"
+                f"　四个象限的含义：趋势强+位置低=最理想；趋势强+位置高=方向对但等回调；"
+                f"趋势弱+位置低=跌多了但没转向，别急着接；趋势弱+位置高=风险收益比最差。",
+                "good" if result["trend_score"] >= 65 else "bad" if result["trend_score"] < 45 else "neutral",
+                title="评级怎么来的")
 
-            # ── 买입/卖출理由 ──
+            # ── 买入/卖出理由 ──
             st.subheader("🧠 分析师意见")
 
             def gen_reason(r):
                 lines = []
                 p = r["price_now"]
-                if r["rating"] in ("强力买入", "买入"):
-                    lines.append(f"**{r['ticker']} 目前技术面偏多，综合评分 {r['score']}/100，给予「{r['rating']}」评级。**")
-                elif r["rating"] == "持有":
-                    lines.append(f"**{r['ticker']} 技术信号中性，综合评分 {r['score']}/100，建议「持有」观望。**")
-                else:
-                    lines.append(f"**{r['ticker']} 技术面偏空，综合评分 {r['score']}/100，给予「{r['rating']}」评级。**")
+                # 按趋势分判方向，而不是匹配评级名字 —— 评级现在有9种，写死名字必漏
+                _ts, _ss = r["trend_score"], r["stretch_score"]
+                _dir = "偏多" if _ts >= 65 else "偏空" if _ts < 45 else "中性"
+                lines.append(f"**{r['ticker']} 技术面{_dir}：趋势强度 {_ts}/100、"
+                             f"位置 {_ss}/100，给予「{r['rating']}」评级。**")
 
                 if r["rsi"] < 30:
                     lines.append(f"RSI 仅 {r['rsi']:.1f}，处于严重超卖区间，历史上此位置出现反弹的概率较高，短线存在较好的买点。")
@@ -5036,29 +5194,42 @@ with tabs[5]:
 
                 if r["target_analyst"] and r["target_analyst"] > 0:
                     upside = (r["target_analyst"] - p) / p * 100
-                    agree = "与本模型判断一致。" if (upside > 0) == (r["score"] >= 50) else "与本模型判断存在分歧，建议综合参考。"
+                    agree = ("与本模型的趋势判断一致。" if (upside > 0) == (r["trend_score"] >= 50)
+                             else "与本模型的趋势判断存在分歧，建议综合参考。")
                     lines.append(f"华尔街分析师平均目标价为 ${r['target_analyst']:.2f}，较现价 {'+' if upside>=0 else ''}{upside:.1f}%，{agree}")
 
-                direction = "上行" if r["price_target_pct"] >= 0 else "下行"
-                lines.append(f"综合以上因素，模型预测未来3个月价格目标为 ${r['price_target']:.2f}，{direction}空间约 {abs(r['price_target_pct']):.1f}%。")
+                lines.append(
+                    f"综合以上因素：趋势强度 {r['trend_score']}/100、位置 {r['stretch_score']}/100，"
+                    f"评级为「{r['rating']}」。{r['rating_note']}"
+                    f"　按该标的自身波动率推算，未来3个月约有 68% 的概率落在 "
+                    f"${r['range_low']:.2f} – ${r['range_high']:.2f} 区间内。"
+                    + (f"华尔街分析师一致目标价为 ${r['analyst_target']:.2f}"
+                       f"（{r['analyst_upside']:+.1f}%）。" if r.get("analyst_target") else
+                       "该标的没有分析师覆盖数据，本站不提供自编的目标价。"))
 
-                if r["rating"] in ("强力买入", "买入"):
-                    lines.append("建议逢低分批建仓，严格设置止损位（建议设于近期低点下方3-5%）。")
-                elif r["rating"] == "持有":
+                if _ts >= 65 and _ss >= 70:
+                    lines.append("趋势站在你这边，但位置已经偏高：与其追价，不如等回调到 MA20 附近再分批建仓，"
+                                 "止损设于近期低点下方 3–5%。")
+                elif _ts >= 65:
+                    lines.append("方向与位置都不逆风，可逢低分批建仓，严格设置止损位（建议设于近期低点下方3-5%）。")
+                elif _ts >= 45 and _ss <= 30:
+                    lines.append("这是博反弹而非趋势跟随：只适合小仓位试错，且必须设硬止损，"
+                                 "趋势指标转正之前不要加仓。")
+                elif _ts >= 45:
                     lines.append("建议持仓观望，等待更明确的方向性信号后再做决策。")
+                elif _ss <= 30:
+                    lines.append("跌幅虽大但趋势尚未转向——「跌不动」不等于「要涨了」。"
+                                 "等 MACD 翻正、价格站回 MA20 之后再考虑介入。")
                 else:
                     lines.append("建议减仓或设置严格止损，控制下行风险，等待技术面好转后再考虑重新介入。")
 
                 return lines
 
-            box_colors = {
-                "强力买入": ("#E1F5EE", "#0F6E56"),
-                "买入":     ("#F0FAF5", "#1D9E75"),
-                "持有":     ("#FAEEDA", "#BA7517"),
-                "卖出":     ("#FDF0EC", "#D85A30"),
-                "强力卖出": ("#FCEBEB", "#A32D2D"),
-            }
-            bg, border = box_colors.get(result["rating"], ("#F5F5F5", "#cccccc"))
+            # 直接复用评级自带的主色，省得再维护一份会漏掉新评级的映射表
+            _tint = {"#0F6E56": "#E1F5EE", "#1D9E75": "#F0FAF5", "#BA7517": "#FAEEDA",
+                     "#D85A30": "#FDF0EC", "#A32D2D": "#FCEBEB"}
+            border = result["rating_color"]
+            bg = _tint.get(border, "#F5F5F5")
             reason_lines = gen_reason(result)
             for line in reason_lines:
                 st.markdown(
@@ -6235,12 +6406,18 @@ with tabs[5]:
 
             # ── 评级说明 ──
             st.subheader("💡 评级说明")
+            st.caption("评级由**趋势强度**与**位置**两个分数的组合决定，而不是把它们相加——"
+                       "相加会让「强势上涨」和「暴跌超卖」得到几乎一样的分数。")
             rating_guide = {
-                "🚀 强力买入 (80-100分)": "多项技术指标同时发出买入信号，趋势强劲，建议积极布局",
-                "📈 买入 (65-79分)": "技术面偏多，建议逢低分批买入，控制仓位",
-                "⚖️ 持有 (45-64分)": "信号中性，建议持有观望，等待更明确方向",
-                "📉 卖出 (30-44分)": "技术面偏空，建议减仓或止损，控制风险",
-                "💥 强力卖出 (0-29分)": "多项指标同时发出警告，建议清仓规避风险",
+                "🚀 强力买入": "趋势≥65 且 位置≤35　—　方向向上、位置还不贵，技术面最理想的组合",
+                "📈 买入": "趋势≥65 且 位置中性　—　顺势参与的条件成立",
+                "⏳ 顺势但偏贵": "趋势≥65 但 位置≥70　—　方向对，但追高性价比差，等回调",
+                "🔍 超卖反弹候选": "趋势45–65 且 位置≤30　—　博反弹而非趋势跟随，小仓位试错",
+                "⚖️ 持有": "趋势45–65 且 位置中性　—　缺乏明确信号，观望为主",
+                "⚠️ 回调风险": "趋势45–65 但 位置≥70　—　趋势撑不住高位，最容易被套",
+                "🩹 止跌观察": "趋势<45 且 位置≤30　—　跌多了但没转向，「跌不动」≠「要涨了」",
+                "📉 卖出": "趋势<45 且 位置中性　—　方向向下且没有安全边际",
+                "💥 强力卖出": "趋势<45 但 位置≥70　—　又弱又贵，风险收益比最差",
             }
             for r, d in rating_guide.items():
                 st.caption(f"**{r}**：{d}")
@@ -6352,16 +6529,17 @@ with tabs[5]:
                 # 综合操作建议
                 st.markdown("**🎯 宏观视角下的操作建议**")
                 tech_rating = r["rating"]
-                if combined_score > 15 and tech_rating in ("强力买入","买入"):
+                _tts = r["trend_score"]          # 用趋势分判方向，新评级名才不会漏判
+                if combined_score > 15 and _tts >= 65:
                     final = ("🚀 强力建议", "#0F6E56",
                              f"技术面{tech_rating} + 宏观环境正面 + {s_label}受益，三重共振。建议积极布局，可适当提高仓位。")
-                elif combined_score > 0 and tech_rating in ("强力买入","买入","持有"):
+                elif combined_score > 0 and _tts >= 45:
                     final = ("📈 建议买入", "#1D9E75",
                              f"技术面{tech_rating}，宏观中性偏正，{s_label}无明显逆风。建议正常仓位参与。")
-                elif combined_score < -15 and tech_rating in ("卖出","强力卖出"):
+                elif combined_score < -15 and _tts < 45:
                     final = ("💥 强烈规避", "#A32D2D",
                              f"技术面{tech_rating} + 宏观环境负面 + {s_label}面临逆风。建议清仓或空仓等待。")
-                elif combined_score < 0 and tech_rating in ("卖出","强力卖出","持有"):
+                elif combined_score < 0 and _tts < 65:
                     final = ("📉 建议减仓", "#D85A30",
                              f"技术面{tech_rating}，宏观有逆风，{s_label}面临压力。建议降低仓位至半仓以下。")
                 else:
