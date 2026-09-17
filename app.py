@@ -475,6 +475,94 @@ I18N = {
    "de":"⚪ Manueller Modus: Daten ändern sich nur bei Interaktion. \u201eBeobachten\u201c aktualisiert alle {iv}s für {mn} Min.",
    "ja":"⚪ 手動モード：操作時のみ更新。「監視開始」で {iv} 秒ごとに自動更新し、{mn} 分後に自動停止します。",
    "ko":"⚪ 수동 모드: 조작할 때만 갱신됩니다. \u201c관찰 시작\u201d을 누르면 {iv}초마다 갱신되고 {mn}분 후 자동 중지됩니다."},
+
+
+ "i18n_note": {
+   "zh":"界面已切换语言；部分深度分析正文暂以英文呈现。",
+   "en":"Interface translated. Some in-depth analysis text is shown in English.",
+   "es":"Interfaz traducida. Parte del análisis detallado se muestra en inglés.",
+   "fr":"Interface traduite. Une partie de l\u2019analyse détaillée s\u2019affiche en anglais.",
+   "de":"Oberfläche übersetzt. Teile der ausführlichen Analyse erscheinen auf Englisch.",
+   "ja":"インターフェースを翻訳しました。詳細な分析の一部は英語で表示されます。",
+   "ko":"인터페이스가 번역되었습니다. 상세 분석의 일부는 영어로 표시됩니다."},
+ # ── 免责声明折叠 ──
+ "disc_more": {"zh":"查看完整免责声明","en":"Read the full disclaimer","es":"Ver el aviso legal completo",
+   "fr":"Lire l’avertissement complet","de":"Vollständigen Haftungsausschluss lesen",
+   "ja":"免責事項の全文を読む","ko":"전체 면책 조항 보기"},
+
+ # ── 持仓存档 / 导入导出 ──
+ "pf_io_title": {"zh":"💾 持仓存档 · 导出 / 导入 / 分享链接","en":"💾 Save, restore & share this portfolio",
+   "es":"💾 Guardar, restaurar y compartir la cartera","fr":"💾 Sauvegarder, restaurer et partager le portefeuille",
+   "de":"💾 Depot sichern, laden & teilen","ja":"💾 保有銘柄の保存・復元・共有",
+   "ko":"💾 보유 종목 저장·복원·공유"},
+ "pf_io_hint": {"zh":"⚠️ 持仓只保存在当前浏览器会话里，**刷新页面就会丢失**。导出存档文件，或生成分享链接后收藏，即可长期保存、换设备继续用。",
+   "en":"⚠️ Your positions live only in this browser session and **are lost when the page reloads**. Export a save file, or generate a share link and bookmark it, to keep them permanently and reopen them on any device.",
+   "es":"⚠️ Tus posiciones solo existen en esta sesión del navegador y **se pierden al recargar**. Exporta un archivo o genera un enlace y guárdalo en favoritos.",
+   "fr":"⚠️ Vos positions n’existent que dans cette session et **sont perdues au rechargement**. Exportez un fichier ou générez un lien à mettre en favori.",
+   "de":"⚠️ Ihre Positionen existieren nur in dieser Browser-Sitzung und **gehen beim Neuladen verloren**. Exportieren Sie eine Datei oder erzeugen Sie einen Link als Lesezeichen.",
+   "ja":"⚠️ 保有銘柄はこのブラウザセッションにのみ保存され、**再読み込みで失われます**。ファイルを書き出すか、共有リンクを作成してブックマークしてください。",
+   "ko":"⚠️ 보유 종목은 현재 브라우저 세션에만 저장되어 **새로고침하면 사라집니다**. 파일로 내보내거나 공유 링크를 만들어 즐겨찾기에 저장하세요."},
+ "pf_export": {"zh":"💾 导出存档","en":"💾 Export save file","es":"💾 Exportar archivo","fr":"💾 Exporter le fichier",
+   "de":"💾 Datei exportieren","ja":"💾 ファイルを書き出す","ko":"💾 파일 내보내기"},
+ "pf_export_h": {"zh":"下载一个 .json 存档文件，之后用「导入存档」即可完整恢复",
+   "en":"Downloads a .json save file you can restore later with Import","es":"Descarga un .json restaurable con Importar",
+   "fr":"Télécharge un .json restaurable via Importer","de":"Lädt eine .json-Datei, die per Import wiederhergestellt wird",
+   "ja":"後で「読み込む」で復元できる .json を保存します","ko":"나중에 가져오기로 복원할 수 있는 .json 파일을 저장합니다"},
+ "pf_import": {"zh":"📂 导入存档","en":"📂 Import save file","es":"📂 Importar archivo","fr":"📂 Importer un fichier",
+   "de":"📂 Datei importieren","ja":"📂 ファイルを読み込む","ko":"📂 파일 가져오기"},
+ "pf_import_ok": {"zh":"✅ 已导入 {n} 个持仓","en":"✅ Imported {n} positions","es":"✅ {n} posiciones importadas",
+   "fr":"✅ {n} positions importées","de":"✅ {n} Positionen importiert","ja":"✅ {n} 件の保有銘柄を読み込みました",
+   "ko":"✅ {n}개 보유 종목을 가져왔습니다"},
+ "pf_import_err": {"zh":"⚠️ 无法读取该存档文件：{err}","en":"⚠️ Could not read that save file: {err}",
+   "es":"⚠️ No se pudo leer el archivo: {err}","fr":"⚠️ Impossible de lire ce fichier : {err}",
+   "de":"⚠️ Datei konnte nicht gelesen werden: {err}","ja":"⚠️ ファイルを読み込めませんでした：{err}",
+   "ko":"⚠️ 파일을 읽을 수 없습니다: {err}"},
+ "pf_link": {"zh":"🔗 生成分享链接","en":"🔗 Create share link","es":"🔗 Crear enlace","fr":"🔗 Créer un lien",
+   "de":"🔗 Link erzeugen","ja":"🔗 共有リンクを作成","ko":"🔗 공유 링크 만들기"},
+ "pf_link_h": {"zh":"把持仓编码进网址，收藏该网址即可随时恢复","en":"Encodes the portfolio into the URL — bookmark it to restore anytime",
+   "es":"Codifica la cartera en la URL — guárdala en favoritos","fr":"Encode le portefeuille dans l’URL — mettez-la en favori",
+   "de":"Codiert das Depot in die URL — als Lesezeichen speichern","ja":"保有銘柄をURLに埋め込みます。ブックマークすれば復元できます",
+   "ko":"보유 종목을 URL에 인코딩합니다. 즐겨찾기하면 복원됩니다"},
+ "pf_link_done": {"zh":"✅ 链接已写入浏览器地址栏 —— 直接复制地址栏，或按 Ctrl/Cmd+D 收藏。换设备打开这个网址，持仓会自动恢复。",
+   "en":"✅ The link is now in your address bar — copy it, or press Ctrl/Cmd+D to bookmark. Opening that URL on any device restores this portfolio.",
+   "es":"✅ El enlace está en la barra de direcciones — cópialo o pulsa Ctrl/Cmd+D.",
+   "fr":"✅ Le lien est dans la barre d’adresse — copiez-le ou faites Ctrl/Cmd+D.",
+   "de":"✅ Der Link steht in der Adresszeile — kopieren oder mit Strg/Cmd+D speichern.",
+   "ja":"✅ リンクがアドレスバーに反映されました。コピーするか Ctrl/Cmd+D でブックマークしてください。",
+   "ko":"✅ 링크가 주소창에 반영되었습니다. 복사하거나 Ctrl/Cmd+D로 즐겨찾기하세요."},
+ "pf_link_clear": {"zh":"🧹 清除链接参数","en":"🧹 Clear link","es":"🧹 Borrar enlace","fr":"🧹 Effacer le lien",
+   "de":"🧹 Link entfernen","ja":"🧹 リンクを消す","ko":"🧹 링크 지우기"},
+ "pf_from_url": {"zh":"🔗 已从分享链接恢复 {n} 个持仓","en":"🔗 Restored {n} positions from the share link",
+   "es":"🔗 {n} posiciones restauradas desde el enlace","fr":"🔗 {n} positions restaurées depuis le lien",
+   "de":"🔗 {n} Positionen aus dem Link wiederhergestellt","ja":"🔗 共有リンクから {n} 件を復元しました",
+   "ko":"🔗 공유 링크에서 {n}개를 복원했습니다"},
+
+ # ── 报告下载 ──
+ "rep_title": {"zh":"#### 📄 导出分析报告","en":"#### 📄 Export this analysis","es":"#### 📄 Exportar el análisis",
+   "fr":"#### 📄 Exporter cette analyse","de":"#### 📄 Analyse exportieren","ja":"#### 📄 分析結果を書き出す",
+   "ko":"#### 📄 분석 결과 내보내기"},
+ "rep_hint": {"zh":"把本页算出来的全部结论打包带走 —— 报告含盈亏归因、长期评估与赛道判断，明细表可直接拖进 Excel。",
+   "en":"Take everything on this page with you — the report carries the P&L attribution, long-term verdicts and sector calls; the table opens straight in Excel.",
+   "es":"Llévate todo lo de esta página — el informe incluye atribución de P&L y veredictos; la tabla abre en Excel.",
+   "fr":"Emportez tout le contenu de cette page — le rapport contient l’attribution du P&L et les verdicts ; le tableau s’ouvre dans Excel.",
+   "de":"Nehmen Sie alles von dieser Seite mit — der Bericht enthält die GuV-Attribution und Bewertungen; die Tabelle öffnet sich in Excel.",
+   "ja":"このページの結論をすべて持ち出せます。レポートには損益要因と長期評価、テーマ判定を含み、表はExcelでそのまま開けます。",
+   "ko":"이 페이지의 모든 결론을 가져갈 수 있습니다. 리포트에는 손익 귀속과 장기 평가가 담기고, 표는 Excel에서 바로 열립니다."},
+ "rep_dl_md": {"zh":"📄 下载分析报告 (Markdown)","en":"📄 Download report (Markdown)","es":"📄 Descargar informe (Markdown)",
+   "fr":"📄 Télécharger le rapport (Markdown)","de":"📄 Bericht herunterladen (Markdown)",
+   "ja":"📄 レポートを保存 (Markdown)","ko":"📄 리포트 저장 (Markdown)"},
+ "rep_dl_csv": {"zh":"📊 下载持仓明细 (CSV)","en":"📊 Download positions (CSV)","es":"📊 Descargar posiciones (CSV)",
+   "fr":"📊 Télécharger les positions (CSV)","de":"📊 Positionen herunterladen (CSV)",
+   "ja":"📊 保有明細を保存 (CSV)","ko":"📊 보유 명세 저장 (CSV)"},
+ "hg_dl_md": {"zh":"📄 下载分散化报告 (Markdown)","en":"📄 Download diversification report",
+   "es":"📄 Descargar informe de diversificación","fr":"📄 Télécharger le rapport de diversification",
+   "de":"📄 Diversifikationsbericht herunterladen","ja":"📄 分散化レポートを保存","ko":"📄 분산화 리포트 저장"},
+ "hg_dl_csv": {"zh":"📊 下载相关性矩阵 (CSV)","en":"📊 Download correlation matrix (CSV)",
+   "es":"📊 Descargar matriz de correlación","fr":"📊 Télécharger la matrice de corrélation",
+   "de":"📊 Korrelationsmatrix herunterladen","ja":"📊 相関行列を保存 (CSV)","ko":"📊 상관행렬 저장 (CSV)"},
+ "rep_gen_at": {"zh":"生成时间","en":"Generated","es":"Generado","fr":"Généré le","de":"Erstellt",
+   "ja":"作成日時","ko":"생성 시각"},
+
 }
 
 # 标的显示名：非中文界面下使用英文名
@@ -494,15 +582,44 @@ def asset_name(ticker, zh_name):
         return zh_name
     return ASSET_NAMES_EN.get(ticker, ticker)
 
-def tr(key, **kw):
-    """取当前语言的界面文案；缺失时回退英文再回退中文"""
+def _i18n_entry(key):
+    """在两个文案字典里找 key。
+
+    I18N 放界面文案、NARRATIVE 放分析正文，但历次翻译里有一批键登记错了
+    字典，页面上就会直接漏出 "pnl_head" 这样的原始键名。两个字典没有任何
+    重名，所以互相兜底既能一次性修好，也能防止以后再出现同类错误。
+    """
+    return I18N.get(key) or NARRATIVE.get(key) or {}
+
+
+def _render(key, entry, kw):
+    """按 当前语言 → 英文 → 中文 的顺序取文案，并套用格式化参数"""
     lang = st.session_state.get("lang", "zh")
-    entry = I18N.get(key, {})
-    s = entry.get(lang) or (entry.get("en") if lang != "zh" else None) or entry.get("zh") or key
+    s = (entry.get(lang)
+         or (entry.get("en") if lang != "zh" else None)
+         or entry.get("zh")
+         or key)
     try:
         return s.format(**kw) if kw else s
     except Exception:
         return s
+
+
+def _nolatex(text):
+    """转义 $，避免 Streamlit 把它当成 LaTeX 行内公式。
+
+    Streamlit 的 Markdown 支持 $...$ 数学公式，所以像
+    "发行价$135，首日收盘$161" 这样的文案里两个 $ 会被配成一对，
+    中间的文字被当作公式渲染，整段就花了。本站不用 LaTeX，
+    凡是走纯 Markdown 渲染的文本都先过一遍这个函数。
+    （unsafe_allow_html=True 的调用走 HTML 渲染，不受影响。）
+    """
+    return str(text).replace("$", "\\$")
+
+
+def tr(key, **kw):
+    """取当前语言的界面文案；缺失时回退英文再回退中文"""
+    return _render(key, _i18n_entry(key), kw)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -633,13 +750,7 @@ NARRATIVE = {
 
 def nt(key, **kw):
     """取分析正文：当前语言 → 英文 → 中文"""
-    lang = st.session_state.get("lang", "zh")
-    e = NARRATIVE.get(key, {})
-    s = e.get(lang) or (e.get("en") if lang != "zh" else None) or e.get("zh") or key
-    try:
-        return s.format(**kw) if kw else s
-    except Exception:
-        return s
+    return _render(key, _i18n_entry(key), kw)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 🎨 苹果风毛玻璃主题（Glassmorphism）
@@ -742,6 +853,39 @@ div[data-testid="stPlotlyChart"] {
 .stApp .disclaimer-top, .stApp .disclaimer-top b { color: #6b4a10; }
 .disclaimer-top .dt-icon { font-size: 19px; line-height: 1.3; }
 .stApp .disclaimer-top .dt-sub { color: #7a5a22; font-size: 12px; line-height: 1.7; }
+
+
+/* ── 深色系统兜底：即使没有 .streamlit/config.toml 也保持浅色一致 ── */
+[data-testid="stSidebar"] {
+  background: #FFFFFFEE !important;
+  border-right: 1px solid rgba(15,23,42,.08);
+}
+[data-testid="stSidebar"] *:not(svg):not(path) { color: #0F172A !important; }
+[data-testid="stSidebar"] small { color: #5B6678 !important; }
+
+/* 下拉菜单 / 提示气泡渲染在 body 的 portal 层，不受主容器 CSS 管辖 */
+[data-baseweb="popover"], [data-baseweb="menu"], [data-baseweb="layer"] [role="listbox"] {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+}
+[data-baseweb="popover"] li, [data-baseweb="menu"] li, [role="option"] {
+  background: #FFFFFF !important; color: #0F172A !important;
+}
+[role="option"]:hover, [aria-selected="true"] { background: #EEF0FA !important; }
+
+body { background: #F7F8FC; }
+
+/* ── 折叠式免责声明 ── */
+.disc-slim {
+  display:flex; gap:10px; align-items:flex-start;
+  background: linear-gradient(135deg, rgba(255,246,224,.92), rgba(253,240,210,.86));
+  border: 1px solid rgba(186,117,23,.28);
+  border-left: 4px solid #BA7517;
+  border-radius: 10px; padding: 10px 14px; margin: 6px 0 2px;
+  backdrop-filter: blur(8px) saturate(140%);
+}
+.stApp .disc-slim, .stApp .disc-slim b { color:#6b4a10; font-size:13.5px; line-height:1.55; }
+.disc-slim .ds-icon { font-size:16px; line-height:1.4; }
 
 /* ── 页脚免责声明 ── */
 .disclaimer-foot {
@@ -1002,7 +1146,7 @@ def setup_auto_refresh():
         st.selectbox(tr("lang_label"), _lang_codes,
                      index=_lang_codes.index(ss.get("lang", "zh")),
                      format_func=lambda c: LANGUAGES[c], key="lang")
-        if ss.get("lang", "zh") != "zh" and tr("i18n_note"):
+        if ss.get("lang", "zh") in ("es", "fr", "de", "ja", "ko"):
             st.caption(tr("i18n_note"))
         st.divider()
         st.markdown(tr("watch_title"))
@@ -2390,11 +2534,144 @@ st.caption(tr("app_subtitle"))
 
 # ── 顶部免责声明（每个页面都能第一眼看到）──
 st.markdown(
-    '<div class="disclaimer-top">'
-    '<span class="dt-icon">⚠️</span>'
-    f'<div><b>{tr("disc_title")}</b><br>'
-    f'<span class="dt-sub">{tr("disc_body")}</span></div>'
+    '<div class="disc-slim">'
+    '<span class="ds-icon">⚠️</span>'
+    f'<div><b>{tr("disc_title")}</b></div>'
     '</div>', unsafe_allow_html=True)
+with st.expander(tr("disc_more"), expanded=False):
+    st.markdown(f'<span style="font-size:13px;line-height:1.75;color:#5b6678">{tr("disc_body")}</span>',
+                unsafe_allow_html=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 💾 持仓存档：导出 / 导入 / 编码进 URL
+#    session_state 一刷新就没，所以提供三条持久化通路：
+#    ① .json 存档文件  ② 分享链接（持仓编码进网址）  ③ 手动重录
+# ══════════════════════════════════════════════════════════════════════════════
+PF_SCHEMA = 1           # 存档格式版本，日后改结构时用来兼容旧档
+
+
+def _ccy_full(code):
+    """'USD' → 'USD 🇺🇸'（回退到列表第一项）"""
+    code = (code or "").strip().upper()
+    for c in CURRENCY_LIST:
+        if c.split()[0] == code:
+            return c
+    return CURRENCY_LIST[0]
+
+
+def pf_normalise(raw_list):
+    """把任意来源（存档文件 / URL / 旧版 session）的持仓清洗成标准结构"""
+    out = []
+    for item in (raw_list or []):
+        try:
+            if isinstance(item, dict):
+                tk   = str(item.get("ticker", "")).strip().upper()
+                qty  = float(item.get("qty", 0) or 0)
+                cost = float(item.get("cost", 0) or 0)
+                ccy  = item.get("ccy") or item.get("currency") or "USD"
+            else:                                   # 紧凑数组格式 [tk, qty, cost, ccy]
+                tk   = str(item[0]).strip().upper()
+                qty  = float(item[1])
+                cost = float(item[2])
+                ccy  = item[3] if len(item) > 3 else "USD"
+            if not tk:
+                continue
+            out.append({"ticker": tk, "qty": qty, "cost": cost,
+                        "ccy": _ccy_full(str(ccy).split()[0])})
+        except Exception:
+            continue                                 # 单条坏数据不影响其余持仓
+    return out
+
+
+def pf_encode(holdings):
+    """持仓 → 可安全放进 URL 的 base64 短串"""
+    import json, base64
+    compact = [[h["ticker"], round(float(h["qty"]), 8), round(float(h["cost"]), 6),
+                str(h.get("ccy", "USD")).split()[0]]
+               for h in holdings if h.get("ticker")]
+    raw = json.dumps([PF_SCHEMA, compact], separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def pf_decode(token):
+    """base64 短串 → 持仓列表；解不开就返回 []"""
+    import json, base64
+    try:
+        token = (token or "").strip()
+        if not token:
+            return []
+        data = json.loads(base64.urlsafe_b64decode(
+            token + "=" * (-len(token) % 4)).decode("utf-8"))
+        payload = data[1] if isinstance(data, list) and len(data) == 2 else data
+        return pf_normalise(payload)
+    except Exception:
+        return []
+
+
+def pf_to_json_bytes(holdings):
+    """持仓 → 带元信息的 .json 存档（给 download_button）"""
+    import json
+    from datetime import datetime as _dt_pf2
+    doc = {
+        "schema": PF_SCHEMA,
+        "app": "2026 IPO Bubble Simulator",
+        "saved_at": _dt_pf2.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "holdings": [{"ticker": h["ticker"], "qty": float(h["qty"]),
+                      "cost": float(h["cost"]), "ccy": str(h.get("ccy", "USD")).split()[0]}
+                     for h in holdings if h.get("ticker")],
+    }
+    return json.dumps(doc, indent=2, ensure_ascii=False).encode("utf-8")
+
+
+def pf_from_json_bytes(blob):
+    """.json 存档 → 持仓列表；抛异常交给调用方显示错误"""
+    import json
+    doc = json.loads(blob.decode("utf-8-sig"))
+    raw = doc.get("holdings") if isinstance(doc, dict) else doc
+    cleaned = pf_normalise(raw)
+    if not cleaned:
+        raise ValueError("no valid positions found")
+    return cleaned
+
+
+
+def _md_clean(text):
+    """叙述文本里可能夹着 HTML 标签和实体，导出 Markdown 前清掉"""
+    import re as _re_md
+    t = _re_md.sub(r"<br\s*/?>", " ", str(text))
+    t = _re_md.sub(r"<[^>]+>", "", t)
+    for _ent, _ch in (("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"),
+                      ("&gt;", ">"), ("&quot;", '"'), ("\u00a0", " ")):
+        t = t.replace(_ent, _ch)
+    return _re_md.sub(r"[ \t]{2,}", " ", t).strip()
+
+
+def _md_heading(key):
+    """把 I18N 里带 # 或 ** 装饰的小标题，还原成纯文字"""
+    return _md_clean(tr(key)).strip("#* ").strip()
+
+
+def _csv_bytes(header, rows):
+    """行列表 → 带 BOM 的 CSV 字节流（BOM 让 Excel 正确认出 UTF-8 中文）"""
+    import csv, io as _io_csv
+    buf = _io_csv.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(header)
+    for r in rows:
+        w.writerow(r)
+    return ("\ufeff" + buf.getvalue()).encode("utf-8")
+
+
+def _report_header(title):
+    """所有导出报告共用的抬头 —— 免责声明必须跟着报告一起走"""
+    from datetime import datetime as _dt_rp
+    return (f"# {title}\n\n"
+            f"> {tr('rep_gen_at')}: {_dt_rp.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"> \n"
+            f"> ⚠️ {_md_clean(tr('disc_title'))}\n"
+            f"> {_md_clean(tr('disc_body'))}\n\n---\n\n")
+
 
 tabs = st.tabs([tr("tab_market"), tr("tab_ipo"), tr("tab_history"), tr("tab_forecast"),
                 tr("tab_macro"), tr("tab_analyzer"), tr("tab_holdings"), tr("tab_grail")])
@@ -2719,7 +2996,7 @@ with tabs[1]:
     with col1:
         st.subheader(company["name"])
         st.caption(company["sector"] + " · " + company["date"])
-        st.write(company["desc"])
+        st.write(_nolatex(company["desc"]))
     with col2:
         ps      = round(company["val_b"] / company["rev_b"])
         val_str = f"${company['val_b']/1000:.2f}T" if company["val_b"] >= 1000 else f"${company['val_b']}B"
@@ -2785,9 +3062,9 @@ with tabs[2]:
                            plot_bgcolor="#fafafa",legend=dict(orientation="h",y=-0.2))
     glass_chart(fig_hist, use_container_width=True)
     col1,col2,col3=st.columns(3)
-    col1.error(nt("hist_c1"))
+    col1.error(_nolatex(nt("hist_c1")))
     col2.warning(nt("hist_c2"))
-    col3.info(nt("hist_c3"))
+    col3.info(_nolatex(nt("hist_c3")))
 
 # ── (实时市场已合并到Tab1) ──────────────────────────────────────────────────────
 
@@ -3130,7 +3407,7 @@ with tabs[3]:
                           if sim["temp"]>60 else "温和偏高" if sim["temp"]>40 else "相对理性")
             st.progress(sim["temp"]/100, text=f"泡沫温度计：**{sim['temp']}/100 — {temp_label}**")
             why(_ex["temp"][0], _ex["temp"][1], calc=_ex["temp"][2], title=f"温度计 {sim['temp']}/100（{temp_label}）")
-            st.info(f"**{sim['label']}** — {sim['desc']}")
+            st.info(f"**{sim['label']}** — {_nolatex(sim['desc'])}")
             why(f"这句结论对应的是破裂概率 {sim['burst']}% 所落在的区间："
                 f"0–19%→极度乐观、20–39%→温和上行、40–59%→基准预期、60–79%→高度警觉、80%以上→泡沫破裂风险。"
                 f"所以你调动滑块让破裂概率跨过某个整二十的门槛时，这段文字才会换。",
@@ -3187,7 +3464,7 @@ with tabs[3]:
 
         hc = st.columns([2,2,1,1])
         hc[0].markdown("**股票代码**")
-        hc[1].markdown("**投入金额 ($)**")
+        hc[1].markdown(_nolatex("**投入金额 ($)**"))
         hc[2].markdown("**占比**")
         hc[3].markdown("**删除**")
 
@@ -3574,13 +3851,13 @@ with tabs[3]:
             with inv_c3:
                 st.markdown("<br>", unsafe_allow_html=True)
                 if curr_code != "USD":
-                    st.info(f"≈ **${invest_usd:,.2f} USD** | 汇率: 1 {curr_code} = {fx_rate:.4f} USD")
+                    st.info(_nolatex(f"≈ **${invest_usd:,.2f} USD** | 汇率: 1 {curr_code} = {fx_rate:.4f} USD"))
                 else:
-                    st.info(f"投资金额：**${invest_usd:,.2f} USD**")
+                    st.info(_nolatex(f"投资金额：**${invest_usd:,.2f} USD**"))
 
             # 计算可购买股数
             shares = invest_usd / params["price"] if params["price"] > 0 else 0
-            st.caption(f"📊 以当前价格 ${params['price']:.2f} 可购入约 **{shares:.2f} 股** {params['ticker']}")
+            st.caption(_nolatex(f"📊 以当前价格 ${params['price']:.2f} 可购入约 **{shares:.2f} 股** {params['ticker']}"))
 
             st.divider()
 
@@ -5256,7 +5533,7 @@ with tabs[5]:
             sig_col1, sig_col2 = st.columns(2)
             for i, (icon, title, desc) in enumerate(result["signals"]):
                 col = sig_col1 if i % 2 == 0 else sig_col2
-                col.markdown(f"**{icon} {title}**  \n{desc}")
+                col.markdown(_nolatex(f"**{icon} {title}**  \n{desc}"))
 
             # ── 基本面 ──
             # ── 基本面数据 + 解释 ──
@@ -6009,10 +6286,23 @@ with tabs[6]:
     st.caption(tr("holdings_caption"))
 
     if "holdings" not in st.session_state:
-        st.session_state["holdings"] = [
-            {"ticker": "NVDA",    "qty": 10.0,  "cost": 120.0,   "ccy": "USD 🇺🇸"},
-            {"ticker": "BTC-USD", "qty": 0.05,  "cost": 60000.0, "ccy": "USD 🇺🇸"},
-        ]
+        # 分享链接里带持仓就优先用它，否则给一组示例
+        _from_link = []
+        try:
+            _from_link = pf_decode(st.query_params.get("p", ""))
+        except Exception:
+            _from_link = []
+        if _from_link:
+            st.session_state["holdings"] = _from_link
+            st.session_state["pf_link_restored"] = len(_from_link)
+        else:
+            st.session_state["holdings"] = [
+                {"ticker": "NVDA",    "qty": 10.0,  "cost": 120.0,   "ccy": "USD 🇺🇸"},
+                {"ticker": "BTC-USD", "qty": 0.05,  "cost": 60000.0, "ccy": "USD 🇺🇸"},
+            ]
+
+    if st.session_state.pop("pf_link_restored", None):
+        st.success(tr("pf_from_url", n=len(st.session_state["holdings"])))
     # 兼容旧版没有货币字段的持仓数据
     for _pos in st.session_state["holdings"]:
         _pos.setdefault("ccy", "USD 🇺🇸")
@@ -6068,6 +6358,57 @@ with tabs[6]:
 
     st.session_state["holdings"] = holdings
     st.caption(tr("ccy_hint"))
+
+    # ── 💾 持仓存档：导出 / 导入 / 分享链接 ──
+    with st.expander(tr("pf_io_title"), expanded=False):
+        st.caption(tr("pf_io_hint"))
+        _io1, _io2, _io3 = st.columns(3)
+
+        with _io1:
+            from datetime import datetime as _dt_pf
+            st.download_button(
+                tr("pf_export"),
+                data=pf_to_json_bytes(holdings),
+                file_name=f"portfolio_{_dt_pf.now().strftime('%Y%m%d_%H%M')}.json",
+                mime="application/json",
+                use_container_width=True, key="pf_dl")
+            st.caption(tr("pf_export_h"))
+
+        with _io2:
+            _up = st.file_uploader(tr("pf_import"), type=["json"],
+                                   key="pf_up", label_visibility="visible")
+            if _up is not None and st.session_state.get("pf_up_done") != _up.name:
+                try:
+                    _loaded = pf_from_json_bytes(_up.getvalue())
+                    st.session_state["holdings"]  = _loaded
+                    st.session_state["pf_up_done"] = _up.name
+                    # 清掉旧的逐行控件状态，否则 Streamlit 会沿用上一批持仓的输入值
+                    for _k in [k for k in st.session_state
+                               if k.startswith(("h_t_", "h_q_", "h_c_", "h_ccy_"))]:
+                        del st.session_state[_k]
+                    st.success(tr("pf_import_ok", n=len(_loaded)))
+                    st.rerun()
+                except Exception as _e:
+                    st.error(tr("pf_import_err", err=_e))
+
+        with _io3:
+            if st.button(tr("pf_link"), use_container_width=True, key="pf_mklink"):
+                try:
+                    st.query_params["p"] = pf_encode(holdings)
+                    st.session_state["pf_link_made"] = True
+                except Exception as _e:
+                    st.error(str(_e))
+            st.caption(tr("pf_link_h"))
+            if st.session_state.get("pf_link_made"):
+                st.success(tr("pf_link_done"))
+                if st.button(tr("pf_link_clear"), key="pf_rmlink"):
+                    try:
+                        del st.query_params["p"]
+                    except Exception:
+                        pass
+                    st.session_state["pf_link_made"] = False
+                    st.rerun()
+
     st.divider()
 
     valid_holdings = [h for h in holdings if h["ticker"] and h["qty"] > 0 and h["cost"] > 0]
@@ -6252,7 +6593,7 @@ with tabs[6]:
 
                     st.markdown(tr("pos_attr"))
                     for line in analyze_position_pnl(h, r, x["pnl_pct"], x["cost_usd"], x["ccy_code"]):
-                        st.markdown(f"- {line}")
+                        st.markdown(f"- {_nolatex(line)}")
 
                     st.markdown(tr("pos_lt"))
                     st.markdown(
@@ -6273,6 +6614,86 @@ with tabs[6]:
                         f'<b style="color:{track_color}">{track_name}</b><br>{track_desc}'
                         f'</div>', unsafe_allow_html=True
                     )
+
+            # ── 📄 导出分析报告 ──
+            st.divider()
+            st.markdown(tr("rep_title"))
+            st.caption(tr("rep_hint"))
+
+            def _build_holdings_report():
+                """把本页所有结论拼成一份 Markdown 报告"""
+                L = [_report_header(_md_heading("sec_holdings").lstrip("💰 ").strip())]
+
+                L.append("## " + _md_heading("sec_holdings_overview") + "\n\n")
+                L.append(f"| | |\n|---|---:|\n")
+                L.append(f"| {_md_clean(tr('m_total_cost'))} | ${total_cost:,.2f} |\n")
+                L.append(f"| {_md_clean(tr('m_market_value'))} | ${total_mv:,.2f} |\n")
+                L.append(f"| {_md_clean(tr('m_total_pnl'))} | ${total_pnl:+,.2f} ({total_pnl_pct:+.1f}%) |\n")
+                L.append(f"| {_md_clean(tr('m_win_ratio'))} | {win_n}/{len(rows)} |\n\n")
+
+                L.append("## " + _md_heading("sec_holdings_lt") + "\n\n")
+                L.append(_md_clean(tr("lt_weighted", score=weighted_lt, bull=n_bull, bear=n_bear)) + "\n\n")
+                L.append(_md_clean(verdict_text) + "\n\n")
+
+                L.append("## " + _md_heading("sec_holdings_each") + "\n\n")
+                for x in rows:
+                    h, r = x["h"], x["r"]
+                    _sym = CURRENCY_SYMBOLS.get(x["ccy_code"], "$")
+                    _cd = (f"{_sym}{h['cost']:.2f} {x['ccy_code']} (≈${x['cost_usd']:.2f})"
+                           if x["ccy_code"] != "USD" else f"${h['cost']:.2f}")
+                    L.append(f"### {h['ticker']} — {r.get('name', h['ticker'])}\n\n")
+                    L.append(f"- {_md_clean(tr('pos_qty'))}: {h['qty']:g}\n")
+                    L.append(f"- {_md_clean(tr('pos_cost_price'))}: {_cd} / ${r['price_now']:.2f}\n")
+                    L.append(f"- {_md_clean(tr('pos_pnl_amt'))}: ${x['pnl']:+,.2f} "
+                             f"({x['pnl_pct']:+.1f}%)\n\n")
+                    L.append("**" + _md_heading("pos_attr") + "**\n\n")
+                    for line in analyze_position_pnl(h, r, x["pnl_pct"], x["cost_usd"], x["ccy_code"]):
+                        L.append(f"- {_md_clean(line)}\n")
+                    L.append("\n**" + _md_heading("pos_lt") + "**\n\n")
+                    L.append(f"{r['lt_rating']} — " + _md_clean(
+                        tr("lt_score_line", score=r["lt_score"], sharpe=r["sharpe"],
+                           slope=r["slope_pct"],
+                           ma=tr("above") if r["price_now"] > r["ma200"] else tr("below"))) + "\n\n")
+                    _tn, _tc, _td = get_track_info(h["ticker"], r.get("sector"))
+                    L.append("**" + _md_heading("pos_track") + "**\n\n")
+                    L.append(f"{_tn} — {_md_clean(_td)}\n\n---\n\n")
+
+                L.append("*" + _md_clean(tr("disc_tab_note")) + "*\n")
+                return "".join(L).encode("utf-8")
+
+            def _build_holdings_csv():
+                hdr = ["Ticker", "Name", "Qty", "Cost", "Currency", "Cost(USD)",
+                       "Price(USD)", "MarketValue(USD)", "CostValue(USD)",
+                       "PnL(USD)", "PnL(%)", "LongTermScore", "LongTermRating",
+                       "RSI", "Momentum1M(%)", "Sharpe", "Track"]
+                out = []
+                for x in rows:
+                    h, r = x["h"], x["r"]
+                    _tn, _, _ = get_track_info(h["ticker"], r.get("sector"))
+                    out.append([h["ticker"], r.get("name", ""), f"{h['qty']:g}",
+                                f"{h['cost']:.4f}", x["ccy_code"], f"{x['cost_usd']:.4f}",
+                                f"{r['price_now']:.4f}", f"{x['mv']:.2f}", f"{x['cost_v']:.2f}",
+                                f"{x['pnl']:.2f}", f"{x['pnl_pct']:.2f}",
+                                f"{r['lt_score']:.1f}", _md_clean(r["lt_rating"]),
+                                f"{r['rsi']:.1f}", f"{r['mom_1m']:.2f}",
+                                f"{r['sharpe']:.2f}", _md_clean(_tn)])
+                out.append([])
+                out.append(["TOTAL", "", "", "", "", "", "", f"{total_mv:.2f}",
+                            f"{total_cost:.2f}", f"{total_pnl:.2f}", f"{total_pnl_pct:.2f}",
+                            f"{weighted_lt:.1f}", "", "", "", "", ""])
+                return _csv_bytes(hdr, out)
+
+            from datetime import datetime as _dt_rep
+            _stamp = _dt_rep.now().strftime("%Y%m%d_%H%M")
+            _rc1, _rc2 = st.columns(2)
+            _rc1.download_button(tr("rep_dl_md"), data=_build_holdings_report(),
+                                 file_name=f"portfolio_report_{_stamp}.md",
+                                 mime="text/markdown", use_container_width=True,
+                                 key="rep_h_md")
+            _rc2.download_button(tr("rep_dl_csv"), data=_build_holdings_csv(),
+                                 file_name=f"portfolio_positions_{_stamp}.csv",
+                                 mime="text/csv", use_container_width=True,
+                                 key="rep_h_csv")
 
             st.warning(tr("disc_tab_note"))
 
@@ -6610,6 +7031,69 @@ with tabs[7]:
                     "warn", title=tr("hg_missing_t"))
             else:
                 why(nt("hg_covered"), "good", title=tr("hg_covered_t"))
+
+            # ── 📄 导出分散化报告 ──
+            st.divider()
+            st.markdown(tr("rep_title"))
+
+            def _build_grail_report():
+                L = [_report_header(_md_heading("sec_grail").lstrip("🏆 ").strip())]
+                L.append(f"**{_md_clean(tr('hg_lookback'))}**: {_hg_period}　·　"
+                         f"**{_md_clean(tr('hg_m_n'))}**: {_n}\n\n")
+                L.append(f"| | |\n|---|---:|\n")
+                L.append(f"| {_md_clean(tr('hg_m_n'))} | {_n} |\n")
+                L.append(f"| {_md_clean(tr('hg_m_rho'))} | {_rho_bar:.3f} |\n")
+                L.append(f"| {_md_clean(tr('hg_m_eff'))} | {_n_eff:.2f} |\n")
+                L.append(f"| {_md_clean(tr('hg_m_cut'))} | {_div_benefit:.1f}% "
+                         f"({_avg_vol*100:.1f}% → {_pf_vol*100:.1f}%) |\n\n")
+
+                L.append("## " + _md_heading("hg_score_title") + "\n\n")
+                L.append(f"**{_hg_score}/100** — {_md_clean(_hg_verdict)}\n\n")
+                L.append(_md_clean(tr("hg_score_break", n=_sc_n, r=_sc_rho, e=_sc_eff)) + "\n\n")
+
+                L.append("## " + _md_heading("hg_cls_title") + "\n\n")
+                for k, v in _classes.items():
+                    L.append(f"- **{k}**: {', '.join(v)}\n")
+                L.append("\n")
+                if _sugg:
+                    L.append(_md_clean(nt("hg_missing")) + "\n\n")
+                    for _nm, _rs in _sugg[:4]:
+                        L.append(f"- **{_nm}** — {_md_clean(_rs)}\n")
+                else:
+                    L.append(_md_clean(nt("hg_covered")) + "\n")
+                L.append("\n## " + _md_clean(tr("hg_m_rho")) + "\n\n")
+                _cols = list(_corr.columns)
+                L.append("| |" + "|".join(_cols) + "|\n")
+                L.append("|---|" + "|".join(["---:"] * len(_cols)) + "|\n")
+                for _rn in _cols:
+                    L.append(f"|**{_rn}**|" +
+                             "|".join(f"{_corr.loc[_rn, _cn]:.2f}" for _cn in _cols) + "|\n")
+                L.append("\n*" + _md_clean(nt("hg_warn")) + "*\n")
+                return "".join(L).encode("utf-8")
+
+            def _build_corr_csv():
+                _cols = list(_corr.columns)
+                out = [[_rn] + [f"{_corr.loc[_rn, _cn]:.6f}" for _cn in _cols] for _rn in _cols]
+                out.append([])
+                out.append(["AvgCorrelation", f"{_rho_bar:.6f}"])
+                out.append(["EffectiveBets", f"{_n_eff:.4f}"])
+                out.append(["RiskReduction(%)", f"{_div_benefit:.4f}"])
+                out.append(["AvgAssetVol(%)", f"{_avg_vol*100:.4f}"])
+                out.append(["PortfolioVol(%)", f"{_pf_vol*100:.4f}"])
+                out.append(["HolyGrailScore", f"{_hg_score}"])
+                return _csv_bytes([""] + _cols, out)
+
+            from datetime import datetime as _dt_hg
+            _hstamp = _dt_hg.now().strftime("%Y%m%d_%H%M")
+            _gc1, _gc2 = st.columns(2)
+            _gc1.download_button(tr("hg_dl_md"), data=_build_grail_report(),
+                                 file_name=f"diversification_report_{_hstamp}.md",
+                                 mime="text/markdown", use_container_width=True,
+                                 key="rep_g_md")
+            _gc2.download_button(tr("hg_dl_csv"), data=_build_corr_csv(),
+                                 file_name=f"correlation_matrix_{_hstamp}.csv",
+                                 mime="text/csv", use_container_width=True,
+                                 key="rep_g_csv")
 
             st.warning(nt("hg_warn"))
 
