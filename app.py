@@ -314,8 +314,8 @@ I18N = {
  "hg_rho_hi":{"zh":"相关性非常高，这些资产基本是同涨同跌，分散效果有限。","en":"That is very high — these assets rise and fall together, so diversification is doing little."},
  "hg_w_eff":{"zh":"名义上你有 {n} 个资产，但因为它们彼此相关，实际只相当于 **{eff:.1f} 个独立赌注**。相关性越高，这个数字缩水得越厉害——这才是衡量「真分散」的指标。",
    "en":"Nominally you hold {n} assets, but because they move together they amount to only **{eff:.1f} independent bets**. The higher the correlation, the more this number shrinks — it is the real measure of diversification."},
- "hg_w_cut":{"zh":"单个资产的平均年化波动率是 {avg:.1f}%，而等权组合的实际波动率只有 {pf:.1f}%，**风险被抹掉了 {cut:.1f}%**。这部分降低完全来自资产之间的不相关性，不需要你放弃任何预期收益——这就是达里欧说的免费午餐。",
-   "en":"The average single-asset volatility is {avg:.1f}% a year, yet the equal-weighted portfolio realises only {pf:.1f}% — **{cut:.1f}% of the risk has been erased**. That reduction comes purely from the assets not moving together, and costs you nothing in expected return. This is Dalio's free lunch."},
+ "hg_w_cut":{"zh":"按当前权重，单个资产的平均年化波动率是 {avg:.1f}%，而{mode}的组合波动率只有 {pf:.1f}%，**风险被抹掉了 {cut:.1f}%**。这部分降低完全来自资产之间的不相关性，不需要你放弃任何预期收益——这就是达里欧说的免费午餐。",
+   "en":"At the current weights the average single-asset volatility is {avg:.1f}% a year, yet {mode} realises only {pf:.1f}% — **{cut:.1f}% of the risk has been erased**. That reduction comes purely from the assets not moving together, and costs you nothing in expected return. This is Dalio's free lunch."},
  "hg_t_rho":{"zh":"平均相关性 {rho:.2f}","en":"Average correlation {rho:.2f}"},
  "hg_t_eff":{"zh":"有效分散数 {eff:.1f}","en":"Effective bets {eff:.1f}"},
  "hg_t_cut":{"zh":"风险下降 {cut:.1f}%","en":"Risk cut {cut:.1f}%"},
@@ -348,8 +348,8 @@ I18N = {
  "hg_alpha_pos":{"zh":"剔除大盘影响后年化 **{a:+.1f}%** 的超额收益","en":"**{a:+.1f}%** annualised excess return once the market is stripped out"},
  "hg_alpha_neg":{"zh":"剔除大盘影响后年化 **{a:+.1f}%**，承担了额外风险却没换来相应回报","en":"**{a:+.1f}%** annualised once the market is stripped out — extra risk taken without the reward to match"},
  "hg_ab_line":{"zh":"β={b:.2f}，{btxt}。{r2txt}。α：{atxt}。","en":"β={b:.2f} — {btxt}. {r2txt}. Alpha: {atxt}."},
- "hg_pf_ab":{"zh":"等权组合的加权 β = **{beta:.2f}**，加权 α = **{alpha:+.1f}%/年**。{tail}而真正决定你能否长期跑赢的是那部分 α。",
-   "en":"The equal-weighted portfolio has a weighted β of **{beta:.2f}** and a weighted α of **{alpha:+.1f}% a year**. {tail}What actually decides whether you outperform over time is that alpha."},
+ "hg_pf_ab":{"zh":"{mode}的加权 β = **{beta:.2f}**，加权 α = **{alpha:+.1f}%/年**。{tail}而真正决定你能否长期跑赢的是那部分 α。",
+   "en":"{mode} has a weighted β of **{beta:.2f}** and a weighted α of **{alpha:+.1f}% a year**. {tail}What actually decides whether you outperform over time is that alpha."},
  "hg_pf_b_mid":{"zh":"β 接近1说明你的组合本质上还是在赌大盘方向，","en":"A beta near 1 means the portfolio is essentially a bet on market direction. "},
  "hg_pf_b_lo":{"zh":"β 只有 {b:.2f}，组合对大盘的依赖度较低，这是好现象，","en":"At just {b:.2f}, the portfolio depends relatively little on the market — a good sign. "},
  "hg_pf_b_hi":{"zh":"β 高达 {b:.2f}，组合是放大版的大盘，牛市爽、熊市痛，","en":"At {b:.2f} the portfolio is a leveraged version of the market: great in bull runs, painful in drawdowns. "},
@@ -485,6 +485,64 @@ I18N = {
    "de":"Oberfläche übersetzt. Teile der ausführlichen Analyse erscheinen auf Englisch.",
    "ja":"インターフェースを翻訳しました。詳細な分析の一部は英語で表示されます。",
    "ko":"인터페이스가 번역되었습니다. 상세 분석의 일부는 영어로 표시됩니다."},
+
+ "hg_rf_note": {
+   "zh":"α 为 Jensen's Alpha，已扣除无风险利率（10年期美债 {rf:.2f}%）：α = (Rp − rf) − β(Rm − rf)",
+   "en":"α is Jensen's alpha, net of the risk-free rate (10Y Treasury {rf:.2f}%): α = (Rp − rf) − β(Rm − rf)",
+   "es":"α es el alfa de Jensen, neto de la tasa libre de riesgo ({rf:.2f}%).",
+   "fr":"α est l\u2019alpha de Jensen, net du taux sans risque ({rf:.2f}%).",
+   "de":"α ist Jensens Alpha, abzüglich des risikofreien Zinssatzes ({rf:.2f}%).",
+   "ja":"α はジェンセンのアルファで、無リスク金利（{rf:.2f}%）を控除しています。",
+   "ko":"α는 젠센의 알파이며, 무위험 수익률({rf:.2f}%)을 차감했습니다."},
+
+ "hg_wmode_label": {"zh":"权重方式","en":"Weighting","es":"Ponderación","fr":"Pondération",
+   "de":"Gewichtung","ja":"ウェイト","ko":"가중 방식"},
+ "hg_wmode_eq": {"zh":"等权（每个标的一样多）","en":"Equal weight","es":"Equiponderado",
+   "fr":"Équipondéré","de":"Gleichgewichtet","ja":"等ウェイト","ko":"동일 비중"},
+ "hg_wmode_mv": {"zh":"按我的持仓市值","en":"By my position sizes","es":"Por el tamaño de mis posiciones",
+   "fr":"Selon la taille de mes positions","de":"Nach meinen Positionsgrößen",
+   "ja":"保有時価に応じて","ko":"보유 시가 기준"},
+ "hg_wmode_help": {
+   "zh":"等权假设你在每个标的上投了一样多的钱。如果你实际是重仓一两只，等权会明显低估组合的真实波动——务必切到「按我的持仓市值」。",
+   "en":"Equal weight assumes you put the same amount into every asset. If you are actually concentrated in one or two names, equal weight badly understates your true portfolio volatility — switch to position sizes.",
+   "es":"El equiponderado asume la misma cantidad en cada activo; si estás concentrado, subestima tu volatilidad real.",
+   "fr":"L\u2019équipondération suppose le même montant sur chaque actif ; si vous êtes concentré, elle sous-estime votre volatilité réelle.",
+   "de":"Gleichgewichtung unterstellt denselben Betrag je Position; bei Konzentration unterschätzt sie Ihre echte Volatilität.",
+   "ja":"等ウェイトは各銘柄に同額を投じた前提です。集中している場合、実際のボラティリティを大きく過小評価します。",
+   "ko":"동일 비중은 모든 종목에 같은 금액을 넣었다고 가정합니다. 집중 투자 시 실제 변동성을 크게 과소평가합니다."},
+ "hg_wmode_nomv": {
+   "zh":"还没有可用的持仓市值，请先到「💰 我的持仓」页录入并等待行情加载，这里才能按真实权重计算。",
+   "en":"No position values available yet — add positions on the 💰 My Holdings tab and let prices load first.",
+   "es":"Aún no hay valores de posiciones; añádelas en la pestaña Mi Cartera.",
+   "fr":"Aucune valeur de position disponible ; ajoutez-les dans l\u2019onglet Mon Portefeuille.",
+   "de":"Noch keine Positionswerte vorhanden; bitte im Depot-Tab erfassen.",
+   "ja":"保有時価がまだありません。「💰 保有銘柄」タブで入力してください。",
+   "ko":"보유 시가가 아직 없습니다. 「💰 내 보유」 탭에서 먼저 입력하세요."},
+ "hg_wmode_active": {"zh":"当前权重：{w}","en":"Weights in use: {w}","es":"Pesos: {w}",
+   "fr":"Pondérations : {w}","de":"Verwendete Gewichte: {w}","ja":"適用ウェイト：{w}","ko":"적용 비중: {w}"},
+ "hg_mv_missing": {
+   "zh":"⚠️ {tks} 不在你的持仓里，市值按 0 处理（相当于没有配置），只影响权重不影响相关性。",
+   "en":"⚠️ {tks} are not in your holdings, so they carry zero weight here — correlations are unaffected.",
+   "es":"⚠️ {tks} no están en tu cartera: peso cero.",
+   "fr":"⚠️ {tks} ne sont pas dans votre portefeuille : pondération nulle.",
+   "de":"⚠️ {tks} sind nicht im Depot und erhalten Gewicht null.",
+   "ja":"⚠️ {tks} は保有していないためウェイト0として扱います。",
+   "ko":"⚠️ {tks}는 보유 종목이 아니므로 비중 0으로 처리됩니다."},
+ "hg_eff_conc": {
+   "zh":"　另外，只看权重集中度（不考虑相关性），你这份持仓相当于只持有 **{conc:.1f}** 个标的；如果改成等权，有效分散数会是 **{eq:.1f}**。",
+   "en":"　Looking at weight concentration alone (ignoring correlation), your portfolio is equivalent to holding just **{conc:.1f}** assets; equally weighted, the effective-bets figure would be **{eq:.1f}**.",
+   "es":"　Solo por concentración de pesos, equivale a tener **{conc:.1f}** activos; equiponderado sería **{eq:.1f}**.",
+   "fr":"　Par la seule concentration des pondérations, cela équivaut à détenir **{conc:.1f}** actifs ; équipondéré ce serait **{eq:.1f}**.",
+   "de":"　Allein nach Gewichtskonzentration entspricht das **{conc:.1f}** Positionen; gleichgewichtet wären es **{eq:.1f}**.",
+   "ja":"　ウェイト集中度だけで見ると実質 **{conc:.1f}** 銘柄相当です。等ウェイトなら **{eq:.1f}** になります。",
+   "ko":"　비중 집중도만 보면 실질 **{conc:.1f}**개 종목에 해당합니다. 동일 비중이라면 **{eq:.1f}**입니다."},
+
+ "hg_mode_eq_n": {"zh":"等权组合","en":"the equal-weighted portfolio","es":"la cartera equiponderada",
+   "fr":"le portefeuille équipondéré","de":"das gleichgewichtete Depot","ja":"等ウェイトの組み合わせ",
+   "ko":"동일 비중 포트폴리오"},
+ "hg_mode_mv_n": {"zh":"你的实际持仓","en":"your actual portfolio","es":"tu cartera real",
+   "fr":"votre portefeuille réel","de":"Ihr tatsächliches Depot","ja":"実際の保有ポートフォリオ",
+   "ko":"실제 보유 포트폴리오"},
  # ── 免责声明折叠 ──
  "disc_more": {"zh":"查看完整免责声明","en":"Read the full disclaimer","es":"Ver el aviso legal completo",
    "fr":"Lire l’avertissement complet","de":"Vollständigen Haftungsausschluss lesen",
@@ -1991,6 +2049,28 @@ CURRENCY_SYMBOLS = {
     "BRL":"R$","SEK":"kr","NOK":"kr",
 }
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_risk_free_rate() -> float:
+    """年化无风险利率（小数形式，例如 0.0494 表示 4.94%）。
+
+    取 10 年期美债收益率 ^TNX —— 注意它本身已经是百分数形式
+    （返回 4.94 表示 4.94%），所以要除以 100。
+
+    夏普比率和 Jensen's Alpha 都必须扣掉这一项：
+    rf 越高、资产波动越低，不扣的偏差就越大（偏差 = rf/σ）。
+    """
+    try:
+        import yfinance as yf
+        h = yf.Ticker("^TNX").history(period="5d")["Close"].dropna()
+        if len(h):
+            r = float(h.iloc[-1]) / 100.0
+            if 0.0 <= r <= 0.25:          # 合理区间，挡掉脏数据
+                return r
+    except Exception:
+        pass
+    return 0.04                            # 取不到时的保守默认值
+
+
 @st.cache_data(ttl=3600)
 def get_fx_rate(currency_code: str) -> float:
     """返回 1单位该货币 = 多少美元"""
@@ -2141,6 +2221,7 @@ STATIC_STOCK_DATA = {
         "nearest_support": 176.3, "nearest_resistance": 225.64,
         "slope_pct": 2.1, "sharpe": 1.2,
         "lt_score": 62, "lt_rating": "适合长期投资", "lt_color": "#1D9E75",
+        "rf_annual": 0.04,
     }
 }
 
@@ -2177,18 +2258,23 @@ def fetch_stock_analysis(ticker: str):
                 return default
 
         # ── 技术指标计算 ──
-        # RSI (14)
+        # RSI (14) —— Wilder 平滑
+        # 用 rolling(14).mean() 算出来的是 Cutler's RSI，只看最近 14 天，
+        # 大涨大跌后会明显偏离 TradingView / 雪球 / 券商软件显示的数值
+        # （实测分歧可达 20 点，足以把"超卖"读成"中性"）。
+        # Wilder 原始定义是 α=1/14 的指数平滑，这里对齐它。
         delta  = close.diff()
-        gain   = delta.clip(lower=0).rolling(14).mean()
-        loss   = (-delta.clip(upper=0)).rolling(14).mean()
+        gain   = delta.clip(lower=0).ewm(alpha=1/14, adjust=False).mean()
+        loss   = (-delta.clip(upper=0)).ewm(alpha=1/14, adjust=False).mean()
         rs     = gain / loss.replace(0, 1e-9)
         rsi    = safe_float((100 - 100 / (1 + rs)).iloc[-1], 50.0)
 
-        # MACD
-        ema12  = close.ewm(span=12).mean()
-        ema26  = close.ewm(span=26).mean()
+        # MACD —— 标准 MACD 用递归 EMA，pandas 默认的 adjust=True 是加权展开式，
+        # 两者在样本前段差别明显，这里对齐图表平台的算法
+        ema12  = close.ewm(span=12, adjust=False).mean()
+        ema26  = close.ewm(span=26, adjust=False).mean()
         macd   = ema12 - ema26
-        signal = macd.ewm(span=9).mean()
+        signal = macd.ewm(span=9, adjust=False).mean()
         macd_val    = safe_float(macd.iloc[-1])
         signal_val  = safe_float(signal.iloc[-1])
         macd_hist   = macd_val - signal_val
@@ -2295,10 +2381,15 @@ def fetch_stock_analysis(ticker: str):
             slope_norm = 0.0
             slope_pct  = 0.0
 
-        # 夏普比率（年化，使用6个月日收益率）
+        # 夏普比率（年化，已扣除无风险利率）
+        # 原来直接用 mean/std，等于假设 rf=0。当 10 年期美债在 4~5% 时，
+        # 这会把夏普整体抬高 rf/σ —— 低波动资产（债券、黄金）被抬得最多，
+        # 而夏普又是 lt_score 里权重最大的单项（±15 分）。
         daily_returns = close.pct_change().dropna()
-        if len(daily_returns) > 5:
-            sharpe = float((daily_returns.mean() / daily_returns.std()) * (252 ** 0.5))
+        rf_annual = get_risk_free_rate()
+        if len(daily_returns) > 5 and float(daily_returns.std()) > 0:
+            _rf_d  = rf_annual / 252
+            sharpe = float(((daily_returns.mean() - _rf_d) / daily_returns.std()) * (252 ** 0.5))
         else:
             sharpe = 0.0
 
@@ -2458,13 +2549,13 @@ def fetch_stock_analysis(ticker: str):
         # 夏普比率信号 (±5分)
         if sharpe > 1.5:
             score += 5
-            signals.append(("✅", "夏普比率优秀", f"夏普={sharpe:.2f}，风险调整后收益极佳"))
+            signals.append(("✅", "夏普比率优秀", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），风险调整后收益极佳"))
         elif sharpe > 0.5:
             score += 2
-            signals.append(("🟡", "夏普比率良好", f"夏普={sharpe:.2f}，风险收益比尚可"))
+            signals.append(("🟡", "夏普比率良好", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），风险收益比尚可"))
         elif sharpe < 0:
             score -= 5
-            signals.append(("🔴", "夏普比率为负", f"夏普={sharpe:.2f}，持有该股不如持有现金"))
+            signals.append(("🔴", "夏普比率为负", f"夏普={sharpe:.2f}（已扣无风险利率 {rf_annual*100:.2f}%），跑不赢无风险收益，不如持有现金/短债"))
 
         score = max(0, min(100, score))
 
@@ -2490,6 +2581,7 @@ def fetch_stock_analysis(ticker: str):
 
         return {
             "ticker": ticker.upper(),
+            "rf_annual": rf_annual,
             "name": name,
             "sector": sector,
             "price_now": price_now,
@@ -5006,10 +5098,15 @@ with tabs[5]:
                 f"= **${result['stop_loss']:.2f}**（{result['stop_loss_pct']:.1f}%）。"
                 f"用ATR而不是固定百分比，是为了让止损宽度匹配这只票自身的波动性——波动大的票给更宽的空间。",
                 "neutral", title="建议止损位", target=qi2)
-            why(f"夏普比率 = 日均收益 ÷ 日收益标准差 × √252，衡量**每承担一单位风险能换来多少回报**。"
+            _rf_disp = result.get("rf_annual", 0.04) * 100
+            why(f"夏普比率 = (日均收益 − 无风险日收益) ÷ 日收益标准差 × √252，"
+                f"衡量**每承担一单位风险能换来多少超过无风险利率的回报**。"
+                f"这里的无风险利率取 10 年期美债 **{_rf_disp:.2f}%**——"
+                f"不扣掉它就等于把「买国债也能拿到」的那部分收益也算成了你的本事，"
+                f"波动越低的资产被抬高得越多。"
                 + (f"{result['sharpe']:.2f} 属于优秀（>1.5），收益是靠稳定上涨而非大起大落赚来的。" if result['sharpe'] > 1.5
                    else f"{result['sharpe']:.2f} 属于良好（0.5–1.5），风险与收益基本匹配。" if result['sharpe'] > 0.5
-                   else f"{result['sharpe']:.2f} 偏低甚至为负，说明这段时间承担的波动没换来相应回报，不如持有现金。"),
+                   else f"{result['sharpe']:.2f} 偏低甚至为负，说明这段时间承担的波动没换来超过国债的回报，不如直接持有现金/短债。"),
                 "good" if result['sharpe'] > 1.5 else "neutral" if result['sharpe'] > 0.5 else "bad",
                 title="夏普比率", target=qi3)
             why(f"对最近20个交易日的收盘价做一元线性回归，取斜率再除以现价，得到 **{result['slope_pct']:+.2f}%/日**。"
@@ -6451,6 +6548,13 @@ with tabs[6]:
             total_pnl     = total_mv - total_cost
             total_pnl_pct = (total_mv / total_cost - 1) * 100 if total_cost > 0 else 0
 
+            # 按代码汇总市值，留给「投资圣杯」页按真实权重计算风险
+            # （同一个代码可能被分多笔录入，这里合并）
+            _mv_by_tk = {}
+            for x in rows:
+                _mv_by_tk[x["h"]["ticker"]] = _mv_by_tk.get(x["h"]["ticker"], 0.0) + x["mv"]
+            st.session_state["holdings_mv"] = _mv_by_tk
+
             st.markdown(tr("sec_holdings_overview"))
             oc1, oc2, oc3, oc4 = st.columns(4)
             oc1.metric(tr("m_total_cost"), f"${total_cost:,.2f}")
@@ -6697,6 +6801,22 @@ with tabs[6]:
 
             st.warning(tr("disc_tab_note"))
 
+
+_WM_OPTS = ["eq", "mv"]
+
+
+def _set_wmode(mode):
+    """程序性地切换权重口径。
+
+    带 key 的控件，其 session_state 值优先于 index 参数，所以光改
+    hg_wmode 是推不动控件的 —— 必须把控件自己的 key 删掉，
+    让它下次渲染时重新按 hg_wmode 播种。
+    """
+    st.session_state["hg_wmode"] = mode
+    for _k in [k for k in st.session_state if k.startswith("hg_wmode_pick_")]:
+        del st.session_state[_k]
+
+
 # ── Tab 8: 投资圣杯（达里欧分散化法则） ────────────────────────────────────────────
 with tabs[7]:
     st.subheader(tr("sec_grail"))
@@ -6750,8 +6870,20 @@ with tabs[7]:
             st.rerun()
     if _pc[-1].button(tr("hg_use_holdings"), key="hg_use_holdings", use_container_width=True,
                       disabled=len(_hold_tks) < 2):
-        st.session_state["hg_tickers"] = _hold_tks
+        st.session_state["hg_tickers"] = list(dict.fromkeys(_hold_tks))
+        # 带上真实市值权重：只传代码而按等权计算，会严重低估集中持仓的风险
+        if st.session_state.get("holdings_mv"):
+            _set_wmode("mv")
         st.rerun()
+
+    # 预设组合本身就是等权思路，切过去时回到等权，避免沿用上一份持仓的权重
+    for _i in range(len(_hg_presets)):
+        if st.session_state.get(f"hg_preset_{_i}"):
+            _set_wmode("eq")
+
+    _hg_mv = st.session_state.get("holdings_mv") or {}
+    if not _hg_mv:
+        _set_wmode("eq")                          # 没有持仓数据就只能等权
 
     _hg_c1, _hg_c2, _hg_c3 = st.columns([3, 1, 1])
     with _hg_c1:
@@ -6806,6 +6938,24 @@ with tabs[7]:
             return None, None
         return df[keep], bench_s
 
+    # ── 权重方式：等权 vs 按持仓市值 ──
+    # 语言放进 key 里，切语言时选项文案才会跟着刷新；
+    # 换 key 相当于新控件，所以下面要重新播种一次当前口径。
+    _lgw = st.session_state.get("lang", "zh")
+    _wkey = f"hg_wmode_pick_{_lgw}"
+    if _wkey not in st.session_state:
+        _seed = st.session_state.get("hg_wmode", "eq")
+        st.session_state[_wkey] = _seed if (_seed in _WM_OPTS and (_seed != "mv" or _hg_mv)) else "eq"
+    _wmode = st.radio(
+        tr("hg_wmode_label"), _WM_OPTS,
+        horizontal=True, key=_wkey,
+        format_func=lambda m: (tr("hg_wmode_eq") if m == "eq" else tr("hg_wmode_mv")),
+        help=tr("hg_wmode_help"))
+    if _wmode == "mv" and not _hg_mv:
+        st.info(tr("hg_wmode_nomv"))
+        _wmode = "eq"
+    st.session_state["hg_wmode"] = _wmode
+
     if len(_hg_tickers) < 2:
         st.info(tr("hg_need2"))
     else:
@@ -6822,11 +6972,44 @@ with tabs[7]:
             _vols = _rets.std() * np.sqrt(252)
             _mask = ~np.eye(_n, dtype=bool)
             _rho_bar = float(_corr.values[_mask].mean())
-            _pf_ret = _rets.mean(axis=1)                       # 等权组合
+
+            # ── 权重向量 ──
+            # 以前这里写死等权。但「用我的持仓」的人往往是重仓一两只，
+            # 等权算出来的波动会比真实组合低一大截，甚至把"风险上升"报成"风险下降"。
+            _missing_mv = []
+            if _wmode == "mv" and _hg_mv:
+                _wv = np.array([float(_hg_mv.get(t, 0.0)) for t in _rets.columns], dtype=float)
+                _missing_mv = [t for t in _rets.columns if float(_hg_mv.get(t, 0.0)) <= 0]
+                if _wv.sum() <= 0:
+                    _wv = np.ones(_n, dtype=float)
+                    _wmode = "eq"
+            else:
+                _wv = np.ones(_n, dtype=float)
+            _wv = _wv / _wv.sum()
+            _is_eq = (_wmode == "eq")
+
+            _pf_ret = (_rets * _wv).sum(axis=1)
             _pf_vol = float(_pf_ret.std() * np.sqrt(252))
-            _avg_vol = float(_vols.mean())
+            # 对照基准：同样权重下"各资产各走各的、完全不分散"时的加权平均波动
+            _avg_vol = float((_vols.values * _wv).sum())
             _div_benefit = (1 - _pf_vol / _avg_vol) * 100 if _avg_vol > 0 else 0
-            _n_eff = _n / (1 + (_n - 1) * max(_rho_bar, 0.0001))
+            # 有效分散数 = 分散化比率的平方 = (Σwᵢσᵢ)² / (w'Σw)
+            # 等权且各资产波动相同时，它正好退化成教科书里的 n/(1+(n−1)ρ̄)
+            _n_eff = (_avg_vol / _pf_vol) ** 2 if _pf_vol > 0 else 0.0
+            # 切到等权后实际会看到的有效分散数（同样用 DR²，口径才一致）
+            _eqw = np.ones(_n) / _n
+            _pf_vol_eq = float((_rets * _eqw).sum(axis=1).std() * np.sqrt(252))
+            _avg_vol_eq = float((_vols.values * _eqw).sum())
+            _n_eff_eq = (_avg_vol_eq / _pf_vol_eq) ** 2 if _pf_vol_eq > 0 else 0.0
+            # 名义等效持仓数（只看权重集中度，不看相关性）
+            _conc = 1.0 / float((_wv ** 2).sum())
+
+            if _missing_mv:
+                st.warning(tr("hg_mv_missing", tks="、".join(_missing_mv)))
+            if not _is_eq:
+                st.caption(tr("hg_wmode_active", w="　·　".join(
+                    f"{t} {w*100:.0f}%" for t, w in
+                    sorted(zip(_rets.columns, _wv), key=lambda kv: -kv[1]))))
 
             # ── 核心结论卡 ──
             k1, k2, k3, k4 = st.columns(4)
@@ -6842,11 +7025,15 @@ with tabs[7]:
                                nt("hg_rho_mid") if _rho_bar < 0.6 else nt("hg_rho_hi"))),
                 "good" if _rho_bar < 0.3 else "warn" if _rho_bar < 0.6 else "bad",
                 title=tr("hg_t_rho", rho=_rho_bar), target=k2)
-            why(nt("hg_w_eff", n=_n, eff=_n_eff),
+            why(nt("hg_w_eff", n=_n, eff=_n_eff)
+                + ("" if _is_eq else tr("hg_eff_conc", conc=_conc, eq=_n_eff_eq)),
                 "good" if _n_eff >= 5 else "warn" if _n_eff >= 3 else "bad",
-                calc=f"{_n} ÷ (1 + {_n-1} × {_rho_bar:.2f}) = {_n_eff:.1f}",
+                calc=f"({_avg_vol*100:.1f}% ÷ {_pf_vol*100:.1f}%)² = {_n_eff:.1f}"
+                     + (f"　·　等权同波动的理论值 {_n} ÷ (1 + {_n-1} × {_rho_bar:.2f}) = "
+                        f"{_n / (1 + (_n - 1) * max(_rho_bar, 0.0001)):.1f}" if _is_eq else ""),
                 title=tr("hg_t_eff", eff=_n_eff), target=k3)
-            why(nt("hg_w_cut", avg=_avg_vol*100, pf=_pf_vol*100, cut=_div_benefit),
+            why(nt("hg_w_cut", avg=_avg_vol*100, pf=_pf_vol*100, cut=_div_benefit,
+                      mode=tr("hg_mode_eq_n") if _is_eq else tr("hg_mode_mv_n")),
                 "good" if _div_benefit > 25 else "warn",
                 calc=f"1 − {_pf_vol*100:.1f}% ÷ {_avg_vol*100:.1f}% = {_div_benefit:.1f}%",
                 title=tr("hg_t_cut", cut=_div_benefit), target=k4)
@@ -6917,13 +7104,20 @@ with tabs[7]:
                 st.warning(tr("hg_ab_nobench", b=_hg_bench))
             else:
                 _bvar = float(_bench_r.var())
+                # Jensen's Alpha：α = (Rp − rf) − β(Rm − rf)
+                # 漏掉 rf 会让偏差变成 rf×(1−β)：β<1 的资产 α 被系统性高估，
+                # 而债券、黄金这类低 β 资产正是本页在建议用户配置的那一类。
+                _rf_ann = get_risk_free_rate()
+                _rf_d = _rf_ann / 252
                 _ab_rows = []
                 for _tk in _rets.columns:
                     _a = _rets[_tk]
                     _beta = float(np.cov(_a, _bench_r)[0, 1] / _bvar) if _bvar > 0 else 0.0
-                    _alpha = float((_a.mean() - _beta * _bench_r.mean()) * 252 * 100)
+                    _alpha = float(((_a.mean() - _rf_d)
+                                    - _beta * (_bench_r.mean() - _rf_d)) * 252 * 100)
                     _r2 = float(np.corrcoef(_a, _bench_r)[0, 1] ** 2)
                     _ab_rows.append((_tk, _beta, _alpha, _r2))
+                st.caption(tr("hg_rf_note", rf=_rf_ann * 100))
 
                 _ab_cards = []
                 for _tk, _beta, _alpha, _r2 in _ab_rows:
@@ -6954,13 +7148,14 @@ with tabs[7]:
                             "good" if (_alpha > 0 and _r2 < 0.5) else "warn" if _alpha > 0 else "bad",
                             title=_tk)
 
-                _w = 1.0 / _n
-                _pf_beta = sum(b for _, b, _, _ in _ab_rows) * _w
-                _pf_alpha = sum(a for _, _, a, _ in _ab_rows) * _w
+                # β 和 α 都是线性的，按组合权重加权即可（_ab_rows 与 _rets.columns 同序）
+                _pf_beta = float(sum(b * w for (_, b, _, _), w in zip(_ab_rows, _wv)))
+                _pf_alpha = float(sum(a * w for (_, _, a, _), w in zip(_ab_rows, _wv)))
                 _tail = (nt("hg_pf_b_mid") if 0.8 <= _pf_beta <= 1.2 else
                          nt("hg_pf_b_lo", b=_pf_beta) if _pf_beta < 0.8 else
                          nt("hg_pf_b_hi", b=_pf_beta))
-                why(nt("hg_pf_ab", beta=_pf_beta, alpha=_pf_alpha, tail=_tail),
+                why(nt("hg_pf_ab", beta=_pf_beta, alpha=_pf_alpha, tail=_tail,
+                          mode=tr("hg_mode_eq_n") if _is_eq else tr("hg_mode_mv_n")),
                     "good" if _pf_beta < 0.8 else "warn", title=tr("hg_pf_ab_t"))
 
             st.divider()
@@ -7039,7 +7234,14 @@ with tabs[7]:
             def _build_grail_report():
                 L = [_report_header(_md_heading("sec_grail").lstrip("🏆 ").strip())]
                 L.append(f"**{_md_clean(tr('hg_lookback'))}**: {_hg_period}　·　"
-                         f"**{_md_clean(tr('hg_m_n'))}**: {_n}\n\n")
+                         f"**{_md_clean(tr('hg_m_n'))}**: {_n}　·　"
+                         f"**{_md_clean(tr('hg_wmode_label'))}**: "
+                         f"{_md_clean(tr('hg_wmode_eq') if _is_eq else tr('hg_wmode_mv'))}\n\n")
+                if not _is_eq:
+                    L.append("| | |\n|---|---:|\n")
+                    for _t_, _w_ in sorted(zip(_rets.columns, _wv), key=lambda kv: -kv[1]):
+                        L.append(f"| {_t_} | {_w_*100:.1f}% |\n")
+                    L.append("\n")
                 L.append(f"| | |\n|---|---:|\n")
                 L.append(f"| {_md_clean(tr('hg_m_n'))} | {_n} |\n")
                 L.append(f"| {_md_clean(tr('hg_m_rho'))} | {_rho_bar:.3f} |\n")
@@ -7081,6 +7283,9 @@ with tabs[7]:
                 out.append(["AvgAssetVol(%)", f"{_avg_vol*100:.4f}"])
                 out.append(["PortfolioVol(%)", f"{_pf_vol*100:.4f}"])
                 out.append(["HolyGrailScore", f"{_hg_score}"])
+                out.append(["Weighting", "equal" if _is_eq else "market-value"])
+                for _t_, _w_ in zip(_rets.columns, _wv):
+                    out.append(["Weight_" + str(_t_), f"{_w_:.6f}"])
                 return _csv_bytes([""] + _cols, out)
 
             from datetime import datetime as _dt_hg
