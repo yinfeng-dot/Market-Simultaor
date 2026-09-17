@@ -1,0 +1,24 @@
+# ══════════════════════════════════════════════════════════════════
+# 主题配置 —— 把这个文件和 app.py 一起放进 GitHub 仓库
+# 目录结构：
+#   market-simultaor/
+#   ├── app.py
+#   └── .streamlit/
+#       └── config.toml     ← 本文件
+#
+# 作用：强制浅色主题。否则访客系统是深色模式时，
+#       侧边栏和下拉菜单会是黑底，主内容区却被 CSS 刷成白底。
+# ══════════════════════════════════════════════════════════════════
+
+[theme]
+base                = "light"
+primaryColor        = "#534AB7"
+backgroundColor     = "#F7F8FC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor           = "#0F172A"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
