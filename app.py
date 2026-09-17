@@ -1417,12 +1417,22 @@ _WHY_C  = {"good": "#0F6E56", "bad": "#A32D2D", "warn": "#BA7517", "neutral": "#
 _WHY_BG = {"good": "rgba(29,158,117,.10)", "bad": "rgba(226,75,74,.10)",
            "warn": "rgba(186,117,23,.10)", "neutral": "rgba(100,116,139,.09)"}
 
+def _md_bold(text):
+    """把 **粗体** 转成 <b>粗体</b>。
+
+    凡是用 unsafe_allow_html=True 塞进 HTML 块的文本，Streamlit 都不会再走
+    Markdown 解析，写 **x** 会原样显示成星号。所有进 HTML 的文案都要过这里。
+    """
+    import re as _re_b
+    return _re_b.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", str(text))
+
+
 def why_html(text, tone="neutral", calc=None, title=None):
     import re
     if title is None:
         title = tr("why_default")
     c, bg = _WHY_C.get(tone, "#475569"), _WHY_BG.get(tone, "rgba(100,116,139,.09)")
-    text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)   # HTML 块内不会解析 markdown 粗体
+    text = _md_bold(text)   # HTML 块内不会解析 markdown 粗体
     calc_html = f'<span class="calc">{calc}</span>' if calc else ""
     return (f'<div class="whybox" style="border-left:3px solid {c};background:{bg}">'
             f'<span class="wt" style="color:{c}">{title}：</span>{text}{calc_html}</div>')
@@ -1773,8 +1783,8 @@ def render_quick_analysis(ticker):
         f'<div style="font-size:13px;opacity:.92">{r["name"]} · {r["sector"]}</div></div>'
         f'<div style="margin-left:auto;text-align:right">'
         f'<div style="font-size:28px;font-weight:750">${r["price_now"]:.2f}</div>'
-        f'<div style="font-size:12.5px;opacity:.92">趋势 {r["trend_score"]}/100　·　'
-        f'位置 {r["stretch_score"]}/100</div>'
+        f'<div style="font-size:12.5px;opacity:.92">趋势 {r.get("trend_score", r.get("score", 50))}/100　·　'
+        f'位置 {r.get("stretch_score", 50)}/100</div>'
         f'</div></div></div>', unsafe_allow_html=True)
 
     q1, q2, q3, q4, q5 = st.columns(5)
@@ -2194,6 +2204,10 @@ def generate_gbm_paths(S0, mu, sigma, T_months, n_paths, seed=None):
     return paths
 
 # ── 股票分析核心函数 ───────────────────────────────────────────────────────────
+# 分析结果的结构版本。session_state 会跨代码更新保留，所以必须能认出旧结构：
+# 改动 fetch_stock_analysis 返回的字段时，把这个数字 +1，旧结果会被自动丢弃重算。
+ANALYSIS_SCHEMA = 2
+
 # 静态备用数据（yfinance未同步的新上市股票）
 STATIC_STOCK_DATA = {
     "SPCX": {
@@ -2222,6 +2236,7 @@ STATIC_STOCK_DATA = {
         "nearest_support": 176.3, "nearest_resistance": 225.64,
         "slope_pct": 2.1, "sharpe": 1.2,
         "lt_score": 62, "lt_rating": "适合长期投资", "lt_color": "#1D9E75",
+        "schema": 2,
         "rf_annual": 0.04,
         "trend_score": 68, "stretch_score": 62,
         "rating_note": "趋势强劲但位置偏高：上市首周涨幅已透支部分预期，等回调更合适。",
@@ -2628,6 +2643,7 @@ def fetch_stock_analysis(ticker: str):
 
         return {
             "ticker": ticker.upper(),
+            "schema": ANALYSIS_SCHEMA,
             "rf_annual": rf_annual,
             "trend_score": trend_score,
             "stretch_score": stretch_score,
@@ -5023,6 +5039,13 @@ with tabs[5]:
         st.session_state["selected_ticker"] = ticker_input
         st.session_state["analysis_result"] = None  # 强制重新分析
 
+    # session_state 跨代码更新会保留，旧结构的结果缺新字段会直接 KeyError，
+    # 这里认出版本不符就丢掉重算，用户不用手动硬刷新。
+    _cached = st.session_state.get("analysis_result")
+    if (isinstance(_cached, dict) and "error" not in _cached
+            and _cached.get("schema") != ANALYSIS_SCHEMA):
+        st.session_state["analysis_result"] = None
+
     if st.session_state["selected_ticker"] and st.session_state["analysis_result"] is None:
         with st.spinner(f"正在分析 {st.session_state['selected_ticker']}..."):
             st.session_state["analysis_result"] = fetch_stock_analysis(
@@ -5037,6 +5060,11 @@ with tabs[5]:
             st.error(f"获取数据失败：{result['error']}")
         else:
             # ── 评级横幅（Logo 水印 + 毛玻璃）──
+            # 取一次就好。.get 回退是为了兼容结构更新前残留在 session_state
+            # 里的旧结果（ANALYSIS_SCHEMA 已经会拦掉，这里是第二道保险）。
+            _tsc = result.get("trend_score", result.get("score", 50))
+            _ssc = result.get("stretch_score", 50)
+            _rnote = result.get("rating_note", "")
             _rc = result["rating_color"]
             st.markdown(
                 f'<div class="ahero" style="background:linear-gradient(120deg,{_rc} 0%,{_rc}cc 55%,{_rc}99 100%)">'
@@ -5050,8 +5078,8 @@ with tabs[5]:
                 f'</div>'
                 f'<div style="margin-left:auto;text-align:right">'
                 f'<div style="font-size:31px;font-weight:750;letter-spacing:-.5px">${result["price_now"]:.2f}</div>'
-                f'<div style="font-size:12.5px;opacity:.92">趋势 {result["trend_score"]}/100　·　'
-                f'位置 {result["stretch_score"]}/100</div>'
+                f'<div style="font-size:12.5px;opacity:.92">趋势 {_tsc}/100　·　'
+                f'位置 {_ssc}/100</div>'
                 f'</div></div></div>',
                 unsafe_allow_html=True
             )
@@ -5067,18 +5095,18 @@ with tabs[5]:
             else:
                 m2.metric("🎯 分析师目标价", "—", "无覆盖", delta_color="off")
             m3.metric("📐 3个月波动区间",
-                      f"${result['range_low']:.0f} – {result['range_high']:.0f}",
-                      f"±{result['range_pct']:.0f}%", delta_color="off")
-            m4.metric("📈 趋势强度", f"{result['trend_score']}/100",
-                      "向上" if result['trend_score'] >= 65 else
-                      "向下" if result['trend_score'] < 45 else "中性",
-                      delta_color="normal" if result['trend_score'] >= 65
-                      else "inverse" if result['trend_score'] < 45 else "off")
-            m5.metric("📍 位置（超买超卖）", f"{result['stretch_score']}/100",
-                      "偏贵" if result['stretch_score'] >= 70 else
-                      "偏低" if result['stretch_score'] <= 30 else "中性",
-                      delta_color="inverse" if result['stretch_score'] >= 70
-                      else "normal" if result['stretch_score'] <= 30 else "off")
+                      f"${result.get('range_low', result['price_now']):.0f} – {result.get('range_high', result['price_now']):.0f}",
+                      f"±{result.get('range_pct', 0):.0f}%", delta_color="off")
+            m4.metric("📈 趋势强度", f"{_tsc}/100",
+                      "向上" if _tsc >= 65 else
+                      "向下" if _tsc < 45 else "中性",
+                      delta_color="normal" if _tsc >= 65
+                      else "inverse" if _tsc < 45 else "off")
+            m5.metric("📍 位置（超买超卖）", f"{_ssc}/100",
+                      "偏贵" if _ssc >= 70 else
+                      "偏低" if _ssc <= 30 else "中性",
+                      delta_color="inverse" if _ssc >= 70
+                      else "normal" if _ssc <= 30 else "off")
 
             # ── 逐项解释这五个数字 ──
             _sig = result.get("signals", [])
@@ -5100,42 +5128,42 @@ with tabs[5]:
                  "本站**不会自己编一个目标价**——右边的波动区间才是有依据的参考。"),
                 "good" if (_au or 0) >= 0 else "bad", title="分析师目标价", target=m2)
             why(f"这不是预测，是按这只标的**自身的历史波动率**推出来的统计区间："
-                f"日收益标准差 × √63（3个月的交易日数）得到 ±{result['range_pct']:.1f}%，"
-                f"即约 **68% 的概率**落在 ${result['range_low']:.2f} – ${result['range_high']:.2f} 之间。"
+                f"日收益标准差 × √63（3个月的交易日数）得到 ±{result.get('range_pct', 0):.1f}%，"
+                f"即约 **68% 的概率**落在 ${result.get('range_low', result['price_now']):.2f} – ${result.get('range_high', result['price_now']):.2f} 之间。"
                 f"区间越宽说明这只票越颠簸，同样的仓位承担的风险越大。"
                 f"（前提是收益近似对数正态且波动率不变——真实市场两条都只是近似。）",
                 "neutral", title="3个月波动区间", target=m3)
             why(f"**趋势强度**只由方向性指标构成：MACD、均线排列、1个月动量、OBV资金流、"
                 f"20日回归斜率、成交量配合、夏普比率。它回答的是「**往哪个方向走**」，"
-                f"不掺任何超买超卖判断。当前 {result['trend_score']}/100"
-                + ("，方向明确向上。" if result['trend_score'] >= 65
-                   else "，方向明确向下。" if result['trend_score'] < 45 else "，方向不明朗。"),
-                "good" if result['trend_score'] >= 65 else "bad" if result['trend_score'] < 45 else "neutral",
+                f"不掺任何超买超卖判断。当前 {_tsc}/100"
+                + ("，方向明确向上。" if _tsc >= 65
+                   else "，方向明确向下。" if _tsc < 45 else "，方向不明朗。"),
+                "good" if _tsc >= 65 else "bad" if _tsc < 45 else "neutral",
                 title="趋势强度", target=m4)
             why(f"**位置分**只由摆动指标构成：RSI {result['rsi']:.1f}、布林带位置、"
                 f"斐波那契回撤、距52周高点 {result['price_from_high']:.1f}%。"
-                f"它回答的是「**现在贵不贵**」，越高越超买。当前 {result['stretch_score']}/100"
-                + ("，位置偏高，追进去性价比差。" if result['stretch_score'] >= 70
-                   else "，位置偏低，安全边际相对好。" if result['stretch_score'] <= 30
+                f"它回答的是「**现在贵不贵**」，越高越超买。当前 {_ssc}/100"
+                + ("，位置偏高，追进去性价比差。" if _ssc >= 70
+                   else "，位置偏低，安全边际相对好。" if _ssc <= 30
                    else "，处在中性区间。")
                 + "　这两个分数**故意分开**——把它们相加会互相抵消，"
                   "强势上涨股和暴跌股会得到几乎一样的分数。",
-                "bad" if result['stretch_score'] >= 70 else "good" if result['stretch_score'] <= 30 else "neutral",
+                "bad" if _ssc >= 70 else "good" if _ssc <= 30 else "neutral",
                 title="位置（超买超卖）", target=m5)
             st.markdown(
                 f'<div style="background:{result["rating_color"]};color:white;padding:12px 18px;'
                 f'border-radius:10px;font-size:14px;margin:10px 0">'
                 f'<b style="font-size:16px">{result["rating_emoji"]} {result["rating"]}</b>'
-                f'　<span style="opacity:.9">趋势 {result["trend_score"]}/100　·　'
-                f'位置 {result["stretch_score"]}/100</span><br>'
-                f'<span style="font-size:13px;opacity:.94">{result["rating_note"]}</span></div>',
+                f'　<span style="opacity:.9">趋势 {_tsc}/100　·　'
+                f'位置 {_ssc}/100</span><br>'
+                f'<span style="font-size:13px;opacity:.94">{_md_bold(_rnote)}</span></div>',
                 unsafe_allow_html=True)
             why(f"评级不是把两个分数相加，而是看它们的**组合**："
-                f"趋势 {result['trend_score']} × 位置 {result['stretch_score']} 落在「{result['rating']}」这一格。"
+                f"趋势 {_tsc} × 位置 {_ssc} 落在「{result['rating']}」这一格。"
                 f"下方「技术信号详情」共 **{_pos} 条利多、{_neg} 条利空、{_neu} 条中性**。"
                 f"　四个象限的含义：趋势强+位置低=最理想；趋势强+位置高=方向对但等回调；"
                 f"趋势弱+位置低=跌多了但没转向，别急着接；趋势弱+位置高=风险收益比最差。",
-                "good" if result["trend_score"] >= 65 else "bad" if result["trend_score"] < 45 else "neutral",
+                "good" if _tsc >= 65 else "bad" if _tsc < 45 else "neutral",
                 title="评级怎么来的")
 
             # ── 买入/卖出理由 ──
@@ -5145,7 +5173,8 @@ with tabs[5]:
                 lines = []
                 p = r["price_now"]
                 # 按趋势分判方向，而不是匹配评级名字 —— 评级现在有9种，写死名字必漏
-                _ts, _ss = r["trend_score"], r["stretch_score"]
+                _ts = r.get("trend_score", r.get("score", 50))
+                _ss = r.get("stretch_score", 50)
                 _dir = "偏多" if _ts >= 65 else "偏空" if _ts < 45 else "中性"
                 lines.append(f"**{r['ticker']} 技术面{_dir}：趋势强度 {_ts}/100、"
                              f"位置 {_ss}/100，给予「{r['rating']}」评级。**")
@@ -5194,17 +5223,17 @@ with tabs[5]:
 
                 if r["target_analyst"] and r["target_analyst"] > 0:
                     upside = (r["target_analyst"] - p) / p * 100
-                    agree = ("与本模型的趋势判断一致。" if (upside > 0) == (r["trend_score"] >= 50)
+                    agree = ("与本模型的趋势判断一致。" if (upside > 0) == (r.get("trend_score", r.get("score", 50)) >= 50)
                              else "与本模型的趋势判断存在分歧，建议综合参考。")
                     lines.append(f"华尔街分析师平均目标价为 ${r['target_analyst']:.2f}，较现价 {'+' if upside>=0 else ''}{upside:.1f}%，{agree}")
 
                 lines.append(
-                    f"综合以上因素：趋势强度 {r['trend_score']}/100、位置 {r['stretch_score']}/100，"
-                    f"评级为「{r['rating']}」。{r['rating_note']}"
+                    f"综合以上因素：趋势强度 {r.get('trend_score', r.get('score', 50))}/100、位置 {r.get('stretch_score', 50)}/100，"
+                    f"评级为「{r['rating']}」。{r.get('rating_note', '')}"
                     f"　按该标的自身波动率推算，未来3个月约有 68% 的概率落在 "
-                    f"${r['range_low']:.2f} – ${r['range_high']:.2f} 区间内。"
-                    + (f"华尔街分析师一致目标价为 ${r['analyst_target']:.2f}"
-                       f"（{r['analyst_upside']:+.1f}%）。" if r.get("analyst_target") else
+                    f"${r.get('range_low', r['price_now']):.2f} – ${r.get('range_high', r['price_now']):.2f} 区间内。"
+                    + (f"华尔街分析师一致目标价为 ${r.get('analyst_target') or 0:.2f}"
+                       f"（{r.get('analyst_upside') or 0:+.1f}%）。" if r.get("analyst_target") else
                        "该标的没有分析师覆盖数据，本站不提供自编的目标价。"))
 
                 if _ts >= 65 and _ss >= 70:
@@ -5235,7 +5264,7 @@ with tabs[5]:
                 st.markdown(
                     f'<div style="background:{bg};border-left:4px solid {border};'
                     f'padding:10px 16px;border-radius:6px;margin-bottom:8px;'
-                    f'font-size:14px;line-height:1.7">{line}</div>',
+                    f'font-size:14px;line-height:1.7">{_md_bold(line)}</div>',
                     unsafe_allow_html=True
                 )
 
@@ -5729,7 +5758,7 @@ with tabs[5]:
                 st.markdown(
                     f'<div style="background:{lt_bg};border-left:3px solid {lt_border};'
                     f'padding:10px 16px;border-radius:6px;margin-bottom:6px;'
-                    f'font-size:14px;line-height:1.7">{line}</div>',
+                    f'font-size:14px;line-height:1.7">{_md_bold(line)}</div>',
                     unsafe_allow_html=True
                 )
 
@@ -6529,7 +6558,7 @@ with tabs[5]:
                 # 综合操作建议
                 st.markdown("**🎯 宏观视角下的操作建议**")
                 tech_rating = r["rating"]
-                _tts = r["trend_score"]          # 用趋势分判方向，新评级名才不会漏判
+                _tts = r.get("trend_score", r.get("score", 50))          # 用趋势分判方向，新评级名才不会漏判
                 if combined_score > 15 and _tts >= 65:
                     final = ("🚀 强力建议", "#0F6E56",
                              f"技术面{tech_rating} + 宏观环境正面 + {s_label}受益，三重共振。建议积极布局，可适当提高仓位。")
