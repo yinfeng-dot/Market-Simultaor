@@ -551,6 +551,21 @@ I18N = {
 
  "bub_label_from": {"zh":"← 这一档由破裂概率 {b}% 决定，与左侧温度是两个数",
    "en":"← this band comes from the {b}% burst probability, not the temperature on the left"},
+
+ "ipo_asof": {
+   "zh":"ℹ️ 下列估值、收入与递交状态为**手工整理的静态数据**（数据截至 {d}），非实时行情；已上市公司的价格在上方实时区。",
+   "en":"ℹ️ The valuations, revenues and filing statuses below are **manually maintained static data** (as of {d}), not live quotes. Prices for listed companies appear in the live section above."},
+ "ipo_asof_old": {
+   "zh":"⚠️ 下列 IPO 数据最后更新于 {d}，距今已 {n} 天，很可能已经过时——估值、收入和上市进度请以最新公开信息为准。",
+   "en":"⚠️ The IPO data below was last updated on {d}, {n} days ago, and is likely stale — check current public filings for valuations, revenue and timing."},
+
+ "rev_runrate": {
+   "zh":"年化跑步收入（最新月×12），非财年实际收入",
+   "en":"Annualised run rate (latest month ×12), not a full fiscal year"},
+ "rev_fy": {"zh":"上一财年实际收入","en":"Last full fiscal year"},
+ "ps_basis_note": {
+   "zh":"⚠️ P/S 倍数的分母口径并不统一：已上市公司用的是财年实际收入，尚未上市的 AI 公司只能拿到**年化跑步收入**（增长极快时会显著压低 P/S）。跨公司比较这一项时请留意。",
+   "en":"⚠️ The P/S denominators are not on a common basis: listed companies use actual fiscal-year revenue, while the private AI companies only disclose an **annualised run rate**, which flatters P/S when growth is fast. Keep that in mind when comparing across names."},
  # ── 当前泡沫读数（自动） ──
  "bub_now_title": {"zh":"### 🌡️ 当前泡沫程度（实时自动测算）",
    "en":"### 🌡️ Current bubble reading (computed live)"},
@@ -1980,18 +1995,32 @@ def add_year_range_tools(fig, start_year, end_year):
     return fig
 
 # ── 数据 ──────────────────────────────────────────────────────────────────────
+# IPO 名单里的估值、收入、递交状态都是手工维护的静态数据 —— 不是实时行情。
+# 之前 SPCX 的价格写死了三个多月没人发现，就是因为没有任何"数据何时采集"的标记。
+# 改这个列表时，把下面这个日期一并改掉；页面会在超过 90 天后自动提示该核对了。
+IPO_DATA_ASOF = "2026-09-18"
+
 IPOS = [
     {"name": "SpaceX",       "sector": "太空科技", "val_b": 1770, "rev_b": 18.7,
      "profitable": False, "float_pct": 4,  "exp_pop": 19, "bubble_risk": 45,
      "date": "2026年6月12日 ✅已上市", "ticker": "SPCX",
-     "price_now": 206.19, "ipo_price": 135.0,
-     "desc": "2026年6月12日纳斯达克上市，发行价$135，首日收盘$161（+19%），史上最大IPO。2025年全年营收$187亿（同比+33%），EBITDA $66亿，但GAAP净亏损$49亿。已收购xAI，整合Grok AI和X（Twitter）。累计亏损$413亿。"},
-    {"name": "OpenAI",       "sector": "人工智能", "val_b": 1000, "rev_b": 3.4,
-     "profitable": False, "float_pct": 5,  "exp_pop": 35, "bubble_risk": 78, "date": "2026年Q4",
-     "desc": "ChatGPT母公司，月活超5亿，年收入约$34亿但仍大幅亏损。内部治理复杂，存在法律不确定性。"},
-    {"name": "Anthropic",    "sector": "人工智能", "val_b": 965,  "rev_b": 1.8,
-     "profitable": False, "float_pct": 5,  "exp_pop": 40, "bubble_risk": 82, "date": "2026年Q4",
-     "desc": "Claude系列模型公司，Series H估值$965亿。亚马逊和谷歌为主要战略投资方。"},
+     "ipo_price": 135.0,
+     "desc": "2026年6月12日纳斯达克上市，发行价$135，首日收盘$161（+19%），史上最大IPO。2025年全年营收$187亿（同比+33%），EBITDA $66亿，但GAAP净亏损$49亿。已收购xAI，整合Grok AI和X（Twitter）。累计亏损$413亿。上市后股价见过$211、也回落到过$108，现价请看上方实时行情。"},
+    {"name": "OpenAI",       "sector": "人工智能", "val_b": 852, "rev_b": 20.0,
+     "rev_basis": "runrate",
+     "profitable": False, "float_pct": 5,  "exp_pop": 30, "bubble_risk": 72,
+     "date": "已保密递交 · 时间待定",
+     "desc": "ChatGPT母公司。2026年5月22日向SEC保密递交S-1，但规模、条款、时间与交易所均未披露。"
+             "最近一次定价为2026年3月31日完成的$1220亿融资，对应估值$8520亿；有分析师预计挂牌时估值可能超过$1万亿。"
+             "2025年底收入已超过$200亿，但仍大幅亏损。原计划最早2026年9月上市，路透社6月末报道称可能推迟到2027年。"},
+    {"name": "Anthropic",    "sector": "人工智能", "val_b": 965,  "rev_b": 65.0,
+     "rev_basis": "runrate",
+     "profitable": False, "float_pct": 5,  "exp_pop": 32, "bubble_risk": 70,
+     "date": "已保密递交 · 最早2026年秋",
+     "desc": "Claude系列模型公司。2026年6月1日向SEC保密递交S-1（保密件，EDGAR上尚不可查）。"
+             "2026年5月完成$650亿融资的Series H-1对应估值$9650亿；投行与投资人讨论过的挂牌估值上限约$2万亿。"
+             "年化收入跑步增长：2025年底约$90亿 → 2026年3月$190亿 → 5月约$470亿 → 7月底已超过$650亿，但尚未盈利。"
+             "亚马逊和谷歌为主要战略投资方。开始交易的时间取决于SEC审核与市场状况，尚无确定日期。"},
     {"name": "Databricks",   "sector": "企业AI",   "val_b": 134,  "rev_b": 2.8,
      "profitable": True,  "float_pct": 8,  "exp_pop": 18, "bubble_risk": 38, "date": "2026年H1",
      "desc": "数据+AI平台，年收入$28亿，正自由现金流。2026年IPO中基本面最扎实的AI公司。"},
@@ -2412,49 +2441,9 @@ def generate_gbm_paths(S0, mu, sigma, T_months, n_paths, seed=None):
 # 改动 fetch_stock_analysis 返回的字段时，把这个数字 +1，旧结果会被自动丢弃重算。
 ANALYSIS_SCHEMA = 2
 
-# 静态备用数据（yfinance未同步的新上市股票）
-STATIC_STOCK_DATA = {
-    "SPCX": {
-        "ticker": "SPCX", "name": "Space Exploration Technologies Corp",
-        "sector": "Industrials", "price_now": 206.19, "price_target": 227.0,
-        "price_target_pct": 10.1, "price_52w_high": 225.64, "price_52w_low": 135.0,
-        "price_from_high": -8.7, "rsi": 62.0, "macd_hist": 0.85,
-        "ma20": 185.0, "ma50": 170.0, "ma200": 170.0,
-        "bb_up": 220.0, "bb_low": 150.0, "vol_ratio": 2.1,
-        "mom_1m": 52.7, "mom_3m": 52.7, "pe": None, "fwd_pe": None,
-        "pb": None, "beta": 1.5, "mktcap": 2730000000000,
-        "target_analyst": 196.0, "score": 68, "rating": "买入",
-        "rating_color": "#1D9E75", "rating_emoji": "📈",
-        "signals": [
-            ("✅","上市首周强势",f"上市价$135，当前$206.19，涨幅+52.7%，资金持续流入"),
-            ("✅","MA多头排列",f"价格$206.19站于MA20($185.00)和MA50($170.00)之上"),
-            ("🟡","RSI偏高",f"RSI=62.0，接近超买区间，短期注意回调风险"),
-            ("✅","成交量放大",f"成交量是均值的2.1倍，机构资金积极参与"),
-            ("🔴","估值极高",f"P/S倍数约145x，需要极高增长预期支撑"),
-            ("⚪","新上市股票",f"上市仅4天，历史数据有限，技术分析仅供参考"),
-        ],
-        "hist": None, "static": True,
-        "atr": 8.5, "atr_pct": 4.1, "stop_loss": 193.4, "stop_loss_pct": -6.2,
-        "obv_trend": "上升", "obv_pct": 45.0,
-        "fib_levels": {"0.236":176.3,"0.382":163.6,"0.500":153.8,"0.618":144.0,"0.786":130.5},
-        "nearest_support": 176.3, "nearest_resistance": 225.64,
-        "slope_pct": 2.1, "sharpe": 1.2,
-        "lt_score": 62, "lt_rating": "适合长期投资", "lt_color": "#1D9E75",
-        "schema": 2,
-        "rf_annual": 0.04,
-        "trend_score": 68, "stretch_score": 62,
-        "rating_note": "趋势强劲但位置偏高：上市首周涨幅已透支部分预期，等回调更合适。",
-        "range_low": 168.0, "range_high": 253.0, "range_pct": 20.5,
-        "analyst_target": 196.0, "analyst_upside": -4.9,
-    }
-}
 
 @st.cache_data(ttl=120)
 def fetch_stock_analysis(ticker: str):
-    # 静态兜底数据只在实时数据真的取不到时才用。
-    # 这里原本是无条件 return，导致 SPCX 上市三个多月后页面还在显示
-    # 上市第 4 天写死的 206.19 —— 新股数据同步后必须切回实时。
-    _static = STATIC_STOCK_DATA.get(ticker.upper())
 
     try:
         import yfinance as yf
@@ -2464,11 +2453,11 @@ def fetch_stock_analysis(ticker: str):
         if hist.empty or len(hist) < 10:
             hist = t.history(period="6mo")
         if hist.empty or len(hist) < 10:
-            return _static          # 实时数据还没同步出来，才用静态兜底
+            return None
         # 清理 NaN
         hist = hist.dropna(subset=["Close","Open","High","Low","Volume"])
         if len(hist) < 10:
-            return _static
+            return None
 
         close  = hist["Close"].dropna()
         volume = hist["Volume"].fillna(0)
@@ -2894,8 +2883,7 @@ def fetch_stock_analysis(ticker: str):
             "lt_color": lt_color,
         }
     except Exception as e:
-        # 取数失败时，有静态兜底就先用它，总好过整块报错
-        return _static if _static else {"error": str(e)}
+        return {"error": str(e)}
 
 # ── 标题 ──────────────────────────────────────────────────────────────────────
 st.title(tr("app_title"))
@@ -3290,16 +3278,8 @@ with tabs[1]:
                         break
                 except Exception:
                     continue
-            # 如果yfinance还未同步SPCX，使用静态备用数据
-            if not found:
-                live["SPCX"] = {
-                    "name":       "SpaceX",
-                    "price":      206.19,
-                    "change_pct": 7.12,
-                    "ipo_price":  135.0,
-                    "from_ipo":   round((206.19-135.0)/135.0*100,1),
-                    "static":     True,
-                }
+            # 取不到就什么都不显示。宁可少一块，也不要再挂一个
+            # 上市第 4 天写死的价格 —— 那正是之前价格三个月不更新的原因。
             return live
         except Exception:
             return {}
@@ -3351,6 +3331,17 @@ with tabs[1]:
 
     st.divider()
     st.subheader(tr("sub_company_deep"))
+    # 手工维护的数据必须让人看得见它有多旧
+    from datetime import datetime as _dt_ipo
+    try:
+        _age = (_dt_ipo.now() - _dt_ipo.strptime(IPO_DATA_ASOF, "%Y-%m-%d")).days
+    except Exception:
+        _age = 0
+    if _age > 90:
+        st.warning(tr("ipo_asof_old", d=IPO_DATA_ASOF, n=_age))
+    else:
+        st.caption(tr("ipo_asof", d=IPO_DATA_ASOF))
+
     selected = st.selectbox(tr("sel_company"), [c["name"] for c in IPOS])
     company  = next(c for c in IPOS if c["name"] == selected)
     col1, col2 = st.columns(2)
@@ -3364,6 +3355,10 @@ with tabs[1]:
         m1,m2,m3 = st.columns(3)
         m1.metric(tr("m_exp_val"), val_str)
         m2.metric(tr("m_revenue"), f"${company['rev_b']}B")
+        # 年化跑步收入 ≠ 财年实际收入。两者混在一起比 P/S 是不公平的，
+        # 所以哪一条用的是跑步口径，必须在页面上说清楚。
+        _rb = company.get("rev_basis")
+        m2.caption(tr("rev_runrate") if _rb == "runrate" else tr("rev_fy"))
         m3.metric(tr("m_ps"), f"{ps}x")
         m4,m5,m6 = st.columns(3)
         m4.metric(tr("m_profitable"), tr("yes_profit") if company["profitable"] else tr("no_profit"))
@@ -3395,6 +3390,7 @@ with tabs[1]:
             render_quick_analysis(_iv)
         st.divider()
 
+    st.caption(tr("ps_basis_note"))
     st.subheader(tr("sub_compare_all"))
     fig_bubble = go.Figure(go.Scatter(
         x=[c["bubble_risk"] for c in IPOS], y=[c["exp_pop"] for c in IPOS],
