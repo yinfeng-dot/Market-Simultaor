@@ -1829,6 +1829,7 @@ def render_asset_grid_clickable(items, key_prefix, cols=4, btn_label=None):
                 if st.button(btn_label or tr("view_analysis"),
                              key=f"{key_prefix}_{tk}", use_container_width=True):
                     st.session_state["quick_view_ticker"] = tk
+                    st.session_state["quick_view_src"] = key_prefix   # 记住是哪一组点的
                     st.session_state["selected_ticker"] = tk      # 同步给「股票分析器」
                     st.session_state["analysis_result"] = None
                     st.rerun()
@@ -1892,8 +1893,33 @@ def render_quick_analysis(ticker):
     st.markdown("**📋 关键技术信号**")
     sc1, sc2 = st.columns(2)
     for i, (icon, title, desc) in enumerate(r.get("signals", [])[:6]):
-        (sc1 if i % 2 == 0 else sc2).markdown(f"**{icon} {title}** — {desc}")
+        (sc1 if i % 2 == 0 else sc2).markdown(_nolatex(f"**{icon} {title}** — {desc}"))
     st.caption("想看完整分析（财报、斐波那契、量化面板、宏观联动）请前往「🔬 股票分析器」，代码已自动填好。")
+
+
+def render_quick_view(src):
+    """在触发它的那一组卡片正下方展开走势与分析。
+
+    以前不管点哪一组，都固定画在页面顶部的主网格下面 —— 加密货币和
+    贵金属的卡片在页面更下方，点完图跑到上面去了，用户得往回滚才看得见。
+    现在按 quick_view_src 匹配，谁触发就画在谁下面。
+    """
+    if st.session_state.get("quick_view_src") != src:
+        return
+    _qv = st.session_state.get("quick_view_ticker")
+    if not _qv:
+        return
+    st.divider()
+    _qc1, _qc2 = st.columns([5, 1])
+    _qc1.markdown(tr("quick_analysis", tk=_qv))
+    if _qc2.button(tr("btn_close"), key=f"qv_close_{src}", use_container_width=True):
+        st.session_state["quick_view_ticker"] = None
+        st.session_state["quick_view_src"] = None
+        st.rerun()
+    with st.spinner(tr("analyzing", tk=_qv)):
+        render_quick_analysis(_qv)
+    st.divider()
+
 
 def add_range_tools(fig, range_buttons=True, slider=True, height_add=0):
     """给任意Plotly图表加上时间轴范围按钮和可拖动滑条"""
@@ -2425,9 +2451,10 @@ STATIC_STOCK_DATA = {
 
 @st.cache_data(ttl=120)
 def fetch_stock_analysis(ticker: str):
-    # 检查是否有静态备用数据
-    if ticker.upper() in STATIC_STOCK_DATA:
-        return STATIC_STOCK_DATA[ticker.upper()]
+    # 静态兜底数据只在实时数据真的取不到时才用。
+    # 这里原本是无条件 return，导致 SPCX 上市三个多月后页面还在显示
+    # 上市第 4 天写死的 206.19 —— 新股数据同步后必须切回实时。
+    _static = STATIC_STOCK_DATA.get(ticker.upper())
 
     try:
         import yfinance as yf
@@ -2437,11 +2464,11 @@ def fetch_stock_analysis(ticker: str):
         if hist.empty or len(hist) < 10:
             hist = t.history(period="6mo")
         if hist.empty or len(hist) < 10:
-            return None
+            return _static          # 实时数据还没同步出来，才用静态兜底
         # 清理 NaN
         hist = hist.dropna(subset=["Close","Open","High","Low","Volume"])
         if len(hist) < 10:
-            return None
+            return _static
 
         close  = hist["Close"].dropna()
         volume = hist["Volume"].fillna(0)
@@ -2867,7 +2894,8 @@ def fetch_stock_analysis(ticker: str):
             "lt_color": lt_color,
         }
     except Exception as e:
-        return {"error": str(e)}
+        # 取数失败时，有静态兜底就先用它，总好过整块报错
+        return _static if _static else {"error": str(e)}
 
 # ── 标题 ──────────────────────────────────────────────────────────────────────
 st.title(tr("app_title"))
@@ -3067,18 +3095,8 @@ with tabs[0]:
             )))
         render_asset_grid_clickable(cards_t1, key_prefix="t1card", cols=4)
 
-        # ── 点击任意标的后就地展开分析与走势 ──
-        _qv = st.session_state.get("quick_view_ticker")
-        if _qv:
-            st.divider()
-            _qc1, _qc2 = st.columns([5, 1])
-            _qc1.markdown(tr("quick_analysis", tk=_qv))
-            if _qc2.button(tr("btn_close"), key="qv_close", use_container_width=True):
-                st.session_state["quick_view_ticker"] = None
-                st.rerun()
-            with st.spinner(tr("analyzing", tk=_qv)):
-                render_quick_analysis(_qv)
-            st.divider()
+        # ── 点击任意标的后，就在这一组卡片下方展开分析与走势 ──
+        render_quick_view("t1card")
 
         with st.expander(tr("exp_read_each"), expanded=True):
             for ticker, info in live_data_t1.items():
@@ -3152,6 +3170,7 @@ with tabs[0]:
                                      note=get_track_info(tk)[0]))
                 for tk, info in crypto_data.items()
             ], key_prefix="cryptocard", cols=3)
+            render_quick_view("cryptocard")
             fig_crypto = go.Figure(go.Bar(
                 x=[asset_name(k, v["name"]) for k, v in crypto_data.items()],
                 y=[v["change_pct"] for v in crypto_data.values()],
@@ -3185,6 +3204,7 @@ with tabs[0]:
                                      note=get_track_info(tk)[0]))
                 for tk, info in metals_data.items()
             ], key_prefix="metalcard", cols=3)
+            render_quick_view("metalcard")
             fig_metals = go.Figure(go.Bar(
                 x=[asset_name(k, v["name"]) for k, v in metals_data.items()],
                 y=[v["change_pct"] for v in metals_data.values()],
