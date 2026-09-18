@@ -543,6 +543,74 @@ I18N = {
  "hg_mode_mv_n": {"zh":"你的实际持仓","en":"your actual portfolio","es":"tu cartera real",
    "fr":"votre portefeuille réel","de":"Ihr tatsächliches Depot","ja":"実際の保有ポートフォリオ",
    "ko":"실제 보유 포트폴리오"},
+
+
+ "bub_clamped": {
+   "zh":"⚠️ 注意：分项贡献加总为 **{raw:.0f}%**，但模型把破裂概率锁在 5–95% 之间，所以头条显示 **{shown}%**。当前行情已经把模型推到量程边缘，这时的数字只说明「极端」，精确到个位没有意义。",
+   "en":"⚠️ Note: the itemised contributions sum to **{raw:.0f}%**, but the model caps burst probability at 5–95%, so the headline shows **{shown}%**. Conditions have pushed the model to the edge of its range — read the number as \u201cextreme\u201d rather than precise."},
+
+ "bub_label_from": {"zh":"← 这一档由破裂概率 {b}% 决定，与左侧温度是两个数",
+   "en":"← this band comes from the {b}% burst probability, not the temperature on the left"},
+ # ── 当前泡沫读数（自动） ──
+ "bub_now_title": {"zh":"### 🌡️ 当前泡沫程度（实时自动测算）",
+   "en":"### 🌡️ Current bubble reading (computed live)"},
+ "bub_now_cap": {
+   "zh":"下面这个读数不需要你做任何操作——它每次打开页面都会用当时的实时行情重新算一遍。四项输入全部来自公开市场数据，每一项对结果的贡献都在下方逐条列出。",
+   "en":"This reading needs no input from you — it is recomputed from live market data every time the page loads. All four inputs come from public market data, and each one's contribution is itemised below."},
+ "bub_temp": {"zh":"泡沫温度","en":"Bubble temperature"},
+ "bub_burst": {"zh":"12个月内破裂概率","en":"Probability of bursting within 12m"},
+ "bub_pop": {"zh":"新股首日预期涨幅","en":"Expected IPO first-day pop"},
+ "bub_six": {"zh":"6个月后预期收益","en":"Expected 6-month return"},
+ "bub_why_title": {"zh":"#### 🔍 为什么是这个数——逐项拆解",
+   "en":"#### 🔍 Why this number — factor by factor"},
+ "bub_why_cap": {
+   "zh":"泡沫温度 = 情绪×0.4 + AI速度×0.3 + 散户热度×0.2 + (100−利率×8)×0.1　·　破裂概率 = 100 − 情绪×0.4 − AI速度×0.2 + 利率×6 − 散户热度×0.05",
+   "en":"Temperature = sentiment×0.4 + AI×0.3 + retail×0.2 + (100−rate×8)×0.1　·　Burst = 100 − sentiment×0.4 − AI×0.2 + rate×6 − retail×0.05"},
+ "bub_col_factor": {"zh":"因子","en":"Factor"},
+ "bub_col_live": {"zh":"当前实时值","en":"Live value"},
+ "bub_col_temp": {"zh":"对温度的贡献","en":"→ temperature"},
+ "bub_col_burst": {"zh":"对破裂概率的贡献","en":"→ burst risk"},
+
+ "bub_f_sentiment": {"zh":"市场情绪","en":"Market sentiment"},
+ "bub_f_ai": {"zh":"AI 商业化速度","en":"AI commercialisation pace"},
+ "bub_f_retail": {"zh":"散户参与热度","en":"Retail participation"},
+ "bub_f_rate": {"zh":"利率环境","en":"Interest-rate environment"},
+
+ "bub_d_sentiment": {
+   "zh":"由 VIX、纳斯达克与英伟达当日涨跌实时算出（拆解见下）。情绪越高，说明市场越愿意为高估值买单，泡沫温度越高、短期破裂概率越低——但这份「低概率」本身就是泡沫的特征。",
+   "en":"Computed live from VIX plus today's Nasdaq and Nvidia moves (broken out below). Higher sentiment means the market is more willing to pay up, which raises temperature and lowers near-term burst odds — though that very complacency is what a bubble looks like."},
+ "bub_d_ai": {
+   "zh":"用 AI 权重股（NVDA/MSFT/GOOGL/META/AMD/AVGO）相对标普500的 **3个月超额收益 {ex:+.1f}%** 换算：市场愿意为 AI 叙事付多少溢价，就代表它对商业化兑现速度的预期。跑赢越多，分数越高。",
+   "en":"Derived from the AI mega-caps' (NVDA/MSFT/GOOGL/META/AMD/AVGO) **3-month excess return of {ex:+.1f}%** versus the S&P 500: how much premium the market pays for the AI story stands in for how fast it expects commercialisation to arrive."},
+ "bub_d_ai_off": {
+   "zh":"⚠️ 实时数据取不到，暂用中性值 60。这一项不影响其余三项的准确性。",
+   "en":"⚠️ Live data unavailable, falling back to a neutral 60. The other three factors are unaffected."},
+ "bub_d_retail": {
+   "zh":"用 VIX 反推（100 − VIX×2）：市场越平静，散户越敢追高。**这是代理指标，不是真实的散户持仓数据**——公开数据里拿不到实时散户流向，所以只能用波动率做近似。",
+   "en":"Inferred from VIX (100 − VIX×2): the calmer the market, the more retail chases. **This is a proxy, not actual retail positioning data** — real-time retail flow is not publicly available, so volatility stands in for it."},
+ "bub_d_rate": {
+   "zh":"取 10 年期美债收益率。**这是模型里权重最高的破裂因子（×6）**——历史上刺破泡沫的几乎都是利率上行：2000年互联网、2021年SPAC都是这样结束的。利率每涨1个百分点，破裂概率就加6。",
+   "en":"The US 10-year Treasury yield. **This carries the heaviest weight on burst risk (×6)** — historically it is rising rates that pop bubbles: both the 2000 dot-com and 2021 SPAC manias ended that way. Every extra percentage point adds 6 to the burst probability."},
+
+ "bub_sent_break": {"zh":"情绪分 {s}/100 的来源：从中性 50 起算",
+   "en":"Where the {s}/100 sentiment comes from: starting from a neutral 50"},
+ "bub_p_vix_lo": {"zh":"VIX {v} 偏低，市场几乎没有恐慌情绪",
+   "en":"VIX at {v} is low — the market shows little fear"},
+ "bub_p_vix_hi": {"zh":"VIX {v} 偏高，避险情绪明显",
+   "en":"VIX at {v} is elevated — risk aversion is visible"},
+ "bub_p_idx": {"zh":"纳斯达克当日 {v}（权重 ×3）","en":"Nasdaq today {v} (weight ×3)"},
+ "bub_p_nvda": {"zh":"英伟达当日 {v}（权重 ×2，作为 AI 情绪的风向标）",
+   "en":"Nvidia today {v} (weight ×2, as the AI sentiment bellwether)"},
+
+ "bub_verdict": {"zh":"当前判定","en":"Current read"},
+ "bub_nodata": {"zh":"⚠️ 暂时取不到实时行情，下面的读数可能不准，请稍后刷新。",
+   "en":"⚠️ Live market data is unavailable right now; the reading below may be stale."},
+ "bub_whatif": {"zh":"🎛️ 想试试别的情景？下面可以手动改参数",
+   "en":"🎛️ Want to test other scenarios? Adjust the inputs manually below"},
+ "bub_whatif_cap": {
+   "zh":"上面是**现状**，下面是**假设**。手动模式用来回答「如果利率再涨1%会怎样」这类问题，改动不影响上面的实时读数。",
+   "en":"Above is what is actually happening; below is what-if. Manual mode answers questions like \u201cwhat if rates rise another point\u201d, and does not affect the live reading above."},
+ "bub_refresh": {"zh":"🔄 重新测算","en":"🔄 Recompute"},
  # ── 免责声明折叠 ──
  "disc_more": {"zh":"查看完整免责声明","en":"Read the full disclaimer","es":"Ver el aviso legal completo",
    "fr":"Lire l’avertissement complet","de":"Vollständigen Haftungsausschluss lesen",
@@ -2133,6 +2201,116 @@ def simulate(sentiment, rate, ai_speed, retail):
     return {"pop": pop, "six_m": six_m, "burst": burst, "temp": temp,
             "label": labels[idx], "desc": descs[idx]}
 
+@st.cache_data(ttl=900, show_spinner=False)
+def compute_ai_speed():
+    """把「AI 商业化速度」量化成 0-100，不再写死一个 60。
+
+    代理指标：AI 权重股组合相对标普 500 的 3 个月超额收益。
+    逻辑是——市场当前愿意为 AI 叙事付多少溢价，就反映了它对
+    AI 商业化兑现速度的集体预期。跑赢大盘越多，说明预期越乐观。
+
+    映射：相对大盘 −20% → 20 分；持平 → 50 分；+20% → 80 分。
+    返回 (分数, 超额收益%, 是否取到真实数据)
+    """
+    try:
+        import yfinance as yf
+        basket = ["NVDA", "MSFT", "GOOGL", "META", "AMD", "AVGO"]
+        rets = []
+        for tk in basket:
+            try:
+                h = yf.Ticker(tk).history(period="3mo")["Close"].dropna()
+                if len(h) > 20:
+                    rets.append(float(h.iloc[-1] / h.iloc[0] - 1))
+            except Exception:
+                continue
+        b = yf.Ticker("^GSPC").history(period="3mo")["Close"].dropna()
+        if not rets or len(b) < 20:
+            return 60, 0.0, False
+        ai_ret = sum(rets) / len(rets)
+        sp_ret = float(b.iloc[-1] / b.iloc[0] - 1)
+        excess = (ai_ret - sp_ret) * 100
+        return int(max(0, min(100, round(50 + excess * 1.5)))), round(excess, 1), True
+    except Exception:
+        return 60, 0.0, False
+
+
+def bubble_now(live):
+    """把实时行情换算成泡沫模型的四个输入，并逐项拆出它们的贡献。
+
+    返回的 breakdown 里每一项都带着：实时值、换算过程、对温度/破裂概率的
+    具体贡献 —— 这样页面上说的"为什么"是算出来的，不是编的。
+    """
+    def _v(tk, field="price", default=None):
+        """取实时字段并强制转成 float。
+
+        行情接口偶尔会回 "N/A" 之类的字符串，而这块现在是页面头条，
+        一个脏字段不该让整页崩掉 —— 转不了就退回 default。
+        """
+        try:
+            import math as _m_bn
+            x = float(live[tk][field])
+            return default if (_m_bn.isnan(x) or _m_bn.isinf(x)) else x
+        except Exception:
+            return default
+
+    vix = _v("^VIX")
+    ixic_chg = _v("^IXIC", "change_pct", 0.0) or 0.0
+    nvda_chg = _v("NVDA", "change_pct", 0.0) or 0.0
+    tnx = _v("^TNX")
+
+    # ── 情绪分（复刻 market_to_sentiment 的算法，同时留下每一项的贡献）──
+    sent_parts = []
+    sent = 50.0
+    if vix is not None:
+        c = 20 if vix < 15 else 10 if vix < 20 else -10 if vix < 30 else -25
+        sent += c
+        sent_parts.append(("VIX", f"{vix:.1f}", c,
+                           "vix_lo" if vix < 20 else "vix_hi"))
+    if ixic_chg:
+        c = ixic_chg * 3
+        sent += c
+        sent_parts.append(("NASDAQ", f"{ixic_chg:+.2f}%", c, "idx"))
+    if nvda_chg:
+        c = nvda_chg * 2
+        sent += c
+        sent_parts.append(("NVDA", f"{nvda_chg:+.2f}%", c, "nvda"))
+    sentiment = int(max(0, min(100, sent)))
+
+    rate = round(tnx, 2) if tnx is not None else 4.5
+    ai_speed, ai_excess, ai_live = compute_ai_speed()
+    # 散户热度用 VIX 反推：市场越平静，散户越敢追高。这是代理指标，不是真实持仓数据。
+    retail = max(20, min(90, int(100 - vix * 2))) if vix is not None else 70
+
+    sim = simulate(sentiment, rate, ai_speed, retail)
+
+    # ── 四个输入对「泡沫温度」和「破裂概率」各自的贡献 ──
+    # temp  = 情绪×0.4 + AI×0.3 + 散户×0.2 + (100−利率×8)×0.1
+    # burst = 100 − 情绪×0.4 − AI×0.2 + 利率×6 − 散户×0.05
+    breakdown = [
+        {"key": "sentiment", "value": sentiment, "raw": f"{sentiment}/100",
+         "temp": sentiment * 0.4, "burst": -sentiment * 0.4, "parts": sent_parts},
+        {"key": "ai", "value": ai_speed, "raw": f"{ai_speed}/100",
+         "temp": ai_speed * 0.3, "burst": -ai_speed * 0.2,
+         "excess": ai_excess, "live": ai_live},
+        {"key": "retail", "value": retail, "raw": f"{retail}/100",
+         "temp": retail * 0.2, "burst": -retail * 0.05},
+        {"key": "rate", "value": rate, "raw": f"{rate:.2f}%",
+         "temp": (100 - rate * 8) * 0.1, "burst": rate * 6},
+    ]
+    # simulate() 把破裂概率截断在 5–95。极端行情下逐项加总会超出这个范围，
+    # 界面上就会出现"分项加起来 119%、头条却写 95%"的矛盾，所以把原始值也带出去。
+    raw_burst = 100 + sum(f["burst"] for f in breakdown)
+    raw_temp = sum(f["temp"] for f in breakdown)
+
+    return {"sentiment": sentiment, "rate": rate, "ai_speed": ai_speed,
+            "retail": retail, "sim": sim, "breakdown": breakdown,
+            "vix": vix, "ai_excess": ai_excess, "ai_live": ai_live,
+            "raw_burst": raw_burst, "raw_temp": raw_temp,
+            "burst_clamped": abs(raw_burst - sim["burst"]) > 1.5,
+            "temp_clamped": abs(raw_temp - sim["temp"]) > 1.5,
+            "has_data": bool(live)}
+
+
 @st.cache_data(ttl=60)
 def fetch_market_data():
     try:
@@ -3235,27 +3413,106 @@ with tabs[2]:
 with tabs[3]:
 
     # ══════════════════════════════════════════════════════════════════════
+    # 🌡️ 当前泡沫程度 —— 打开页面就算好，不需要用户做任何操作
+    # ══════════════════════════════════════════════════════════════════════
+    live_data_sim = fetch_market_data()
+    _bn = bubble_now(live_data_sim)
+    _bsim = _bn["sim"]
+
+    st.markdown(tr("bub_now_title"))
+    st.caption(tr("bub_now_cap"))
+    if not _bn["has_data"]:
+        st.warning(tr("bub_nodata"))
+
+    # 温度决定整条横幅的颜色
+    _tv = _bsim["temp"]
+    _tc = ("#A32D2D" if _tv >= 80 else "#D85A30" if _tv >= 65 else
+           "#BA7517" if _tv >= 45 else "#1D9E75")
+    st.markdown(
+        f'<div style="background:linear-gradient(120deg,{_tc} 0%,{_tc}cc 60%,{_tc}99 100%);'
+        f'color:white;padding:18px 22px;border-radius:14px;margin:6px 0 4px">'
+        f'<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">'
+        f'<span style="font-size:42px;font-weight:780;line-height:1">{_tv}</span>'
+        f'<span style="font-size:15px;opacity:.9">/100　{tr("bub_temp")}</span>'
+        f'<span style="margin-left:auto;text-align:right">'
+        f'<span style="font-size:19px;font-weight:700">{_bsim["label"]}</span><br>'
+        f'<span style="font-size:11.5px;opacity:.85">{tr("bub_label_from", b=_bsim["burst"])}</span>'
+        f'</span>'
+        f'</div>'
+        f'<div style="font-size:13px;opacity:.95;margin-top:8px;line-height:1.65">'
+        f'{_bsim["desc"]}</div></div>',
+        unsafe_allow_html=True)
+
+    _bc1, _bc2, _bc3 = st.columns(3)
+    _bc1.metric(tr("bub_burst"), f"{_bsim['burst']}%")
+    _bc2.metric(tr("bub_pop"), f"{_bsim['pop']:+d}%")
+    _bc3.metric(tr("bub_six"), f"{_bsim['six_m']:+d}%")
+
+    # ── 为什么是这个数：四个因子逐项拆解 ──
+    st.markdown(tr("bub_why_title"))
+    st.caption(tr("bub_why_cap"))
+    if _bn.get("burst_clamped") or _bn.get("temp_clamped"):
+        st.caption(tr("bub_clamped", raw=_bn["raw_burst"], shown=_bsim["burst"]))
+
+    _fname = {"sentiment": "bub_f_sentiment", "ai": "bub_f_ai",
+              "retail": "bub_f_retail", "rate": "bub_f_rate"}
+    for _f in _bn["breakdown"]:
+        _fk = _f["key"]
+        # 对破裂概率为正 = 增加破裂风险；对温度贡献大 = 推高泡沫
+        _tone = ("bad" if _f["burst"] > 15 else
+                 "warn" if _f["temp"] > 25 else "neutral")
+        if _fk == "ai":
+            _desc = (tr("bub_d_ai", ex=_f.get("excess", 0.0)) if _f.get("live")
+                     else tr("bub_d_ai_off"))
+        else:
+            _desc = tr("bub_d_" + _fk)
+
+        # 情绪这一项再往下拆一层，让 VIX / 纳指 / 英伟达各自的贡献可见
+        if _fk == "sentiment" and _f.get("parts"):
+            _pl = []
+            for _pn, _pv, _pc, _pk in _f["parts"]:
+                if _pk in ("vix_lo", "vix_hi"):
+                    _pt = tr("bub_p_vix_lo" if _pk == "vix_lo" else "bub_p_vix_hi", v=_pv)
+                elif _pk == "idx":
+                    _pt = tr("bub_p_idx", v=_pv)
+                else:
+                    _pt = tr("bub_p_nvda", v=_pv)
+                _pl.append(f"{_pt} → **{_pc:+.1f}**")
+            _desc += "　　" + tr("bub_sent_break", s=_f["value"]) + "：" + "；".join(_pl) + "。"
+
+        why(_desc, _tone,
+            calc=(f'{tr("bub_col_live")} {_f["raw"]}　→　'
+                  f'{tr("bub_col_temp")} {_f["temp"]:+.1f}　·　'
+                  f'{tr("bub_col_burst")} {_f["burst"]:+.1f}'),
+            title=f'{tr(_fname[_fk])}　{_f["raw"]}')
+
+    if st.button(tr("bub_refresh"), key="bub_recompute"):
+        st.cache_data.clear()
+        st.rerun()
+
+    st.divider()
+
+
+    # ══════════════════════════════════════════════════════════════════════
     # 🎛️ 泡沫模拟（已整合至趋势预测）
     # ══════════════════════════════════════════════════════════════════════
-    with st.expander("🎛️ 泡沫风险模拟器", expanded=False):
-        
-        live_data_sim  = fetch_market_data()
-        auto_sentiment = market_to_sentiment(live_data_sim)
-        auto_rate = 4.5
-        if live_data_sim and "^TNX" in live_data_sim:
-            auto_rate = round(live_data_sim["^TNX"]["price"], 2)
-        auto_retail = 70
-        if live_data_sim and "^VIX" in live_data_sim:
-            vix = live_data_sim["^VIX"]["price"]
-            auto_retail = max(20, min(90, int(100 - vix * 2)))
+    with st.expander(tr("bub_whatif"), expanded=False):
+        st.caption(tr("bub_whatif_cap"))
+        # 四个输入直接复用页面顶部已经算好的实时读数，不再各算一遍
+        auto_sentiment = _bn["sentiment"]
+        auto_rate      = _bn["rate"]
+        auto_retail    = _bn["retail"]
+        auto_ai        = _bn["ai_speed"]
+        vix            = _bn["vix"]
         
         mode_col1, mode_col2 = st.columns([1, 2])
         with mode_col1:
-            auto_mode = st.toggle("🤖 自动驾驶模式", value=False,
+            auto_mode = st.toggle("🤖 自动驾驶模式", value=True,
                                   help="开启后从实时市场数据自动计算所有参数")
         with mode_col2:
             if auto_mode:
-                st.success(f"✅ 已接入实时数据 · 情绪={auto_sentiment} · 利率={auto_rate}% · 散户={auto_retail}")
+                st.success(f"✅ 已接入实时数据 · 情绪={auto_sentiment} · 利率={auto_rate}% · "
+                           f"AI速度={auto_ai} · 散户={auto_retail}")
                 if st.button("🔄 刷新实时参数", key="refresh_sim"):
                     st.cache_data.clear()
                     st.rerun()
@@ -3267,7 +3524,7 @@ with tabs[3]:
         if auto_mode:
             sentiment = auto_sentiment
             rate      = auto_rate
-            ai_speed  = 60
+            ai_speed  = auto_ai        # 原来写死 60，现在由 AI 板块相对强度实算
             retail    = auto_retail
         
             # ── 股票/ETF选择器 ──────────────────────────────────────────────
